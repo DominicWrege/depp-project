@@ -9,7 +9,7 @@ info:
     contact:
         email: "dominic.wrege001@stud.fh-dortmud.de"
 servers:
-  - url: http://localhost:8088
+  - url: http://127.0.0.1:8080
 paths:
     /assignments:
         get:

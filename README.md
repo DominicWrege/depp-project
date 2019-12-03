@@ -60,7 +60,7 @@ args = ["rackrent"]                     # with this stdin I will run this script
 
 # Discussion
 
-- Do you want pass each request and api key?
+- Do you want pass each request an API key?
 - Do we need some auth (LTI)?
 
 # TODO For API
