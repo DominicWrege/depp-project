@@ -62,7 +62,6 @@ args = ["rackrent"]                     # with this stdin I will run this script
 - Do we need some auth (LTI)?
 
 # TODO For API
-- [ ] Ordner Überprüfung generischer machen. Aktueller Ordner oder vom Studenten gebener Test Ordner als Refernz nehmen und daran testen 
 - [ ]  async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40) 
 - [ ] Memory limit for script
 - [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
