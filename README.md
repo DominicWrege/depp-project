@@ -2,7 +2,9 @@
 
 Please take a look inside the examples folder. Inside you will find the ```exampels/assignments.yaml``` file. **Please do not move or delete this file**. 
 The examples folder and the ```docs/api.openapi.yml``` will be mounted to the container. So no rebuild is necessary after change.
-I also includded some example scripts you can encode to base64 for testing. Currently all ```.bat``` scripts run inside wine. This there are running slow like 4-12 seconds.
+I also includded some example scripts you can encode to base64 for testing.  
+### Batch files On Linux
+Currently all Batch files are running inside wine on Linux. This means each script takes around 4-15 seconds.
 
 # Getting Started
 ## Build And Run
