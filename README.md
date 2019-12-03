@@ -55,6 +55,12 @@ args = ["rackrent"]                     # with this stdin I will run this script
 
 ```
 
+
+# Discussion
+
+- Do you want pass each request and api key?
+- Do we need some auth (LTI)?
+
 # TODO For API
 - [ ] Ordner Überprüfung generischer machen. Aktueller Ordner oder vom Studenten gebener Test Ordner als Refernz nehmen und daran testen 
 - [ ]  async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40) 
