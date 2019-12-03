@@ -1,0 +1,22 @@
+version: "3"
+services:
+    deep-api:
+        build: .
+        ports:
+            - 8080:8080
+        volumes:
+            - ./examples:/media/examples
+    docs:
+        build: docs
+        ports:
+            - 4001:80
+        volumes:
+            - ./docs:/usr/share/nginx/html/
+    swagger_ui:
+        depends_on:
+            - docs
+        image: swaggerapi/swagger-ui
+        environment:
+            - API_URL=http://127.0.0.1:4001/api.openapi.yml
+        ports:
+            - 4000:8080

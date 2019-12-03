@@ -1,0 +1,186 @@
+openapi: "3.0.0"
+info:
+    description: "Please read the [Ilias Feature Wiki](https://docu.ilias.de/goto_docu_wiki_wpage_5930_1357.html) for more information.
+    This Rest API uses `JSON only`. Everytime an error occurs, I send and ApiError json object. 
+    For more information see the README file at git.
+    "
+    version: "0.1"
+    title: "DEPP Project API"
+    contact:
+        email: "dominic.wrege001@stud.fh-dortmud.de"
+servers:
+  - url: http://localhost:8088
+paths:
+    /assignments:
+        get:
+            summary: "Lists of all existings assigments"
+            description: "The Endpoint stores all assigments provied by the docent."
+            operationId: "getAssignments"
+            responses:
+                200:
+                    description: "All assigments as an array."
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/Assignment"
+    /submission:
+        post:
+            summary: "Takes the source code to test"
+            operationId: "addSubmission"
+            description: "Will evaluate the given source and will store the test result. Each
+            iliasId should be unique and will be **cached** unil ```get:  /result/{iliasId}``` is called."
+            requestBody:
+                  required: true
+                  content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Submission"
+            responses:
+                201:
+                    description: "Submission created."
+                400:
+                    description: "Request body error."
+                    content:
+                        application/json:
+                                schema:
+                                    $ref: "#/components/schemas/SubmissionError"
+                409:
+                    description: "Duplicate iliasID. I excpet to that every iliasId should be unique and you submitted the same iliasId 
+                    without calling ```get:  /result/{iliasId}``` twice "
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+    /result/{iliasId}:
+        get:
+            summary: "Returns the result for the submission by given iliasID"
+            operationId: "getResults"
+            parameters:
+                - name: iliasId
+                  in: path
+                  required: true
+                  description: "Needs and existing iliasId to find the result. After that I will remove this iliasId from the cache."
+                  schema:
+                    $ref: "#/components/schemas/IliasId"
+            responses:
+                200:
+                    description: "Returns the result for the submission"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Result"
+                400:
+                    description: "Parameter error invalid digit found in string. An interger64 is required"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+
+                404:
+                    description: "No Results not found for given Ilias ID: {id}"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+                500:
+                    description: "Generic Error"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+    /version:
+        get:
+            summary: "The current version and status of the endpoint."
+            operationId: "version"
+            responses:
+                200:
+                    description: ""
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Meta"
+
+components:
+    schemas:
+        Submission:
+            type: object
+            properties:
+                iliasId:
+                    type: integer
+                    format: int64
+                sourceCode:
+                    type: string
+                    format: base64
+                    example: "QGVjaG8gb2ZmDQpta2RpciBTY2hyaWZ0c3R1ZWNrZQ0KY2QgLlxTY2hyaWZ0c3R1ZWNrZQ0KbWtk
+    aXIgQWx0DQpta2RpciBOZXUNCm1rZGlyIC5cQWx0XExhdGV4DQpta2RpciAuXE5ldVxMYXRleA0K
+    Zm9yIC9SICUlYSBpbiAoLikgZG8gZWNobyAiJSV+ZmEiPiUlfmZhXHRlc3QudGV4DQpjZCAuLg=="
+                assigmentId:
+                    type: integer
+                    format: int64
+            required:
+                - iliasId
+                - sourceCode
+                - assigmentId
+        Result:
+            type: object
+            properties:
+                iliasId:
+                    type: integer
+                    format: int64
+                passed:
+                    type: boolean
+                message:
+                    type: string
+                    nullable: true
+                mark:
+                    type: string
+                    nullable: true
+            required:
+                - iliasId
+                - passed
+        Assignment:
+            type: object
+            properties: 
+                assigmentId: 
+                    type: integer
+                    format: int64
+                name:
+                    type: string
+                    example: "Aufgabe 7 Powershell Dateien auslesen"
+        Meta:
+            type: "object"
+            properties:
+                version:
+                    type: number
+                    format: double
+                status:
+                    type: string
+                    enum: [online, maintenance]
+            required:
+                - version
+                - status
+        IliasId:
+            type: integer
+            format: int64
+        ApiError:
+            type: "object"
+            properties:
+                msg:
+                    type: string
+            required:
+                - msg
+        SubmissionError:
+            type: "object"
+            properties:
+                msg:
+                    type: string
+                example:
+                    $ref: "#/components/schemas/Submission"
+            required:
+                - msg
+
+externalDocs:
+    description: "Find out more about Swagger"
+    url: "http://swagger.io"

@@ -1,0 +1,67 @@
+name = "Blatt 42"
+
+# takes writes 'HalloWorld' into hallo.txt
+[[assignment]]
+name = "Task 1 Hello World"
+type = "Shell"
+    [[assignment.files]]
+    path = "hallo.txt"
+    content = "HalloWorld"
+
+# takes 1 argument, reverse and print it out
+[[assignment]]
+name = "Task 2 Bash reverse"
+type = "Bash"
+args = ["rackrent"] 
+    [assignment.output]
+    regex = false
+    text = "tnerkcar"
+
+# calc fib by given number
+[[assignment]]
+name = "Task 3 Pyhton fib"
+type = "Python3"
+args = ["6", "fib-out.txt"]
+    [[assignment.files]]
+    path = "fib-out.txt"
+    content = "720"
+
+# create some directories and files
+[[assignment]]
+name = "Task 4 crate directories"
+type = "Batch"
+    [[assignment.files]]
+    path = "Schriftstuecke/Alt/test.tex"
+    content = "Schriftstuecke\\Alt\\test.tex"
+    [[assignment.files]]
+    path = "Schriftstuecke/Alt/Latex/test.tex"
+    content = "Schriftstuecke\\Alt\\Latex\\test.tex"
+    [[assignment.files]]
+    path = "Schriftstuecke/Neu/Latex/test.tex"
+    content = "Schriftstuecke\\Neu\\Latex\\test.tex"
+    [[assignment.files]]
+    path ="Schriftstuecke/test.tex"
+    content ="Schriftstuecke\\test.tex"
+
+[[assignment]]
+name = "Task 5 parse with regex"
+type = "Powershell"
+    [[assignment.files]]
+    path = "fib-out.txt"
+    content = '''
+    6 ipsum
+    1000 dolor
+    5 dolor
+    99  tet
+    101  test
+    0001 Test
+    2words
+    00000000000001 
+    00000000001000 
+    1 
+    10 
+    100 
+    1000 
+    9999 
+    10000
+    '''
