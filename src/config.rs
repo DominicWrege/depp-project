@@ -81,7 +81,7 @@ impl Script {
 impl Script {
     pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
         match self {
-            Script::Powershell => ("powershell.exe", vec!["--command".into()]),
+            Script::Powershell => ("powershell.exe", vec![]),
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),

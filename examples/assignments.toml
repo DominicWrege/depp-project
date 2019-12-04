@@ -22,7 +22,7 @@ args = ["rackrent"]
 name = "Task 3 Python3 fib"
 type = "Python3"
 args = ["5", "7"]
-    [[assignment.output]]
+    [assignment.output]
     text = "120 5040"
 
 # create some directories and files
@@ -43,11 +43,11 @@ type = "Batch"
     content ="Schriftstuecke\\test.tex"
 
 [[assignment]]
-name = "Task 5 parse with regex"
+name = "Task 5 Powershell parse file with regex"
 type = "Powershell"
-    [[assignment.files]]
-    path = "task5-test.txt"
-    content = '''
+args = [".\task5-input.txt"]
+    [assignment.output]
+    text = '''
     6 ipsum
     1000 dolor
     5 dolor

@@ -85,9 +85,9 @@ fn match_with_solution(stdout: &str, regex_text: &str) -> Result<ScriptResult, E
 fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
     let a = rm_windows_new_lines(output.trim());
     let b = rm_windows_new_lines(expected_output.trim());
-    info!("\nExpected:");
+    println!("\nExpected:");
     println!("{:#?}", b);
-    info!("Value:");
+    println!("Value:");
     println!("{:#?}", a);
     println!("--------------------------");
     //println!("compare {}", output.trim_end() == &std_solution);
