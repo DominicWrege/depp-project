@@ -23,7 +23,7 @@ fn run() -> Result<(), failure::Error> {
     let opt = Opt::from_args();
     let config = parse_config(&opt.config)?;
     std::env::set_var("RUST_LOG", "actix_web=info");
-    dbg!(&config);
+    // dbg!(&config);
     let state = State::new(config);
     env_logger::init();
     HttpServer::new(move || {

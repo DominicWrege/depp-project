@@ -40,7 +40,7 @@ fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult
             _ => (),
         }
     }
-    if output.status.success() {
+    if output.status.success() && output.stderr.is_empty() {
         if let Some(pattern) = &assignment.output {
             let stdout = String::from_utf8(output.stdout)?;
             let script_result = if pattern.regex {
@@ -58,15 +58,13 @@ fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult
             _ => (),
         }
     } else {
-        println!(
-            "Assignment: {} Script finished with exit code 1, {:?}, stderr {:?}",
+        let err_msg = format!(
+            "Script finished with exit code 1, {}, stderr {}",
             &assignment.name,
-            &script_path,
-            String::from_utf8(output.stderr).unwrap()
+            String::from_utf8(output.stderr).unwrap_or_default()
         );
-        return Ok(ScriptResult::InCorrect(
-            "Script finished with exit code 1".into(),
-        ));
+        println!("{:?}: {}", &script_path, err_msg);
+        return Ok(ScriptResult::InCorrect(err_msg));
     }
     Ok(ScriptResult::Correct)
 }
@@ -97,6 +95,19 @@ fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
     };
 }
 
+// TODO print exec command with all args
+//     let a = args
+//     .iter()
+//     .filter_map(|path| path.to_str())
+//     .collect::<Vec<_>>()
+//     .join("\n");
+// println!(
+//     "Executing: {} {} {}",
+//     &prog,
+//     a.trim(),
+//     &args_from_conf.join(" ").trim()
+// );
+
 fn run_script(
     script_type: &Script,
     script_path: &Path,
@@ -109,6 +120,7 @@ fn run_script(
         .args(args_from_conf)
         .output()
         .with_context(|_| format!("Could not find script"))?;
+    // dbg!(&out);
     Ok(out)
 }
 
@@ -131,15 +143,15 @@ fn check_file(path_to_file: &PathBuf, solution: &Option<String>) -> Result<Scrip
             .trim_end()
             .to_string();
         //info!("solut {:?}", solution);
-        info!("file content is {:?}", &file_content);
-        info!("Solution is {:?}", &solution);
+        println!("file content is {:?}", &file_content);
+        println!("Solution is {:?}", &solution);
         if let Some(solution) = solution {
             return Ok(contains_with_solution(&file_content, &solution));
         } else {
             return Ok(ScriptResult::Correct);
         }
     } else {
-        info!("Path {:?} does not exists", path_to_file.as_os_str());
+        println!("Path {:?} does not exists", path_to_file.as_os_str());
     }
     Ok(ScriptResult::InCorrect("File not found".into()))
 }
@@ -153,7 +165,7 @@ fn file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult,
             return Ok(ScriptResult::Correct);
         }
     }
-    info!("Script does not contains_with_solution this pattern");
+    println!("Script does not contains_with_solution this pattern");
     Ok(ScriptResult::InCorrect(
         "Script does not contains_with_solution this pattern".into(),
     ))
