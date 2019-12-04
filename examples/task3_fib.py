@@ -6,11 +6,6 @@ def fib2(n):
         return 1
     return n * fib2(n-1)
 
-n = sys.argv[1]
-file_name = sys.argv[2]
-
-f = open(file_name, "a")
-a = str(fib2(int(n)))
-print(a)
-f.write(a)
-f.close()
+n1 = int(sys.argv[1])
+n2 = int(sys.argv[2])
+print("fib:", fib2(n1), fib2(n2))

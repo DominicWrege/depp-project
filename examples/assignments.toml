@@ -19,12 +19,11 @@ args = ["rackrent"]
 
 # calc fib by given number
 [[assignment]]
-name = "Task 3 Pyhton fib"
+name = "Task 3 Python3 fib"
 type = "Python3"
-args = ["6", "fib-out.txt"]
-    [[assignment.files]]
-    path = "fib-out.txt"
-    content = "720"
+args = ["5", "7"]
+    [[assignment.output]]
+    text = "120 5040"
 
 # create some directories and files
 [[assignment]]
@@ -47,7 +46,7 @@ type = "Batch"
 name = "Task 5 parse with regex"
 type = "Powershell"
     [[assignment.files]]
-    path = "fib-out.txt"
+    path = "task5-test.txt"
     content = '''
     6 ipsum
     1000 dolor
