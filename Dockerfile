@@ -32,9 +32,10 @@ RUN apt-get update &&\
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7-preview &&\
     chmod +x /opt/microsoft/powershell/7-preview/pwsh &&\
     ln -s /opt/microsoft/powershell/7-preview/pwsh /usr/bin/pwsh &&\
-    apt-get install -y --no-install-recommends wine python3
+    apt-get install -y --no-install-recommends wine python3 && \
+    ln -s /media/examples/ examples
 
 COPY --from=builder /deep-api/target/release/deep-api .
 EXPOSE 8088
 
-CMD ["./deep-api","--config", "/media/examples/assignments.toml"]
+CMD ["./deep-api","--config", "examples/assignments.toml"]

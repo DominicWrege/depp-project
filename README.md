@@ -1,8 +1,7 @@
 # Description
 
-Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. **Please do not move or delete this file**.
-The examples folder and the `docs/api.openapi.yml` will be mounted to the container. So no rebuild is necessary after change.
-I also includded some example scripts you can encode to base64 for testing.
+Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do  **not move or delete this file**.
+The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the ```assignments.yaml``` file after start **once**. So a restart is necessary after change to take effect. I also includded some example scripts you can encode to base64 for testing.
 
 ### Batch files On Linux
 
