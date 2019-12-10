@@ -12,22 +12,22 @@ Currently all Batch files are running inside wine on Linux. This means each scri
 ## Build And Run
 
 ```
-docker-compuse up
+docker-compose up
 ```
 
 ## Build And Run As Deamon
 
 ```
-docker-compuse up -d
+docker-compose up -d
 ```
 
 ## Build Only
 
 First build ETA is 10min.
-Sometimes `docker-compuse up` will no rebuild some containers. So you have to do this or even with `--force` option.
+Sometimes `docker-compose up` will no rebuild some containers. So you have to do this or even with `--force` option.
 
 ```
-docker-compuse build
+docker-compose build
 ```
 
 ## API Endpoint
