@@ -28,12 +28,12 @@ fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult
         "running Taskname: {} Script: {:?}",
         assignment.name, &script_path
     );
-    if let Some(script_contains_with_solution) = &assignment.script_contains {
+    if let Some(script_contains_solution) = &assignment.script_contains {
         let script_content = fs::read_to_string(&script_path).map_err(Error::IO)?;
-        let script_result = if script_contains_with_solution.regex {
-            file_match_line(&script_contains_with_solution.text, &script_content)?
+        let script_result = if script_contains_solution.regex {
+            file_match_line(&script_contains_solution.text, &script_content)?
         } else {
-            contains_with_solution(&script_contains_with_solution.text, &script_content)
+            contains_solution(&script_contains_solution.text, &script_content)
         };
         match script_result {
             ScriptResult::InCorrect(_) => return Ok(script_result),
@@ -46,7 +46,7 @@ fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult
             let script_result = if pattern.regex {
                 match_with_solution(&stdout, &pattern.text)?
             } else {
-                contains_with_solution(&stdout, &pattern.text)
+                contains_solution(&stdout, &pattern.text)
             };
             match script_result {
                 ScriptResult::InCorrect(x) => return Ok(ScriptResult::InCorrect(x)),
@@ -76,22 +76,25 @@ fn match_with_solution(stdout: &str, regex_text: &str) -> Result<ScriptResult, E
     info!("Value to match: {:#?}", c_stdout);
     match regex.is_match(stdout) {
         true => Ok(ScriptResult::Correct),
-        false => Ok(ScriptResult::InCorrect("Values to not match".into())),
+        false => Ok(ScriptResult::InCorrect(format!(
+            "Does not match by following regex {}.",
+            c_regex_text
+        ))),
     }
 }
 
-fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
-    let a = rm_windows_new_lines(output.trim());
-    let b = rm_windows_new_lines(expected_output.trim());
-    println!("\nExpected:");
-    println!("{:#?}", b);
-    println!("Value:");
-    println!("{:#?}", a);
-    println!("--------------------------");
-    //println!("compare {}", output.trim_end() == &std_solution);
-    match a.contains(&b) {
+fn contains_solution(out: &str, e_out: &str) -> ScriptResult {
+    let expected_output = rm_windows_new_lines(e_out.trim());
+    let output = rm_windows_new_lines(out.trim());
+    println!("Expected:\n {:#?}", expected_output);
+    println!("Output:\n{:#?}", output);
+    let err_msg = format!(
+        "Output does not contains expected solution. Expected:{:#?} Output:{:#?}",
+        expected_output, output
+    );
+    match expected_output.contains(&output) {
         true => return ScriptResult::Correct,
-        false => return ScriptResult::InCorrect("Does not Contain expected Output".into()),
+        false => return ScriptResult::InCorrect(err_msg),
     };
 }
 
@@ -146,7 +149,7 @@ fn check_file(path_to_file: &PathBuf, solution: &Option<String>) -> Result<Scrip
         println!("file content is {:?}", &file_content);
         println!("Solution is {:?}", &solution);
         if let Some(solution) = solution {
-            return Ok(contains_with_solution(&file_content, &solution));
+            return Ok(contains_solution(&file_content, &solution));
         } else {
             return Ok(ScriptResult::Correct);
         }
@@ -161,13 +164,12 @@ fn file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult,
     let c_script_content = rm_windows_new_lines(script_content);
     for line in c_script_content.lines() {
         if regex.is_match(line) {
-            info!("Script contains_with_solution this pattern");
             return Ok(ScriptResult::Correct);
         }
     }
-    println!("Script does not contains_with_solution this pattern");
+    println!("File does not contains solution.");
     Ok(ScriptResult::InCorrect(
-        "Script does not contains_with_solution this pattern".into(),
+        "File does not contains solution.".into(),
     ))
 }
 

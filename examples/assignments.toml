@@ -45,22 +45,22 @@ type = "Batch"
 [[assignment]]
 name = "Task 5 Powershell parse file with regex"
 type = "Powershell"
-args = ["media/examples/task5-input.txt"]      # no path just the name
-    [assignment.output]         # raw string I know ugly
+args = ["examples/task5-input.txt"]      # no path just the name
+    [assignment.output]                 # raw string I know ugly
     text = '''
 6 ipsum
 1000 dolor
-5  dolor
+5 dolor
 99  tet
-101    test
+101  test
 0001 Test
 2words
-00000000000001  
-00000000001000  
-1  
-10  
-100  
-1000  
-9999  
-10000  
+00000000000001 
+00000000001000 
+1 
+10 
+100 
+1000 
+9999 
+10000 
 '''
