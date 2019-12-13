@@ -4,9 +4,8 @@ use crate::config::{Assignment, AssignmentId};
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
-use std::sync::RwLock;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct State {
     pub inner: Arc<InnerState>,
 }
@@ -15,16 +14,15 @@ impl State {
     pub fn new(c: HashMap<AssignmentId, Assignment>) -> State {
         State {
             inner: Arc::new(InnerState {
-                pending_results: Default::default(),
+                pending_results: dashmap::DashMap::new(),
                 config: c,
             }),
         }
     }
 }
 
-#[derive(Debug)]
 pub struct InnerState {
-    pub pending_results: RwLock<HashMap<IliasId, api::AssignmentResult>>,
+    pub pending_results: dashmap::DashMap<IliasId, api::AssignmentResult>,
     pub config: HashMap<AssignmentId, Assignment>,
 }
 

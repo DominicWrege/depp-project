@@ -63,8 +63,6 @@ pub enum Script {
     Python3,
     Shell,
     Bash,
-    Awk,
-    Sed
 }
 #[cfg(target_os = "linux")]
 impl Script {
@@ -75,8 +73,6 @@ impl Script {
             Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => ("python3", vec![]),
             Script::Bash => ("bash", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![])
         }
     }
 }
@@ -90,8 +86,6 @@ impl Script {
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),
             Script::Bash => ("bash", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![])
         }
     }
 }

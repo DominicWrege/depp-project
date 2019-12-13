@@ -29,6 +29,8 @@ impl Assignment {
     Copy,
     derive_more::Display,
     derive_more::From,
+    Ord,
+    PartialOrd,
 )]
 #[serde(rename_all = "camelCase")]
 #[display(fmt = "{}", _0)]

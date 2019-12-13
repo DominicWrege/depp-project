@@ -1,20 +1,17 @@
-
+use crate::config::Error;
+use crate::config::{Assignment, File, Script};
+use crate::exec::{run_script, script_is_ok};
+use crate::util::rm_windows_new_lines;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
-//use std::time::Duration;
 
-use crate::config::Error;
-use crate::config::{Assignment, File, Script};
-use crate::util::rm_windows_new_lines;
-use crate::exec::{run_script, script_is_ok};
 use log::info;
 use regex::Regex;
 
+pub async fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult {
 
-
-pub fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult {
-    match inner_run(assignment, script_path.as_path()) {
+    match inner_run(assignment, script_path.as_path()).await {
         Ok(scr) => scr,
         Err(e) => {
             eprintln!("Run test Error {}", e);
@@ -23,9 +20,9 @@ pub fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult {
     }
 }
 
-fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult, failure::Error> {
+async fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult, failure::Error> {
     let script_path = add_file_extension(script_path, assignment.commandline)?;
-    let output = run_script(&assignment.commandline, &script_path, &assignment.args)?;
+    let output = run_script(&assignment.commandline, &script_path, &assignment.args).await?;
     println!(
         "running Taskname: {} Script: {:?}",
         assignment.name, &script_path
@@ -42,7 +39,7 @@ fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult
             _ => (),
         }
     }
-    if script_is_ok(&output){
+    if script_is_ok(&output) {
         if let Some(pattern) = &assignment.output {
             let stdout = String::from_utf8(output.stdout)?;
             let script_result = if pattern.regex {
@@ -96,20 +93,6 @@ fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
         false => return ScriptResult::InCorrect("Does not Contain expected Output".into()),
     };
 }
-
-// TODO print exec command with all args
-//     let a = args
-//     .iter()
-//     .filter_map(|path| path.to_str())
-//     .collect::<Vec<_>>()
-//     .join("\n");
-// println!(
-//     "Executing: {} {} {}",
-//     &prog,
-//     a.trim(),
-//     &args_from_conf.join(" ").trim()
-// );
-
 
 fn check_files(files: &[File]) -> Result<ScriptResult, Error> {
     for x in files {

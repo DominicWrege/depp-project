@@ -1,0 +1,9 @@
+### Send POST request with json body
+POST http://127.0.0.1:8080/submission
+Content-Type: application/json
+
+{
+  "iliasId": 1984,
+  "sourceCode": "QGVjaG8gb2ZmCgpzZXQgZG9jbmFtZT10ZXN0LnRleAoKbWtkaXIgIlNjaHJpZnRzdHVlY2tlIgpjZCAiLlxTY2hyaWZ0c3R1ZWNrZVwiCm1rZGlyICJBbHQiCm1rZGlyICJOZXUiCmNkICIuXEFsdFwiCm1rZGlyICJMYXRleCIKY2QgIi4uXE5ldVwiCm1rZGlyICJMYXRleCIKY2QgIi4uIgpGT1IgL0QgL1IgJSVBIElOIChTY2hyaWZ0c3R1ZWNrZSkgRE8gKAogICAgcmVtIGVjaG8gIiUlfmRBJSV+cEElZG9jbmFtZSUiCiAgICBlY2hvICIlJX5kQSUlfnBBJWRvY25hbWUlIiA+ICIlJX5kQSUlfnBBJWRvY25hbWUlIgogICAgKQpwYXVzZQ==",
+  "assigmentId": 3
+}

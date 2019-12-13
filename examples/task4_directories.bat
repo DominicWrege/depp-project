@@ -9,6 +9,7 @@ mkdir "Neu"
 cd ".\Alt\"
 mkdir "Latex"
 cd "..\Neu\"
+```
 mkdir "Latex"
 cd ".."
 FOR /D /R %%A IN (Schriftstuecke) DO (
@@ -16,3 +17,4 @@ FOR /D /R %%A IN (Schriftstuecke) DO (
     echo "%%~dA%%~pA%docname%" > "%%~dA%%~pA%docname%"
     )
 pause
+```

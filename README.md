@@ -84,3 +84,4 @@ args = ["rackrent"]                         # optional, a list arguments passed 
 -   [ ] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
 -   [ ] Memory limit for script
 -   [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
+-   [ ] remove pause keyword from bat scripts
