@@ -5,8 +5,8 @@ mod crash_test;
 mod handler;
 mod state;
 mod util;
+mod exec;
 use structopt::StructOpt;
-
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use config::parse_config;

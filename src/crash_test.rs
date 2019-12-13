@@ -1,15 +1,17 @@
-use crate::config::Error;
-use crate::config::{Assignment, File, Script};
-use crate::util::rm_windows_new_lines;
-use failure::ResultExt;
 
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
 //use std::time::Duration;
+
+use crate::config::Error;
+use crate::config::{Assignment, File, Script};
+use crate::util::rm_windows_new_lines;
+use crate::exec::{run_script, script_is_ok};
 use log::info;
 use regex::Regex;
+
+
 
 pub fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult {
     match inner_run(assignment, script_path.as_path()) {
@@ -40,7 +42,7 @@ fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult
             _ => (),
         }
     }
-    if output.status.success() && output.stderr.is_empty() {
+    if script_is_ok(&output){
         if let Some(pattern) = &assignment.output {
             let stdout = String::from_utf8(output.stdout)?;
             let script_result = if pattern.regex {
@@ -108,21 +110,6 @@ fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
 //     &args_from_conf.join(" ").trim()
 // );
 
-fn run_script(
-    script_type: &Script,
-    script_path: &Path,
-    args_from_conf: &Vec<String>,
-) -> Result<Output, failure::Error> {
-    let (prog, mut args) = script_type.commandline();
-    args.push(script_path.to_path_buf());
-    let out = Command::new(prog)
-        .args(args)
-        .args(args_from_conf)
-        .output()
-        .with_context(|_| format!("Could not find script"))?;
-    // dbg!(&out);
-    Ok(out)
-}
 
 fn check_files(files: &[File]) -> Result<ScriptResult, Error> {
     for x in files {
