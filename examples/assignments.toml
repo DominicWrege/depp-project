@@ -4,6 +4,7 @@ name = "Blatt 42"
 [[assignment]]
 name = "Task 1 Hello World"
 type = "Shell"
+solution-path = "task3_fib.py"
     [[assignment.files]]
     path = "hallo.txt"
     content = "HalloWorld"
@@ -12,6 +13,7 @@ type = "Shell"
 [[assignment]]
 name = "Task 2 Bash reverse"
 type = "Bash"
+solution-path = "task3_fib.py"
 args = ["rackrent"] 
     [assignment.output]
     regex = false
@@ -21,6 +23,7 @@ args = ["rackrent"]
 [[assignment]]
 name = "Task 3 Python3 fib"
 type = "Python3"
+solution-path  = "task3_fib.py"
 args = ["5", "7"]
     [assignment.output]
     text = "120 5040"
@@ -29,6 +32,7 @@ args = ["5", "7"]
 [[assignment]]
 name = "Task 4 crate directories"
 type = "Batch"
+solution-path  = "task3_fib.py"
     [[assignment.files]]
     path = "Schriftstuecke/Alt/test.tex"
     content = "Schriftstuecke\\Alt\\test.tex"
@@ -45,22 +49,5 @@ type = "Batch"
 [[assignment]]
 name = "Task 5 Powershell parse file with regex"
 type = "Powershell"
-args = ["media/examples/task5-input.txt"]      # no path just the name
-    [assignment.output]         # raw string I know ugly
-    text = '''
-6 ipsum
-1000 dolor
-5  dolor
-99  tet
-101    test
-0001 Test
-2words
-00000000000001  
-00000000001000  
-1  
-10  
-100  
-1000  
-9999  
-10000  
-'''
+solution-path  = "/home/dominic/Code/depp-project-api/examples/task5_regex.ps1"
+args = ["/home/dominic/Code/depp-project-api/examples/task5-input.txt"]      # no path just the name

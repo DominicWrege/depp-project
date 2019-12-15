@@ -1,6 +1,6 @@
 use crate::api;
-use crate::api::IliasId;
-use crate::config::{Assignment, AssignmentId};
+use crate::api::{AssignmentId, IliasId};
+use crate::config::Assignment;
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;

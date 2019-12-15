@@ -1,16 +1,17 @@
-use crate::config::Error;
-use crate::config::{Assignment, File, Script};
-use crate::exec::{run_script, script_is_ok};
-use crate::util::rm_windows_new_lines;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time;
 
 use log::info;
 use regex::Regex;
 
-pub async fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult {
+use crate::config::{Assignment, File, Pattern};
+use crate::exec::{run_script, script_exit_fine};
+use crate::util::rm_windows_new_lines;
+use std::process::Output;
 
+pub async fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult {
     match inner_run(assignment, script_path.as_path()).await {
         Ok(scr) => scr,
         Err(e) => {
@@ -20,41 +21,43 @@ pub async fn run(assignment: &Assignment, script_path: PathBuf) -> ScriptResult 
     }
 }
 
-async fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<ScriptResult, failure::Error> {
-    let script_path = add_file_extension(script_path, assignment.commandline)?;
+async fn inner_run(
+    assignment: &Assignment,
+    script_path: &Path,
+) -> Result<ScriptResult, failure::Error> {
     let output = run_script(&assignment.commandline, &script_path, &assignment.args).await?;
-    println!(
-        "running Taskname: {} Script: {:?}",
-        assignment.name, &script_path
-    );
-    if let Some(script_contains_with_solution) = &assignment.script_contains {
-        let script_content = fs::read_to_string(&script_path).map_err(Error::IO)?;
-        let script_result = if script_contains_with_solution.regex {
-            file_match_line(&script_contains_with_solution.text, &script_content)?
+    log_runing_task(&assignment.name, &script_path);
+    let solution_output = run_script(
+        &assignment.commandline,
+        &assignment.solution_path,
+        &assignment.args,
+    )
+    .await?;
+    log_runing_task(&assignment.name, &assignment.solution_path);
+    if script_exit_fine(&output) {
+        // TODO FIX ME
+        if !solution_output.stdout.is_empty() {
+            let _a = check_stdout_with_solution(&output, &solution_output)?;
+        }
+        // TODO FIX ME
+        let _tmp1_script_result = if let Some(pattern) = &assignment.script_contains {
+            check_script_content(&script_path, &pattern)?
         } else {
-            contains_with_solution(&script_contains_with_solution.text, &script_content)
+            ScriptResult::Correct
         };
-        match script_result {
-            ScriptResult::InCorrect(_) => return Ok(script_result),
-            _ => (),
-        }
-    }
-    if script_is_ok(&output) {
-        if let Some(pattern) = &assignment.output {
-            let stdout = String::from_utf8(output.stdout)?;
-            let script_result = if pattern.regex {
-                match_with_solution(&stdout, &pattern.text)?
-            } else {
-                contains_with_solution(&stdout, &pattern.text)
-            };
-            match script_result {
-                ScriptResult::InCorrect(x) => return Ok(ScriptResult::InCorrect(x)),
-                _ => (),
-            }
-        }
-        match check_files(&assignment.files)? {
-            ScriptResult::InCorrect(x) => return Ok(ScriptResult::InCorrect(x)),
-            _ => (),
+        /*
+         // TODO redo check output with regex or contains
+        let tmp2_script_result = if pattern.regex {
+              match_with_solution(&stdout, &pattern.text)?
+          } else {
+              contains_with_solution(&stdout, &pattern.text)
+          };
+          match tmp2_script_result {
+              ScriptResult::InCorrect(x) => return Ok(ScriptResult::InCorrect(x)),
+              _ => (),
+          }*/
+        if let ScriptResult::InCorrect(x) = check_files(&assignment.files)? {
+            return Ok(ScriptResult::InCorrect(x));
         }
     } else {
         let err_msg = format!(
@@ -68,17 +71,19 @@ async fn inner_run(assignment: &Assignment, script_path: &Path) -> Result<Script
     Ok(ScriptResult::Correct)
 }
 
-fn match_with_solution(stdout: &str, regex_text: &str) -> Result<ScriptResult, Error> {
+// TODO Maybe use later
+/*fn match_with_solution(stdout: &str, regex_text: &str) -> Result<ScriptResult, Error> {
     let c_regex_text = &rm_windows_new_lines(regex_text);
-    let regex = Regex::new(c_regex_text).map_err(Error::Regex)?;
+    let regex = Regex::new(c_regex_text)?;
     let c_stdout = &rm_windows_new_lines(stdout);
     info!("Value to match: {:#?}", c_stdout);
     match regex.is_match(stdout) {
         true => Ok(ScriptResult::Correct),
         false => Ok(ScriptResult::InCorrect("Values to not match".into())),
     }
-}
+}*/
 
+// better error output maybe in master
 fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
     let a = rm_windows_new_lines(output.trim());
     let b = rm_windows_new_lines(expected_output.trim());
@@ -92,6 +97,23 @@ fn contains_with_solution(output: &str, expected_output: &str) -> ScriptResult {
         true => return ScriptResult::Correct,
         false => return ScriptResult::InCorrect("Does not Contain expected Output".into()),
     };
+}
+
+fn check_stdout_with_solution(
+    output: &Output,
+    solution_output: &Output,
+) -> Result<ScriptResult, Error> {
+    println!("------------------------");
+    // TODO why output.stdout.clone() and solution_output.stdout.clone() why clone  ??
+    let stdout = String::from_utf8(output.stdout.clone())?;
+    dbg!(&stdout);
+    println!("######################");
+    println!("######################");
+    let stdout_solution = String::from_utf8(solution_output.stdout.clone())?;
+    dbg!(&stdout_solution);
+    println!("------------------------");
+    let res = contains_with_solution(&stdout, &stdout_solution);
+    Ok(res)
 }
 
 fn check_files(files: &[File]) -> Result<ScriptResult, Error> {
@@ -109,7 +131,7 @@ fn check_file(path_to_file: &PathBuf, solution: &Option<String>) -> Result<Scrip
     info!("Path: {:?}", path_to_file);
     if path_to_file.exists() {
         let file_content = fs::read_to_string(path_to_file)
-            .map_err(Error::IO)?
+            .map_err(|e| Error::ReadFile(e, path_to_file.into()))?
             .trim_end()
             .to_string();
         //info!("solut {:?}", solution);
@@ -127,7 +149,7 @@ fn check_file(path_to_file: &PathBuf, solution: &Option<String>) -> Result<Scrip
 }
 
 fn file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult, Error> {
-    let regex = Regex::new(regex_in).map_err(Error::Regex)?;
+    let regex = Regex::new(regex_in)?;
     let c_script_content = rm_windows_new_lines(script_content);
     for line in c_script_content.lines() {
         if regex.is_match(line) {
@@ -141,16 +163,43 @@ fn file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult,
     ))
 }
 
-fn add_file_extension(path: &Path, script_type: Script) -> Result<PathBuf, failure::Error> {
-    let ext = match script_type {
-        Script::Batch => "bat",
-        Script::Powershell => "ps1",
-        Script::Python3 => "py",
-        Script::Shell | Script::Bash => "sh",
+fn check_script_content(script_path: &Path, pattern: &Pattern) -> Result<ScriptResult, Error> {
+    let script_content = fs::read_to_string(&script_path)
+        .map_err(|e| Error::ReadFile(e, script_path.to_path_buf()))?;
+    let script_result = if pattern.regex {
+        file_match_line(&pattern.text, &script_content)?
+    } else {
+        contains_with_solution(&pattern.text, &script_content)
     };
-    let new_path = path.with_extension(ext);
-    fs::rename(path, &new_path)?;
-    Ok(new_path)
+    Ok(script_result)
+}
+
+#[derive(Debug, err_derive::Error, derive_more::From)]
+pub enum Error {
+    #[error(display = "IO error while reading the file: {:#?}, {:#?}", _1, _0)]
+    ReadFile(std::io::Error, PathBuf),
+    #[error(display = "Command {} not found", _0)]
+    CommandNotFound(String),
+    #[from]
+    #[error(display = "Wrong regex was, {}", _0)]
+    Regex(regex::Error),
+    #[error(display = "Time out reached! Script took more than {}.", _1)]
+    Timeout(tokio::time::Elapsed, DurationDisplay),
+    #[from]
+    #[error(display = "No valid UFT8.")]
+    NoUTF8(std::string::FromUtf8Error),
+}
+#[derive(Debug, derive_more::From)]
+pub struct DurationDisplay(time::Duration);
+
+impl fmt::Display for DurationDisplay {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} seconds", self.0.as_secs())
+    }
+}
+
+fn log_runing_task(name: &str, path: &Path) {
+    println!("running Taskname: {} Script: {:?}", name, path);
 }
 
 #[derive(Debug)]

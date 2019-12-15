@@ -1,20 +1,15 @@
-use std::io::Write;
-
-use actix_web::{web, HttpResponse, ResponseError};
-use log::info;
-use tempfile::NamedTempFile;
-
-use crate::api::{AssignmentResult, AssignmentShort, IliasId, Submission};
-use crate::config::AssignmentId;
+use crate::api::{AssignmentId, AssignmentResult, AssignmentShort, IliasId, Submission};
 use crate::crash_test::{run, ScriptResult};
+use crate::fs_util::new_tmp_script_file;
 use crate::state::State;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
+use actix_web::{web, HttpResponse, ResponseError};
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
     if let Some(ret) = state.pending_results.remove(&id) {
-        return Ok(HttpResponse::Ok().json(ret));
+        return Ok(HttpResponse::Ok().json(ret.1));
     }
     Err(Error::NotFoundIliasId(id))
 }
@@ -34,8 +29,7 @@ pub async fn add_submission(
     para: web::Json<Submission>,
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
-    let mut script_file = NamedTempFile::new()?;
-    script_file.write(&para.source_code.0.as_bytes())?;
+
     let config = state.config.clone();
     if state.pending_results.contains_key(&para.ilias_id) {
         return Err(Error::DuplicateIliasId);
@@ -43,11 +37,13 @@ pub async fn add_submission(
     //TODO better err handling
 
     if let Some(assignment) = config.get(&para.assigment_id).map(|x| x.clone()) {
+        let script_file = new_tmp_script_file(assignment.commandline, para.source_code.clone())?;
         tokio::task::spawn(async move {
-            let test_result = match run(&assignment, script_file.into_temp_path().to_path_buf()).await {
-                ScriptResult::Correct => (true, None),
-                ScriptResult::InCorrect(msg) => (false, Some(msg)),
-            };
+            let test_result =
+                match run(&assignment, script_file.into_temp_path().to_path_buf()).await {
+                    ScriptResult::Correct => (true, None),
+                    ScriptResult::InCorrect(msg) => (false, Some(msg)),
+                };
             state.pending_results.insert(
                 para.ilias_id,
                 AssignmentResult::new(test_result.0, test_result.1, None),
@@ -104,7 +100,6 @@ pub enum Error {
     #[fail(display = "Request body error. {:?}.", _0)]
     Body(JsonPayloadError),
 }
-
 impl<T> From<T> for Error
 where
     T: std::error::Error + Sync + Send + 'static,

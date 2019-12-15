@@ -1,10 +1,11 @@
-use serde::Deserialize;
-use std::fs;
-
-use err_derive::Error;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fs;
 use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
+
+use crate::api::AssignmentId;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -12,11 +13,6 @@ pub struct Config {
     pub name: String,
     pub assignment: Vec<Assignment>,
 }
-#[derive(
-    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub u64);
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
@@ -24,7 +20,8 @@ pub struct Assignment {
     #[serde(default)]
     pub name: String,
     /*pub script_path: PathBuf,*/
-    pub output: Option<Pattern>,
+    pub output: Option<Pattern>, // delete my
+    pub solution_path: PathBuf,
     #[serde(default)]
     #[serde(rename = "type")]
     pub commandline: Script,
@@ -63,6 +60,8 @@ pub enum Script {
     Python3,
     Shell,
     Bash,
+    Awk,
+    Sed,
 }
 #[cfg(target_os = "linux")]
 impl Script {
@@ -73,6 +72,8 @@ impl Script {
             Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => ("python3", vec![]),
             Script::Bash => ("bash", vec![]),
+            Script::Awk => ("awk", vec![]),
+            Script::Sed => ("sed", vec![]),
         }
     }
 }
@@ -86,6 +87,8 @@ impl Script {
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),
             Script::Bash => ("bash", vec![]),
+            Script::Awk => ("awk", vec![]),
+            Script::Sed => ("sed", vec![]),
         }
     }
 }
@@ -96,21 +99,19 @@ impl Default for Script {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, err_derive::Error, derive_more::From)]
 pub enum Error {
-    #[error(display = "can`t read config file, {}", _0)]
+    #[from]
+    #[error(display = "can`t find config file, {}", _0)]
     ConfigFile(std::io::Error),
+    #[from]
     #[error(display = "wrong toml format, {}", _0)]
     Toml(toml::de::Error),
-    #[error(display = "given file was not found, {}", _0)]
-    IO(std::io::Error),
-    #[error(display = "wrong regex was, {}", _0)]
-    Regex(regex::Error),
 }
 
 pub fn parse_config(path: &Path) -> Result<HashMap<AssignmentId, Assignment>, Error> {
-    let file_content = fs::read_to_string(path).map_err(Error::ConfigFile)?;
-    let exercise = toml::from_str(&file_content).map_err(Error::Toml)?;
+    let file_content = fs::read_to_string(path)?;
+    let exercise = toml::from_str(&file_content)?;
     Ok(into_config_map(exercise))
 }
 

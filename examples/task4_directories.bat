@@ -17,4 +17,3 @@ FOR /D /R %%A IN (Schriftstuecke) DO (
     echo "%%~dA%%~pA%docname%" > "%%~dA%%~pA%docname%"
     )
 pause
-```

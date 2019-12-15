@@ -2,19 +2,20 @@ mod api;
 mod base64;
 mod config;
 mod crash_test;
+mod exec;
+mod fs_util;
 mod handler;
 mod state;
 mod util;
-mod exec;
 use structopt::StructOpt;
 
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use config::parse_config;
-use handler::{add_submission, get_assignments, get_result, index, version};
-use state::State;
 use failure::_core::time::Duration;
 use futures::prelude::*;
+use handler::{add_submission, get_assignments, get_result, index, version};
+use state::State;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -31,7 +32,7 @@ async fn run() -> Result<(), failure::Error> {
     let c_state = state.clone();
     tokio::task::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60 * 10));
-        while let Some(_) = interval.next().await{
+        while let Some(_) = interval.next().await {
             c_state.pending_results.shrink_to_fit()
         }
     });
@@ -64,8 +65,7 @@ async fn run() -> Result<(), failure::Error> {
     Ok(())
 }
 fn main() {
-    if let Err(e) = actix_rt::System::new("test")
-        .block_on(run()) {
+    if let Err(e) = actix_rt::System::new("test").block_on(run()) {
         eprintln!("{}", e);
         std::process::exit(1);
     }

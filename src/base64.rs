@@ -1,5 +1,5 @@
 use serde::de::{self, Deserialize, Deserializer, Visitor};
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Base64(pub String);
 struct Base64Visitor;
 
