@@ -42,7 +42,7 @@ Please use the openapi 3.0 docs via swagger ui for more information how to use t
 ## Currently Supported Script Types
 
 -   Python3
--   Powershell\*
+-   PowerShell\*
 -   Shell
 -   Bash
 -   Batch\*

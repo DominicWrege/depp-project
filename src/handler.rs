@@ -1,6 +1,6 @@
 use crate::api::{AssignmentId, AssignmentResult, AssignmentShort, IliasId, Submission};
-use crate::crash_test::{run, ScriptResult};
-use crate::fs_util::new_tmp_script_file;
+use crate::crash_test;
+use crate::crash_test::run;
 use crate::state::State;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
@@ -29,25 +29,32 @@ pub async fn add_submission(
     para: web::Json<Submission>,
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
-
     let config = state.config.clone();
     if state.pending_results.contains_key(&para.ilias_id) {
         return Err(Error::DuplicateIliasId);
     }
-    //TODO better err handling
-
     if let Some(assignment) = config.get(&para.assigment_id).map(|x| x.clone()) {
-        let script_file = new_tmp_script_file(assignment.commandline, para.source_code.clone())?;
         tokio::task::spawn(async move {
-            let test_result =
-                match run(&assignment, script_file.into_temp_path().to_path_buf()).await {
-                    ScriptResult::Correct => (true, None),
-                    ScriptResult::InCorrect(msg) => (false, Some(msg)),
-                };
-            state.pending_results.insert(
-                para.ilias_id,
-                AssignmentResult::new(test_result.0, test_result.1, None),
-            );
+            loop {
+                match run(&assignment, &para.source_code).await {
+                    Err(crash_test::Error::ReadFile(e, _))
+                    | Err(crash_test::Error::CantCreatTempFile(e)) => {
+                        tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
+                        println!("System Error. Waiting for 3 secs. {}", e);
+                    }
+                    Err(e) => {
+                        break state.pending_results.insert(
+                            para.ilias_id,
+                            AssignmentResult::new(false, Some(e.to_string()), None),
+                        );
+                    }
+                    Ok(_) => {
+                        break state
+                            .pending_results
+                            .insert(para.ilias_id, AssignmentResult::new(true, None, None));
+                    }
+                }
+            }
         });
     };
 

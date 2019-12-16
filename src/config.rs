@@ -42,7 +42,8 @@ impl From<usize> for AssignmentId {
 #[serde(rename_all = "kebab-case")]
 pub struct File {
     pub path: PathBuf,
-    pub content: Option<String>,
+    #[serde(default)]
+    pub content: String,
 }
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
@@ -55,7 +56,7 @@ pub struct Pattern {
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub enum Script {
-    Powershell,
+    PowerShell,
     Batch,
     Python3,
     Shell,
@@ -67,13 +68,11 @@ pub enum Script {
 impl Script {
     pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
         match self {
-            Script::Powershell => ("pwsh", vec![]),
+            Script::PowerShell => ("pwsh", vec![]),
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => ("python3", vec![]),
-            Script::Bash => ("bash", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![]),
+            Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
         }
     }
 }
@@ -82,7 +81,7 @@ impl Script {
 impl Script {
     pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
         match self {
-            Script::Powershell => ("powershell.exe", vec![]),
+            Script::PowerShell => ("powershell.exe", vec![]),
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),

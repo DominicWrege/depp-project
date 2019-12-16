@@ -48,6 +48,6 @@ solution-path  = "task3_fib.py"
 
 [[assignment]]
 name = "Task 5 Powershell parse file with regex"
-type = "Powershell"
+type = "PowerShell"
 solution-path  = "/home/dominic/Code/depp-project-api/examples/task5_regex.ps1"
 args = ["/home/dominic/Code/depp-project-api/examples/task5-input.txt"]      # no path just the name

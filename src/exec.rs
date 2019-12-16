@@ -38,9 +38,11 @@ pub async fn run_script(
             .output(),
     )
     .await
-    .map_err(|e| Error::Timeout(e, dur.into()))?
-    .map_err(|_| Error::CommandNotFound(prog.to_string()))?;
-    Ok(out)
+    .map_err(|e| Error::Timeout(e, dur.into()))?;
+    match out {
+        Err(_) => panic!("Command {} not found!", prog),
+        Ok(out) => Ok(out),
+    }
 }
 
 /*
