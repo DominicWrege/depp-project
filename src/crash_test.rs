@@ -1,7 +1,7 @@
 use crate::base64::Base64;
 use crate::config::{Assignment, File};
 use crate::crash_test::Error::RequiredFileNotFound;
-use crate::exec::{run_script, script_exit_fine};
+use crate::exec::{run_script, script_exit_for_out};
 use crate::fs_util::new_tmp_script_file;
 use crate::util::rm_windows_new_lines;
 use log::info;
@@ -9,46 +9,48 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time;
-
-pub struct Out {
-    std_out: String,
-    //script_path: Option<PathBuf>
-}
+use walkdir::WalkDir;
 
 pub trait Tester {
-    fn test(&self, p: &Out) -> Result<(), Error>;
+    fn test(&self) -> Result<(), Error>;
 }
 pub struct Stdout {
     expected: String,
+    std_out: String,
 }
 pub struct Files {
-    files: Vec<File>,
+    //files: Vec<File>,
+    files: Vec<PathBuf>,
 }
 //struct Contains;
 
 impl Tester for Stdout {
-    fn test(&self, p: &Out) -> Result<(), Error> {
-        contains_with_solution(&p.std_out, &self.expected)
+    fn test(&self) -> Result<(), Error> {
+        contains_with_solution(&self.std_out, &self.expected)
     }
 }
 
 impl Tester for Files {
-    fn test(&self, _p: &Out) -> Result<(), Error> {
+    fn test(&self) -> Result<(), Error> {
         for file in &self.files {
-            check_file(&file.path, &file.content)?;
+            check_file(file, "Not ready jet".into())?;
         }
         Ok(())
     }
 }
 
 impl Stdout {
-    fn boxed(expected: String) -> Box<dyn Tester> {
-        Box::new(Stdout { expected })
+    fn boxed(expected: String, std_out: String) -> Box<dyn Tester> {
+        Box::new(Stdout { expected, std_out })
     }
 }
 
 impl Files {
-    fn boxed(files: Vec<File>) -> Box<dyn Tester> {
+    fn boxed(dir: &str) -> Box<dyn Tester> {
+        let files = WalkDir::new(dir)
+            .into_iter()
+            .map(|e| e.unwrap().into_path())
+            .collect::<Vec<_>>();
         Box::new(Files { files })
     }
 }
@@ -66,51 +68,23 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     )
     .await?;
     log_running_task(&assignment.name, &assignment.solution_path);
-    if script_exit_fine(&output) {
-        let mut tests: Vec<Box<dyn Tester>> = Vec::new();
+    script_exit_for_out(&output)?;
+    script_exit_for_out(&solution_output)?;
+    let mut tests: Vec<Box<dyn Tester>> = Vec::new();
+    /*    for entry in WalkDir::new("/home/dominic/Downloads").into_iter().filter_map(|e| e.ok()) {
+        println!("path print is {}", entry.path().display());
+    }*/
+    tests.push(Stdout::boxed(
+        String::from_utf8(solution_output.stdout).unwrap(),
+        String::from_utf8(output.stdout)?,
+    ));
+    tests.push(Files::boxed("home/dominic/Downloads"));
 
-        let payload = Out {
-            std_out: String::from_utf8(output.stdout)?,
-            /*          script_path: None,*/
-        };
-        tests.push(Stdout::boxed(
-            String::from_utf8(solution_output.stdout).unwrap(),
-        ));
-        tests.push(Files::boxed(assignment.files.clone()));
-
-        tests
-            .iter()
-            .map(|item| item.test(&payload))
-            .collect::<Result<_, _>>()
-    } else {
-        Err(Error::ExitCode(
-            String::from_utf8(output.stderr).unwrap_or_default(),
-        ))
-    }
+    tests
+        .iter()
+        .map(|item| item.test())
+        .collect::<Result<_, _>>()
 }
-
-// TODO Maybe use later
-/*fn match_with_solution(stdout: &str, regex_text: &str) -> Result<ScriptResult, Error> {
-    let c_regex_text = &rm_windows_new_lines(regex_text);
-    let regex = Regex::new(c_regex_text)?;
-    let c_stdout = &rm_windows_new_lines(stdout);
-    info!("Value to match: {:#?}", c_stdout);
-    match regex.is_match(stdout) {
-        true => Ok(ScriptResult::Correct),
-        false => Ok(ScriptResult::InCorrect("Values to not match".into())),
-    }
-}
-
- // TODO redo check output with regex or contains
-let tmp2_script_result = if pattern.regex {
-      match_with_solution(&stdout, &pattern.text)?
-  } else {
-      contains_with_solution(&stdout, &pattern.text)
-  };
-  match tmp2_script_result {
-      ScriptResult::InCorrect(x) => return Ok(ScriptResult::InCorrect(x)),
-      _ => (),
-  }*/
 
 fn contains_with_solution(output: &str, expected_output: &str) -> Result<(), Error> {
     let std_out = rm_windows_new_lines(output.trim());
@@ -137,32 +111,6 @@ fn check_file(path_to_file: &PathBuf, solution: &str) -> Result<(), Error> {
         Err(RequiredFileNotFound(path_to_file.to_path_buf()))
     }
 }
-
-/*fn file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult, Error> {
-    let regex = Regex::new(regex_in)?;
-    let c_script_content = rm_windows_new_lines(script_content);
-    for line in c_script_content.lines() {
-        if regex.is_match(line) {
-            info!("Script contains_with_solution this pattern");
-            return Ok(ScriptResult::Correct);
-        }
-    }
-    println!("Script does not contains_with_solution this pattern");
-    Ok(ScriptResult::InCorrect(
-        "Script does not contains_with_solution this pattern".into(),
-    ))
-}*/
-
-/*fn check_script_content(script_path: &Path, pattern: &Pattern) -> Result<ScriptResult, Error> {
-    let script_content = fs::read_to_string(&script_path)
-        .map_err(|e| Error::ReadFile(e, script_path.to_path_buf()))?;
-    let script_result = if pattern.regex {
-        file_match_line(&pattern.text, &script_content)?
-    } else {
-        contains_with_solution(&pattern.text, &script_content)
-    };
-    Ok(script_result)
-}*/
 
 #[derive(Debug, err_derive::Error, derive_more::From)]
 pub enum Error {
@@ -192,5 +140,39 @@ impl fmt::Display for DurationDisplay {
 }
 
 fn log_running_task(name: &str, path: &Path) {
-    println!("running Taskname: {} Script: {:?}", name, path);
+    //TODO use log!
+    dbg!("Running taskname: {} Script: {:?} .", name, path);
 }
+
+/*
+// TODO redo check output with regex or contains
+let tmp2_script_result = if pattern.regex {
+      match_with_solution(&stdout, &pattern.text)?
+  } else {
+      contains_with_solution(&stdout, &pattern.text)
+  };
+file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult, Error> {
+    let regex = Regex::new(regex_in)?;
+    let c_script_content = rm_windows_new_lines(script_content);
+    for line in c_script_content.lines() {
+        if regex.is_match(line) {
+            info!("Script contains_with_solution this pattern");
+            return Ok(ScriptResult::Correct);
+        }
+    }
+    println!("Script does not contains_with_solution this pattern");
+    Ok(ScriptResult::InCorrect(
+        "Script does not contains_with_solution this pattern".into(),
+    ))
+}
+
+fn check_script_content(script_path: &Path, pattern: &Pattern) -> Result<ScriptResult, Error> {
+    let script_content = fs::read_to_string(&script_path)
+        .map_err(|e| Error::ReadFile(e, script_path.to_path_buf()))?;
+    let script_result = if pattern.regex {
+        file_match_line(&pattern.text, &script_content)?
+    } else {
+        contains_with_solution(&pattern.text, &script_content)
+    };
+    Ok(script_result)
+}*/

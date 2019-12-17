@@ -10,6 +10,7 @@ mod util;
 use structopt::StructOpt;
 
 use actix_cors::Cors;
+use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use config::parse_config;
 use failure::_core::time::Duration;
@@ -39,6 +40,7 @@ async fn run() -> Result<(), failure::Error> {
     env_logger::init();
     HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .route("/", web::get().to(index))
             .route("/version", web::get().to(version))
             .route("/assignments", web::get().to(get_assignments))

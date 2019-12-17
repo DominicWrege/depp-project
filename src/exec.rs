@@ -52,6 +52,12 @@ pub trait FutureExt: std::future::Future + Sized  {
     }
 }*/
 
-pub fn script_exit_fine(out: &Output) -> bool {
-    out.status.success() && out.stderr.is_empty()
+pub fn script_exit_for_out(out: &Output) -> Result<(), Error> {
+    if out.status.success() && out.stderr.is_empty() {
+        Ok(())
+    } else {
+        Err(Error::ExitCode(
+            String::from_utf8(out.stderr.clone()).unwrap_or_default(),
+        ))
+    }
 }

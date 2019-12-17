@@ -37,10 +37,11 @@ pub async fn add_submission(
         tokio::task::spawn(async move {
             loop {
                 match run(&assignment, &para.source_code).await {
+                    // TODO better handling finner match
                     Err(crash_test::Error::ReadFile(e, _))
                     | Err(crash_test::Error::CantCreatTempFile(e)) => {
                         tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
-                        println!("System Error. Waiting for 3 secs. {}", e);
+                        log::info!("System Error. Waiting for 3 secs. {}", e);
                     }
                     Err(e) => {
                         break state.pending_results.insert(
