@@ -6,17 +6,16 @@ mod fs_util;
 mod handler;
 mod script;
 mod state;
-mod util;
-use structopt::StructOpt;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{web, App, HttpServer};
+use actix_web::{middleware, web, App, HttpServer};
 use config::parse_config;
 use failure::_core::time::Duration;
 use futures::prelude::*;
 use handler::{add_submission, get_assignments, get_result, index, version};
 use state::State;
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -27,7 +26,7 @@ struct Opt {
 async fn run() -> Result<(), failure::Error> {
     let opt = Opt::from_args();
     let config = parse_config(&opt.config)?;
-    std::env::set_var("RUST_LOG", "actix_web=info");
+    std::env::set_var("RUST_LOG", "info");
     //dbg!(&config);
     let state = State::new(config);
     let c_state = state.clone();
@@ -40,6 +39,8 @@ async fn run() -> Result<(), failure::Error> {
     env_logger::init();
     HttpServer::new(move || {
         App::new()
+            .wrap(middleware::Compress::default())
+            .wrap(Logger::default())
             .route("/", web::get().to(index))
             .route("/version", web::get().to(version))
             .route("/assignments", web::get().to(get_assignments))

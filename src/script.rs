@@ -1,4 +1,5 @@
 use crate::crash_test::Error;
+use failure::_core::convert::TryFrom;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::process::Output;
@@ -66,11 +67,11 @@ impl Script {
         script_path: &Path,
         dir: &Path,
         args_from_conf: &Vec<String>,
-    ) -> Result<Output, Error> {
+    ) -> Result<ScriptOutput, Error> {
         let (prog, mut args) = self.commandline();
         let dur = Duration::from_secs(30);
         args.push(script_path.to_path_buf());
-        println!("Running in dir {:?}", &dir);
+        log::info!("running in dir {:?}", &dir);
         let out = timeout(
             dur,
             Command::new(prog)
@@ -81,13 +82,28 @@ impl Script {
         )
         .await
         .map_err(|e| Error::Timeout(e, dur.into()))?;
-        match out {
+
+        let out = match out {
             Err(_) => panic!("Command {} not found!", prog),
-            Ok(out) => Ok(out),
-        }
+            Ok(out) => out,
+        };
+        exited_fine(&out)?;
+        ScriptOutput::try_from(out)
     }
 }
-pub fn exited_ok(out: &Output) -> Result<(), Error> {
+
+impl TryFrom<Output> for ScriptOutput {
+    type Error = Error;
+
+    fn try_from(o: Output) -> Result<Self, Error> {
+        Ok(ScriptOutput {
+            stdout: String::from_utf8(o.stdout.clone())?,
+            output: o,
+        })
+    }
+}
+
+fn exited_fine(out: &Output) -> Result<(), Error> {
     if out.status.success() && out.stderr.is_empty() {
         Ok(())
     } else {
@@ -95,4 +111,9 @@ pub fn exited_ok(out: &Output) -> Result<(), Error> {
             String::from_utf8(out.stderr.clone()).unwrap_or_default(),
         ))
     }
+}
+
+pub struct ScriptOutput {
+    pub stdout: String,
+    pub output: Output,
 }

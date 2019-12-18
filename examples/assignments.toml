@@ -26,8 +26,6 @@ type = "Python3"
 inlcude-files = ["examples/akademisches_jahrbuch.txt"]
 solution-path  = "examples/task3_fib.py"
 args = ["5", "7"]
-    [assignment.output]
-    text = "120 5040"
 
 
 [[assignment]]

@@ -17,7 +17,6 @@ pub struct Config {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Assignment {
-    #[serde(default)]
     pub name: String,
     pub solution_path: PathBuf,
     #[serde(default)]

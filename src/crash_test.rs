@@ -1,16 +1,15 @@
 use std::fmt;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time;
 
 use crate::base64::Base64;
 use crate::config::{Assignment, File};
 use crate::crash_test::Error::RequiredFileNotFound;
 use crate::fs_util::new_tmp_script_file;
-use crate::script::exited_ok;
-use crate::util::trim_new_lines;
 use fs_extra::dir;
 use log::info;
+use tempfile::TempDir;
 use walkdir::WalkDir;
 
 pub trait Tester {
@@ -57,53 +56,46 @@ impl Files {
     }
 }
 
+fn cp_include_into(
+    files: &Vec<PathBuf>,
+    dir_solution: &TempDir,
+    dir_to_test: &TempDir,
+) -> Result<(), Error> {
+    let opt = dir::CopyOptions::new();
+    fs_extra::copy_items(&files, &dir_solution.path(), &opt)?;
+    fs_extra::copy_items(&files, &dir_to_test.path(), &opt)?;
+    Ok(())
+}
+
 pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
 
-    let script_path = new_tmp_script_file(assignment.script_type, code)
+    let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
+    // TODO fix unwrap
+    let script_solution_path = dir_solution
+        .path()
+        .join(&assignment.solution_path.as_path().file_name().unwrap());
+    fs::copy(&assignment.solution_path, &script_solution_path)?;
+    cp_include_into(&assignment.include_files, &dir_solution, &dir_to_test)?;
 
-    let opt = dir::CopyOptions::new();
-    fs_extra::copy_items(&assignment.include_files, &dir_solution.path(), &opt)?;
-    fs_extra::copy_items(&assignment.include_files, &dir_to_test.path(), &opt)?;
-
-    let solution_path = if assignment.solution_path.exists() && assignment.solution_path.is_file() {
-        let s_path = dir_solution
-            .path()
-            .join(&assignment.solution_path.file_name().unwrap());
-        fs::copy(&assignment.solution_path, &s_path)?;
-        s_path
-    } else {
-        panic!("Solution path {:?} not found.", &assignment.solution_path)
-    };
-
-    for entry in WalkDir::new(&dir_to_test)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        println!("Folder: {}", entry.path().display());
-    }
-
-    let output = assignment
+    let test_output = assignment
         .script_type
-        .run(&script_path, &dir_to_test.path(), &assignment.args)
+        .run(&script_test_path, &dir_to_test.path(), &assignment.args)
         .await?;
-    log_running_task(&assignment.name, &script_path);
+    info!("running task: {}", &assignment.name);
     let solution_output = assignment
         .script_type
-        .run(&solution_path, &dir_solution.path(), &assignment.args)
+        .run(
+            &script_solution_path,
+            &dir_solution.path(),
+            &assignment.args,
+        )
         .await?;
-    log_running_task(&assignment.name, &assignment.solution_path);
-    exited_ok(&output)?;
-    exited_ok(&solution_output)?;
-
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
-    tests.push(Stdout::boxed(
-        String::from_utf8(solution_output.stdout).unwrap(),
-        String::from_utf8(output.stdout)?,
-    ));
+    tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
     tests.push(Files::boxed(assignment.files.clone()));
     tests
         .iter()
@@ -114,26 +106,26 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
 fn fz_compare_with_solution(stdout: &str, expected_output: &str) -> Result<(), Error> {
     let stdout = trim_new_lines(stdout);
     let expected_output = trim_new_lines(expected_output);
-    println!("expected:{:#?}\nvalue:{:#?}", expected_output, stdout);
+    log::info!("\nexpected: {:#?}\nvalue: {:#?}", expected_output, stdout);
     if expected_output.contains(&stdout) {
         Ok(())
     } else {
         Err(Error::WrongOutput(format!(
-            "expected:({:#?}) value:({:#?})",
+            "expected: ({:#?}) value: ({:#?})",
             expected_output, stdout
         )))
     }
 }
 
 fn check_file(path_to_file: &PathBuf, solution: &str) -> Result<(), Error> {
-    println!("Path: {:?}", path_to_file);
+    info!("path: {:?}", path_to_file);
     if path_to_file.exists() {
         let file_content = fs::read_to_string(path_to_file)
             .map_err(|e| Error::ReadFile(e, path_to_file.into()))?
             .trim_end()
             .to_string();
-        println!("file content is {:?}", &file_content);
-        println!("solution is {:?}", &solution);
+        info!("file content is {:?}", &file_content);
+        info!("solution is {:?}", &solution);
         fz_compare_with_solution(&file_content, &solution)
     } else {
         Err(RequiredFileNotFound(path_to_file.to_path_buf()))
@@ -171,9 +163,17 @@ impl fmt::Display for DurationDisplay {
     }
 }
 
-fn log_running_task(name: &str, path: &Path) {
-    //TODO use log!
-    log::info!("Running taskname: {} Script: {:?} \n.", name, path);
+pub fn trim_new_lines(s: &str) -> String {
+    s.chars()
+        .filter(|&c| c != '\r')
+        .collect::<String>()
+        .lines()
+        .map(|line| {
+            let mut n_line = line.trim_end().to_string();
+            n_line.push('\n');
+            n_line
+        })
+        .collect::<String>()
 }
 
 // TODO redo check output with regex or contains
