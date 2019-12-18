@@ -35,9 +35,12 @@ pub async fn add_submission(
     }
     if let Some(assignment) = config.get(&para.assigment_id).map(|x| x.clone()) {
         tokio::task::spawn(async move {
+            let mut attempts_counter = 0;
             loop {
+                if attempts_counter >= 10 {
+                    panic!("Server Stopped! System might be corrupted.")
+                }
                 match run(&assignment, &para.source_code).await {
-                    // TODO better handling finner match
                     Err(crash_test::Error::ReadFile(e, _))
                     | Err(crash_test::Error::CantCreatTempFile(e)) => {
                         tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
@@ -55,6 +58,7 @@ pub async fn add_submission(
                             .insert(para.ilias_id, AssignmentResult::new(true, None, None));
                     }
                 }
+                attempts_counter = attempts_counter + 1;
             }
         });
     };

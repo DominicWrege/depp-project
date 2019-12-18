@@ -2,9 +2,9 @@ mod api;
 mod base64;
 mod config;
 mod crash_test;
-mod exec;
 mod fs_util;
 mod handler;
+mod script;
 mod state;
 mod util;
 use structopt::StructOpt;
@@ -28,7 +28,7 @@ async fn run() -> Result<(), failure::Error> {
     let opt = Opt::from_args();
     let config = parse_config(&opt.config)?;
     std::env::set_var("RUST_LOG", "actix_web=info");
-    // dbg!(&config);
+    //dbg!(&config);
     let state = State::new(config);
     let c_state = state.clone();
     tokio::task::spawn(async move {
@@ -40,7 +40,6 @@ async fn run() -> Result<(), failure::Error> {
     env_logger::init();
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
             .route("/", web::get().to(index))
             .route("/version", web::get().to(version))
             .route("/assignments", web::get().to(get_assignments))

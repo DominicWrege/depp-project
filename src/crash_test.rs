@@ -1,14 +1,16 @@
-use crate::base64::Base64;
-use crate::config::{Assignment, File};
-use crate::crash_test::Error::RequiredFileNotFound;
-use crate::exec::{run_script, script_exit_for_out};
-use crate::fs_util::new_tmp_script_file;
-use crate::util::rm_windows_new_lines;
-use log::info;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time;
+
+use crate::base64::Base64;
+use crate::config::{Assignment, File};
+use crate::crash_test::Error::RequiredFileNotFound;
+use crate::fs_util::new_tmp_script_file;
+use crate::script::exited_ok;
+use crate::util::trim_new_lines;
+use fs_extra::dir;
+use log::info;
 use walkdir::WalkDir;
 
 pub trait Tester {
@@ -19,8 +21,8 @@ pub struct Stdout {
     std_out: String,
 }
 pub struct Files {
-    //files: Vec<File>,
-    files: Vec<PathBuf>,
+    files: Vec<File>,
+    //files: Vec<PathBuf>,
 }
 //struct Contains;
 
@@ -33,7 +35,7 @@ impl Tester for Stdout {
 impl Tester for Files {
     fn test(&self) -> Result<(), Error> {
         for file in &self.files {
-            check_file(file, "Not ready jet".into())?;
+            check_file(&file.path, "Not ready jet".into())?;
         }
         Ok(())
     }
@@ -46,59 +48,85 @@ impl Stdout {
 }
 
 impl Files {
-    fn boxed(dir: &str) -> Box<dyn Tester> {
-        let files = WalkDir::new(dir)
-            .into_iter()
-            .map(|e| e.unwrap().into_path())
-            .collect::<Vec<_>>();
+    fn boxed(files: Vec<File>) -> Box<dyn Tester> {
+        //        let files = WalkDir::new(dir)
+        //            .into_iter()
+        //            .map(|e| e.unwrap().into_path())
+        //            .collect::<Vec<_>>();
         Box::new(Files { files })
     }
 }
 
 pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
-    let script_path = new_tmp_script_file(assignment.commandline, code)
+    let dir_to_test = tempfile::tempdir()?;
+    let dir_solution = tempfile::tempdir()?;
+
+    let script_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
-    let output = run_script(&assignment.commandline, &script_path, &assignment.args).await?;
+
+    let opt = dir::CopyOptions::new();
+    fs_extra::copy_items(&assignment.include_files, &dir_solution.path(), &opt)?;
+    fs_extra::copy_items(&assignment.include_files, &dir_to_test.path(), &opt)?;
+
+    let solution_path = if assignment.solution_path.exists() && assignment.solution_path.is_file() {
+        let s_path = dir_solution
+            .path()
+            .join(&assignment.solution_path.file_name().unwrap());
+        fs::copy(&assignment.solution_path, &s_path)?;
+        s_path
+    } else {
+        panic!("Solution path {:?} not found.", &assignment.solution_path)
+    };
+
+    for entry in WalkDir::new(&dir_to_test)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        println!("Folder: {}", entry.path().display());
+    }
+
+    let output = assignment
+        .script_type
+        .run(&script_path, &dir_to_test.path(), &assignment.args)
+        .await?;
     log_running_task(&assignment.name, &script_path);
-    let solution_output = run_script(
-        &assignment.commandline,
-        &assignment.solution_path,
-        &assignment.args,
-    )
-    .await?;
+    let solution_output = assignment
+        .script_type
+        .run(&solution_path, &dir_solution.path(), &assignment.args)
+        .await?;
     log_running_task(&assignment.name, &assignment.solution_path);
-    script_exit_for_out(&output)?;
-    script_exit_for_out(&solution_output)?;
+    exited_ok(&output)?;
+    exited_ok(&solution_output)?;
+
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
-    /*    for entry in WalkDir::new("/home/dominic/Downloads").into_iter().filter_map(|e| e.ok()) {
-        println!("path print is {}", entry.path().display());
-    }*/
     tests.push(Stdout::boxed(
         String::from_utf8(solution_output.stdout).unwrap(),
         String::from_utf8(output.stdout)?,
     ));
-    tests.push(Files::boxed("home/dominic/Downloads"));
-
+    tests.push(Files::boxed(assignment.files.clone()));
     tests
         .iter()
         .map(|item| item.test())
         .collect::<Result<_, _>>()
 }
 
-fn contains_with_solution(output: &str, expected_output: &str) -> Result<(), Error> {
-    let std_out = rm_windows_new_lines(output.trim());
-    let expected_output = rm_windows_new_lines(expected_output.trim());
-    log::info!("\nExpected: {:#?} Value: {:#?}", expected_output, std_out);
-    if std_out.contains(&expected_output) {
+fn contains_with_solution(stdout: &str, expected_output: &str) -> Result<(), Error> {
+    let stdout = trim_new_lines(stdout);
+    let expected_output = trim_new_lines(expected_output);
+    println!("Expected:{:#?}\nValue:{:#?}", expected_output, stdout);
+    if expected_output.contains(&stdout) {
         Ok(())
     } else {
-        Err(Error::WrongOutput)
+        Err(Error::WrongOutput(format!(
+            "Expected:({:#?}) Value:({:#?})",
+            expected_output, stdout
+        )))
     }
 }
 
 fn check_file(path_to_file: &PathBuf, solution: &str) -> Result<(), Error> {
-    info!("Path: {:?}", path_to_file);
+    println!("Path: {:?}", path_to_file);
     if path_to_file.exists() {
         let file_content = fs::read_to_string(path_to_file)
             .map_err(|e| Error::ReadFile(e, path_to_file.into()))?
@@ -121,14 +149,18 @@ pub enum Error {
     #[from]
     #[error(display = "Script produced invalid UFT8.")]
     NoUTF8(std::string::FromUtf8Error),
-    #[error(display = "Does not contains expected output")]
-    WrongOutput,
+    #[error(display = "Does not contains expected output. {}", _0)]
+    WrongOutput(String),
     #[error(display = "Required file not found. Path {:#?} does not exists", _0)]
     RequiredFileNotFound(PathBuf),
     #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
     ExitCode(String),
+    #[from]
     #[error(display = "Can't create temp file. {}", _0)]
     CantCreatTempFile(std::io::Error),
+    #[from]
+    #[error(display = "Could not copy included files for testing {}", _0)]
+    Copy(fs_extra::error::Error),
 }
 #[derive(Debug, derive_more::From)]
 pub struct DurationDisplay(time::Duration);
@@ -141,38 +173,7 @@ impl fmt::Display for DurationDisplay {
 
 fn log_running_task(name: &str, path: &Path) {
     //TODO use log!
-    dbg!("Running taskname: {} Script: {:?} .", name, path);
+    log::info!("Running taskname: {} Script: {:?} \n.", name, path);
 }
 
-/*
 // TODO redo check output with regex or contains
-let tmp2_script_result = if pattern.regex {
-      match_with_solution(&stdout, &pattern.text)?
-  } else {
-      contains_with_solution(&stdout, &pattern.text)
-  };
-file_match_line(regex_in: &str, script_content: &str) -> Result<ScriptResult, Error> {
-    let regex = Regex::new(regex_in)?;
-    let c_script_content = rm_windows_new_lines(script_content);
-    for line in c_script_content.lines() {
-        if regex.is_match(line) {
-            info!("Script contains_with_solution this pattern");
-            return Ok(ScriptResult::Correct);
-        }
-    }
-    println!("Script does not contains_with_solution this pattern");
-    Ok(ScriptResult::InCorrect(
-        "Script does not contains_with_solution this pattern".into(),
-    ))
-}
-
-fn check_script_content(script_path: &Path, pattern: &Pattern) -> Result<ScriptResult, Error> {
-    let script_content = fs::read_to_string(&script_path)
-        .map_err(|e| Error::ReadFile(e, script_path.to_path_buf()))?;
-    let script_result = if pattern.regex {
-        file_match_line(&pattern.text, &script_content)?
-    } else {
-        contains_with_solution(&pattern.text, &script_content)
-    };
-    Ok(script_result)
-}*/

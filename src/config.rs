@@ -3,9 +3,9 @@ use std::convert::TryFrom;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
-
 use crate::api::AssignmentId;
+use crate::script::Script;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -19,15 +19,15 @@ pub struct Config {
 pub struct Assignment {
     #[serde(default)]
     pub name: String,
-    /*pub script_path: PathBuf,*/
-    pub output: Option<Pattern>, // delete my
     pub solution_path: PathBuf,
     #[serde(default)]
+    pub include_files: Vec<PathBuf>,
+    #[serde(default)]
     #[serde(rename = "type")]
-    pub commandline: Script,
+    pub script_type: Script,
     #[serde(default)]
     pub args: Vec<String>,
-    pub script_contains: Option<Pattern>,
+    pub script_contains: Option<Pattern>, // delete me
     #[serde(default)]
     pub files: Vec<File>,
 }
@@ -53,51 +53,6 @@ pub struct Pattern {
     pub text: String,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
-#[serde(rename_all = "PascalCase")]
-pub enum Script {
-    PowerShell,
-    Batch,
-    Python3,
-    Shell,
-    Bash,
-    Awk,
-    Sed,
-}
-#[cfg(target_os = "linux")]
-impl Script {
-    pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
-        match self {
-            Script::PowerShell => ("pwsh", vec![]),
-            Script::Shell => ("sh", vec![]),
-            Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
-            Script::Python3 => ("python3", vec![]),
-            Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
-        }
-    }
-}
-
-#[cfg(target_os = "windows")]
-impl Script {
-    pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
-        match self {
-            Script::PowerShell => ("powershell.exe", vec![]),
-            Script::Shell => ("sh", vec![]),
-            Script::Batch => ("cmd.exe", vec!["/C".into()]),
-            Script::Python3 => ("python3", vec![]),
-            Script::Bash => ("bash", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![]),
-        }
-    }
-}
-
-impl Default for Script {
-    fn default() -> Self {
-        Script::Batch
-    }
-}
-
 #[derive(Debug, err_derive::Error, derive_more::From)]
 pub enum Error {
     #[from]
@@ -118,6 +73,21 @@ fn into_config_map(conf: Config) -> HashMap<AssignmentId, Assignment> {
     conf.assignment
         .into_iter()
         .enumerate()
-        .map(|(id, assignment)| (AssignmentId::from(id), assignment))
+        .map(|(id, assignment)| {
+            for path in &assignment.include_files {
+                path_exists_and_is_file(&path);
+            }
+            path_exists_and_is_file(&assignment.solution_path);
+            (AssignmentId::from(id), assignment)
+        })
         .collect::<HashMap<AssignmentId, Assignment>>()
+}
+
+fn path_exists_and_is_file(p: &Path) {
+    if !p.exists() || p.is_dir() {
+        panic!(
+            "Config error: path to {:#?} does not exists or is not a file.",
+            p
+        )
+    }
 }

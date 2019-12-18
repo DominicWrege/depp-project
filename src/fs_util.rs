@@ -1,7 +1,7 @@
+use crate::base64::Base64;
+use crate::script::Script;
 use std::io::Write;
 
-use crate::base64::Base64;
-use crate::config::Script;
 use tempfile::{Builder, NamedTempFile};
 
 pub fn new_tmp_script_file(
@@ -13,15 +13,4 @@ pub fn new_tmp_script_file(
         .tempfile()?;
     file.write(&content.0.as_bytes())?;
     Ok(file)
-}
-
-impl Script {
-    pub fn file_extension(&self) -> &'static str {
-        match self {
-            Script::Batch => ".bat",
-            Script::PowerShell => ".ps1",
-            Script::Python3 => ".py",
-            Script::Shell | Script::Bash | Script::Sed | Script::Awk => ".sh",
-        }
-    }
 }
