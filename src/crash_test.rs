@@ -28,7 +28,7 @@ pub struct Files {
 
 impl Tester for Stdout {
     fn test(&self) -> Result<(), Error> {
-        contains_with_solution(&self.std_out, &self.expected)
+        fz_compare_with_solution(&self.std_out, &self.expected)
     }
 }
 
@@ -111,15 +111,15 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
         .collect::<Result<_, _>>()
 }
 
-fn contains_with_solution(stdout: &str, expected_output: &str) -> Result<(), Error> {
+fn fz_compare_with_solution(stdout: &str, expected_output: &str) -> Result<(), Error> {
     let stdout = trim_new_lines(stdout);
     let expected_output = trim_new_lines(expected_output);
-    println!("Expected:{:#?}\nValue:{:#?}", expected_output, stdout);
+    println!("expected:{:#?}\nvalue:{:#?}", expected_output, stdout);
     if expected_output.contains(&stdout) {
         Ok(())
     } else {
         Err(Error::WrongOutput(format!(
-            "Expected:({:#?}) Value:({:#?})",
+            "expected:({:#?}) value:({:#?})",
             expected_output, stdout
         )))
     }
@@ -133,8 +133,8 @@ fn check_file(path_to_file: &PathBuf, solution: &str) -> Result<(), Error> {
             .trim_end()
             .to_string();
         println!("file content is {:?}", &file_content);
-        println!("Solution is {:?}", &solution);
-        contains_with_solution(&file_content, &solution)
+        println!("solution is {:?}", &solution);
+        fz_compare_with_solution(&file_content, &solution)
     } else {
         Err(RequiredFileNotFound(path_to_file.to_path_buf()))
     }
