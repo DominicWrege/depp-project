@@ -6,10 +6,8 @@ use std::time;
 use crate::base64::Base64;
 use crate::config::{Assignment, File};
 use crate::crash_test::Error::RequiredFileNotFound;
-use crate::fs_util::new_tmp_script_file;
-use fs_extra::dir;
+use crate::fs_util::{cp_include_into, new_tmp_script_file};
 use log::info;
-use tempfile::TempDir;
 use walkdir::WalkDir;
 
 pub trait Tester {
@@ -54,17 +52,6 @@ impl Files {
         //            .collect::<Vec<_>>();
         Box::new(Files { files })
     }
-}
-
-fn cp_include_into(
-    files: &Vec<PathBuf>,
-    dir_solution: &TempDir,
-    dir_to_test: &TempDir,
-) -> Result<(), Error> {
-    let opt = dir::CopyOptions::new();
-    fs_extra::copy_items(&files, &dir_solution.path(), &opt)?;
-    fs_extra::copy_items(&files, &dir_to_test.path(), &opt)?;
-    Ok(())
 }
 
 pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
