@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::api::AssignmentId;
 use crate::script::Script;
-use serde::Deserialize;
+use serde::{de, Deserialize, Deserializer};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -18,15 +18,27 @@ pub struct Config {
 #[serde(rename_all = "kebab-case")]
 pub struct Assignment {
     pub name: String,
+    #[serde(deserialize_with = "into_absolute_path")]
     pub solution_path: PathBuf,
     #[serde(default)]
     pub include_files: Vec<PathBuf>,
+    #[serde(default)]
+    pub check_files: bool,
     #[serde(default)]
     #[serde(rename = "type")]
     pub script_type: Script,
     #[serde(default)]
     pub args: Vec<String>,
     pub script_contains: Option<Pattern>, // delete me
+}
+
+fn into_absolute_path<'de, D>(deserial: D) -> Result<PathBuf, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let relative_path = PathBuf::deserialize(deserial)?;
+
+    fs::canonicalize(relative_path).map_err(de::Error::custom)
 }
 
 impl From<usize> for AssignmentId {

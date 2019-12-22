@@ -71,7 +71,6 @@ impl Script {
         let (prog, mut args) = self.commandline();
         let dur = Duration::from_secs(30);
         args.push(script_path.to_path_buf());
-        log::info!("running in dir {:?}", &dir);
         let out = timeout(
             dur,
             Command::new(prog)

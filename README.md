@@ -61,7 +61,7 @@ type = "Shell"                              # required, set the script type
 args = ["rackrent"]                         # optional, a list arguments passed to the 
 include-files = ["examples/akademisches_jahrbuch.txt"] # optional inlcude needed files
 solution-path  = "examples/pk7-Aufgabe1.sh" # required sample solution
-
+check-files = true                          # optional default is false
 ```
 
 # Discussion
@@ -74,4 +74,5 @@ solution-path  = "examples/pk7-Aufgabe1.sh" # required sample solution
 -   [X] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
 -   [ ] Memory limit for script
 -   [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
--   [ ] remove pause keyword from bat scripts
+-   [ ] remove pause keyword from bat scripts?!
+-   [ ] auth using some token

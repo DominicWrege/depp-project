@@ -1,12 +1,12 @@
-use std::fmt;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::time;
+use std::{fmt, fs};
 
 use crate::base64::Base64;
 use crate::config::Assignment;
 use crate::fs_util::{cp_include_into, new_tmp_script_file};
 use log::info;
+use walkdir::WalkDir;
 //use walkdir::WalkDir;
 
 pub trait Tester {
@@ -26,15 +26,22 @@ impl Tester for Stdout {
     fn test(&self) -> Result<(), Error> {
         let stdout = trim_new_lines(&self.std_out);
         let expected_output = trim_new_lines(&self.expected);
-        log::info!("\nexpected: {:#?}\nvalue: {:#?}", expected_output, stdout);
+        log::info!("expected: {:#?}", expected_output);
+        log::info!("result: {:#?}", stdout);
         if expected_output.contains(&stdout) {
             Ok(())
         } else {
             Err(Error::WrongOutput(format!(
-                "expected: ({:#?}) value: ({:#?})",
+                "expected: ({:#?}) result: ({:#?})",
                 expected_output, stdout
             )))
         }
+    }
+}
+
+impl Stdout {
+    fn boxed(expected: String, std_out: String) -> Box<dyn Tester> {
+        Box::new(Stdout { expected, std_out })
     }
 }
 
@@ -42,6 +49,8 @@ impl Tester for Stdout {
 // Maybe use your own impl
 impl Tester for Files {
     fn test(&self) -> Result<(), Error> {
+        print_dir_content("expected dir:", &self.expected_dir);
+        print_dir_content("result after test:", &self.given_dir);
         if let Ok(false) = dir_diff::is_different(&self.expected_dir, &self.given_dir) {
             Ok(())
         } else {
@@ -50,9 +59,15 @@ impl Tester for Files {
     }
 }
 
-impl Stdout {
-    fn boxed(expected: String, std_out: String) -> Box<dyn Tester> {
-        Box::new(Stdout { expected, std_out })
+fn print_dir_content<P: AsRef<Path>>(msg: &str, root: P) {
+    info!("{}", &msg);
+    for entry in WalkDir::new(root).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        info!("path: {}", &path.display());
+        if path.is_file() {
+            let content = fs::read_to_string(&path).unwrap_or_default();
+            info!("file content: {:#?}\n", &content);
+        }
     }
 }
 
@@ -72,9 +87,6 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
-
-    // TODO maybe fix unwrap
-    let script_solution_path = fs::canonicalize(&assignment.solution_path).unwrap();
     //fs::copy(&assignment.solution_path, &script_solution_path)?;
     cp_include_into(&assignment.include_files, &dir_solution, &dir_to_test)?;
 
@@ -86,7 +98,7 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let solution_output = assignment
         .script_type
         .run(
-            &script_solution_path,
+            &assignment.solution_path,
             &dir_solution.path(),
             &assignment.args,
         )
@@ -94,8 +106,9 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
 
     tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
-    tests.push(Files::boxed(&dir_solution.path(), &dir_to_test.path()));
-
+    if assignment.check_files {
+        tests.push(Files::boxed(&dir_solution.path(), &dir_to_test.path()));
+    }
     tests
         .iter()
         .map(|item| item.test())

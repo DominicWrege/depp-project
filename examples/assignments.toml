@@ -5,6 +5,7 @@ name = "Blatt 42"
 name = "Task 1 Hello World"
 type = "Shell"
 solution-path = "examples/task1_helloworld.bat"
+check-files = true
 
 ## takes 1 argument, reverse and print it out
 [[assignment]]
@@ -20,7 +21,7 @@ type = "Python3"
 solution-path  = "examples/task3_fib.py"
 args = ["5", "7"]
 
-
+# from pk7
 [[assignment]]
 name = "Pk7 Aufgabe 1 awk akademisches_jahrbuch"
 type = "Bash"
@@ -28,12 +29,12 @@ include-files = ["examples/akademisches_jahrbuch.txt"]
 solution-path  = "examples/pk7-Aufgabe1.sh"
 
 # create some directories and files
-#[[assignment]]
-#name = "Task 4 crate directories"
-#type = "Batch"
-#solution-path  = "some batch"
+[[assignment]]
+name = "Task 4 crate directories"
+type = "Batch"
+solution-path  = "examples/task4_directories.bat"
 
-#
+# parse file
 [[assignment]]
 name = "Task 5 Powershell parse file with regex"
 type = "PowerShell"
