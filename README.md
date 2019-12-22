@@ -3,9 +3,10 @@
 Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do  **not move or delete this file**.
 The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the ```assignments.yaml``` file after start **once**. So a restart is necessary after change to take effect. I also includded some example scripts you can encode to base64 for testing.
 
-### Batch files On Linux
+### Batch Files On Linux
 
 Currently all Batch files are running inside wine on Linux. This means each script takes around 4-15 seconds.
+Wine is very limited so not every Batch script will work.
 
 # Getting Started
 
@@ -45,7 +46,9 @@ Please use the openapi 3.0 docs via swagger ui for more information how to use t
 -   PowerShell\*
 -   Shell
 -   Bash
--   Batch\*
+-   Batch\* (windows only without docker)
+-   Sed
+-   Awk
 
 \*Inside Linux only core features are working.
 
