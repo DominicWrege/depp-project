@@ -41,8 +41,7 @@ pub async fn add_submission(
                     panic!("Server Stopped! System might be corrupted.")
                 }
                 match run(&assignment, &para.source_code).await {
-                    Err(crash_test::Error::ReadFile(e, _))
-                    | Err(crash_test::Error::CantCreatTempFile(e)) => {
+                    Err(crash_test::Error::CantCreatTempFile(e)) => {
                         tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
                         log::info!("System Error. Waiting for 3 secs. {}", e);
                     }

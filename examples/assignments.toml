@@ -1,29 +1,22 @@
 name = "Blatt 42"
 
 # takes writes 'HalloWorld' into hallo.txt
-#[[assignment]]
-#name = "Task 1 Hello World"
-#type = "Shell"
-#solution-path = "task1_halloworld.bat"
-#    [[assignment.files]]
-#    path = "hallo.txt"
-#    content = "HalloWorld"
+[[assignment]]
+name = "Task 1 Hello World"
+type = "Shell"
+solution-path = "examples/task1_helloworld.bat"
 
 ## takes 1 argument, reverse and print it out
-#[[assignment]]
-#name = "Task 2 Bash reverse"
-#type = "Bash"
-#solution-path = "task2_reverse.py"
-#args = ["rackrent"]
-#    [assignment.output]
-#    regex = false
-#    text = "tnerkcar"
+[[assignment]]
+name = "Task 2 Bash reverse"
+type = "Bash"
+solution-path = "examples/task2_reverse.sh"
+args = ["rackrent"]
 
 # calc fib by given number
 [[assignment]]
 name = "Task 3 Python3 fib"
 type = "Python3"
-inlcude-files = ["examples/akademisches_jahrbuch.txt"]
 solution-path  = "examples/task3_fib.py"
 args = ["5", "7"]
 
@@ -38,22 +31,11 @@ solution-path  = "examples/pk7-Aufgabe1.sh"
 #[[assignment]]
 #name = "Task 4 crate directories"
 #type = "Batch"
-#solution-path  = "task3_fib.py"
-#    [[assignment.files]]
-#    path = "Schriftstuecke/Alt/test.tex"
-#    content = "Schriftstuecke\\Alt\\test.tex"
-#    [[assignment.files]]
-#    path = "Schriftstuecke/Alt/Latex/test.tex"
-#    content = "Schriftstuecke\\Alt\\Latex\\test.tex"
-#    [[assignment.files]]
-#    path = "Schriftstuecke/Neu/Latex/test.tex"
-#    content = "Schriftstuecke\\Neu\\Latex\\test.tex"
-#    [[assignment.files]]
-#    path ="Schriftstuecke/test.tex"
-#    content ="Schriftstuecke\\test.tex"
+#solution-path  = "some batch"
+
 #
-#[[assignment]]
-#name = "Task 5 Powershell parse file with regex"
-#type = "PowerShell"
-#solution-path  = "/home/dominic/Code/depp-project-api/examples/task5_regex.ps1"
-#args = ["/home/dominic/Code/depp-project-api/examples/task5-input.txt"]      # no path just the name
+[[assignment]]
+name = "Task 5 Powershell parse file with regex"
+type = "PowerShell"
+solution-path  = "examples/task5_regex.ps1"
+include-files = ["examples/task5-input.txt"]

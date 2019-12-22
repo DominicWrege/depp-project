@@ -27,8 +27,6 @@ pub struct Assignment {
     #[serde(default)]
     pub args: Vec<String>,
     pub script_contains: Option<Pattern>, // delete me
-    #[serde(default)]
-    pub files: Vec<File>,
 }
 
 impl From<usize> for AssignmentId {
@@ -37,13 +35,6 @@ impl From<usize> for AssignmentId {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "kebab-case")]
-pub struct File {
-    pub path: PathBuf,
-    #[serde(default)]
-    pub content: String,
-}
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Pattern {

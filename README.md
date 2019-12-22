@@ -58,19 +58,9 @@ Here I go into more details how the assignment is structured.
 [[assignment]]
 name = "Task 9 loops in shell"              # required
 type = "Shell"                              # required, set the script type
-args = ["rackrent"]                         # optional, a list arguments passed to the script
-    [assignment.script-contains]            # optinal, locking for pattern inside the script with an regex or contains
-    regex = true                            # optinal, default is false
-    text: "^echo [0-9][0-9]$"               # can be an regex if regex is set to true
-    [assignment.output]                     # optional, checking stdout
-    regex = false                           # optinal, default is false
-    text = "tnerkcar"                       # can be an regex if regex is set to true
-    [[assignment.files]]                    # optional, if certain files/folders are created
-    path = "hallo.txt"
-    content = "HalloWorld"
-    [[assignment.files]]
-    path = "morefiles.txt"
-    content = "42 answer"
+args = ["rackrent"]                         # optional, a list arguments passed to the 
+include-files = ["examples/akademisches_jahrbuch.txt"] # optional inlcude needed files
+solution-path  = "examples/pk7-Aufgabe1.sh" # required sample solution
 
 ```
 
@@ -81,7 +71,7 @@ args = ["rackrent"]                         # optional, a list arguments passed 
 
 # TODO For API
 
--   [ ] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
+-   [X] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
 -   [ ] Memory limit for script
 -   [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
 -   [ ] remove pause keyword from bat scripts

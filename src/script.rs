@@ -1,12 +1,12 @@
-use crate::crash_test::Error;
-use failure::_core::convert::TryFrom;
 use serde::Deserialize;
+use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
 use std::process::Output;
 use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
+use crate::crash_test::Error;
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub enum Script {
