@@ -37,8 +37,8 @@ pub async fn add_submission(
         tokio::task::spawn(async move {
             let mut attempts_counter = 0;
             loop {
-                if attempts_counter >= 10 {
-                    panic!("Server Stopped! System might be corrupted.")
+                if attempts_counter >= 5 {
+                    panic!("Server Stopped! System might be corrupted due to to many errors.")
                 }
                 match run(&assignment, &para.source_code).await {
                     Err(crash_test::Error::CantCreatTempFile(e)) => {
@@ -79,7 +79,7 @@ pub async fn index() -> HttpResponse {
 }
 
 pub async fn version() -> web::Json<MetaJson> {
-    web::Json(MetaJson::new(0.1, EndPointStatus::Online))
+    web::Json(MetaJson::new(0.2, EndPointStatus::Online))
 }
 #[derive(serde::Serialize)]
 struct ErrJson {
