@@ -4,63 +4,39 @@ name = "Blatt 42"
 [[assignment]]
 name = "Task 1 Hello World"
 type = "Shell"
-    [[assignment.files]]
-    path = "hallo.txt"
-    content = "HalloWorld"
+solution-path = "examples/task1_helloworld.bat"
+check-files = true
 
-# takes 1 argument, reverse and print it out
+## takes 1 argument, reverse it and print it out
 [[assignment]]
 name = "Task 2 Bash reverse"
 type = "Bash"
-args = ["rackrent"] 
-    [assignment.output]
-    regex = false
-    text = "tnerkcar"
+solution-path = "examples/task2_reverse.sh"
+args = ["rackrent"]
 
 # calc fib by given number
 [[assignment]]
 name = "Task 3 Python3 fib"
 type = "Python3"
+solution-path  = "examples/task3_fib.py"
 args = ["5", "7"]
-    [assignment.output]
-    text = "120 5040"
+
+# from pk7
+[[assignment]]
+name = "Pk7 Aufgabe 1 awk akademisches_jahrbuch"
+type = "Bash"
+include-files = ["examples/akademisches_jahrbuch.txt"]
+solution-path  = "examples/pk7-Aufgabe1.sh"
 
 # create some directories and files
 [[assignment]]
 name = "Task 4 crate directories"
 type = "Batch"
-    [[assignment.files]]
-    path = "Schriftstuecke/Alt/test.tex"
-    content = "Schriftstuecke\\Alt\\test.tex"
-    [[assignment.files]]
-    path = "Schriftstuecke/Alt/Latex/test.tex"
-    content = "Schriftstuecke\\Alt\\Latex\\test.tex"
-    [[assignment.files]]
-    path = "Schriftstuecke/Neu/Latex/test.tex"
-    content = "Schriftstuecke\\Neu\\Latex\\test.tex"
-    [[assignment.files]]
-    path ="Schriftstuecke/test.tex"
-    content ="Schriftstuecke\\test.tex"
+solution-path  = "examples/task4_directories.bat"
 
+# parse file
 [[assignment]]
 name = "Task 5 Powershell parse file with regex"
-type = "Powershell"
-args = ["examples/task5-input.txt"]      # no path just the name
-    [assignment.output]                 # raw string I know ugly
-    text = '''
-6 ipsum
-1000 dolor
-5 dolor
-99  tet
-101  test
-0001 Test
-2words
-00000000000001 
-00000000001000 
-1 
-10 
-100 
-1000 
-9999 
-10000 
-'''
+type = "PowerShell"
+solution-path  = "examples/task5_regex.ps1"
+include-files = ["examples/task5-input.txt"]

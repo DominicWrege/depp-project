@@ -9,6 +9,7 @@ mkdir "Neu"
 cd ".\Alt\"
 mkdir "Latex"
 cd "..\Neu\"
+```
 mkdir "Latex"
 cd ".."
 FOR /D /R %%A IN (Schriftstuecke) DO (

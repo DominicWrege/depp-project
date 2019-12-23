@@ -1,10 +1,11 @@
-use serde::Deserialize;
-use std::fs;
-
-use err_derive::Error;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fs;
 use std::path::{Path, PathBuf};
+
+use crate::api::AssignmentId;
+use crate::script::Script;
+use serde::{de, Deserialize, Deserializer};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -12,27 +13,32 @@ pub struct Config {
     pub name: String,
     pub assignment: Vec<Assignment>,
 }
-#[derive(
-    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub u64);
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Assignment {
-    #[serde(default)]
     pub name: String,
-    /*pub script_path: PathBuf,*/
-    pub output: Option<Pattern>,
+    #[serde(deserialize_with = "into_absolute_path")]
+    pub solution_path: PathBuf,
+    #[serde(default)]
+    pub include_files: Vec<PathBuf>,
+    #[serde(default)]
+    pub check_files: bool,
     #[serde(default)]
     #[serde(rename = "type")]
-    pub commandline: Script,
+    pub script_type: Script,
     #[serde(default)]
     pub args: Vec<String>,
-    pub script_contains: Option<Pattern>,
-    #[serde(default)]
-    pub files: Vec<File>,
+    pub script_contains: Option<Pattern>, // delete me
+}
+
+fn into_absolute_path<'de, D>(deserial: D) -> Result<PathBuf, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let relative_path = PathBuf::deserialize(deserial)?;
+
+    fs::canonicalize(relative_path).map_err(de::Error::custom)
 }
 
 impl From<usize> for AssignmentId {
@@ -43,74 +49,25 @@ impl From<usize> for AssignmentId {
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
-pub struct File {
-    pub path: PathBuf,
-    pub content: Option<String>,
-}
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "kebab-case")]
 pub struct Pattern {
     #[serde(default)]
     pub regex: bool,
     pub text: String,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
-#[serde(rename_all = "PascalCase")]
-pub enum Script {
-    Powershell,
-    Batch,
-    Python3,
-    Shell,
-    Bash,
-}
-#[cfg(target_os = "linux")]
-impl Script {
-    pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
-        match self {
-            Script::Powershell => ("pwsh", vec![]),
-            Script::Shell => ("sh", vec![]),
-            Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
-            Script::Python3 => ("python3", vec![]),
-            Script::Bash => ("bash", vec![]),
-        }
-    }
-}
-
-#[cfg(target_os = "windows")]
-impl Script {
-    pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
-        match self {
-            Script::Powershell => ("powershell.exe", vec![]),
-            Script::Shell => ("sh", vec![]),
-            Script::Batch => ("cmd.exe", vec!["/C".into()]),
-            Script::Python3 => ("python3", vec![]),
-            Script::Bash => ("bash", vec![]),
-        }
-    }
-}
-
-impl Default for Script {
-    fn default() -> Self {
-        Script::Batch
-    }
-}
-
-#[derive(Debug, Error)]
+#[derive(Debug, err_derive::Error, derive_more::From)]
 pub enum Error {
-    #[error(display = "can`t read config file, {}", _0)]
+    #[from]
+    #[error(display = "can`t find config file, {}", _0)]
     ConfigFile(std::io::Error),
+    #[from]
     #[error(display = "wrong toml format, {}", _0)]
     Toml(toml::de::Error),
-    #[error(display = "given file was not found, {}", _0)]
-    IO(std::io::Error),
-    #[error(display = "wrong regex was, {}", _0)]
-    Regex(regex::Error),
 }
 
 pub fn parse_config(path: &Path) -> Result<HashMap<AssignmentId, Assignment>, Error> {
-    let file_content = fs::read_to_string(path).map_err(Error::ConfigFile)?;
-    let exercise = toml::from_str(&file_content).map_err(Error::Toml)?;
+    let file_content = fs::read_to_string(path)?;
+    let exercise = toml::from_str(&file_content)?;
     Ok(into_config_map(exercise))
 }
 
@@ -118,6 +75,21 @@ fn into_config_map(conf: Config) -> HashMap<AssignmentId, Assignment> {
     conf.assignment
         .into_iter()
         .enumerate()
-        .map(|(id, assignment)| (AssignmentId::from(id), assignment))
+        .map(|(id, assignment)| {
+            for path in &assignment.include_files {
+                path_exists_and_is_file(&path);
+            }
+            path_exists_and_is_file(&assignment.solution_path);
+            (AssignmentId::from(id), assignment)
+        })
         .collect::<HashMap<AssignmentId, Assignment>>()
+}
+
+fn path_exists_and_is_file(p: &Path) {
+    if !p.exists() || p.is_dir() {
+        panic!(
+            "Config error: path to {:#?} does not exists or is not a file.",
+            p
+        )
+    }
 }

@@ -1,59 +1,71 @@
-use std::io::Write;
-
-use actix_web::{web, HttpResponse, Responder, ResponseError};
-use log::info;
-use tempfile::NamedTempFile;
-
-use crate::api::{AssignmentResult, AssignmentShort, IliasId, Submission};
-use crate::config::AssignmentId;
-use crate::crash_test::{run, ScriptResult};
+use crate::api::{AssignmentId, AssignmentResult, AssignmentShort, IliasId, Submission};
+use crate::crash_test;
+use crate::crash_test::run;
 use crate::state::State;
 use actix_web::error::JsonPayloadError;
+use actix_web::http::StatusCode;
+use actix_web::{web, HttpResponse, ResponseError};
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
-    let mut rets = state.pending_results.write().unwrap();
-    if let Some(ret) = rets.remove(&id) {
-        return Ok(HttpResponse::Ok().json(ret));
+    if let Some(ret) = state.pending_results.remove(&id) {
+        return Ok(HttpResponse::Ok().json(ret.1));
     }
     Err(Error::NotFoundIliasId(id))
 }
 
-pub fn get_result(state: web::Data<State>, para: web::Path<String>) -> Result<HttpResponse, Error> {
+pub async fn get_result(
+    state: web::Data<State>,
+    para: web::Path<String>,
+) -> Result<HttpResponse, Error> {
     let str = para.into_inner();
     match str.parse::<u64>() {
         Ok(id) => inner_get_result(state, id.into()),
         Err(e) => Err(Error::Parameter(e.to_string(), "An integer64 is required")),
     }
 }
-pub fn add_submission(
+pub async fn add_submission(
     state: web::Data<State>,
     para: web::Json<Submission>,
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
-    info!("Submisson: the parameter is: {:#?}", para);
-    let mut script_file = NamedTempFile::new()?;
-    script_file.write(&para.source_code.0.as_bytes())?;
-    let mut rets = state.pending_results.write().unwrap();
     let config = state.config.clone();
-    if rets.contains_key(&para.ilias_id) {
+    if state.pending_results.contains_key(&para.ilias_id) {
         return Err(Error::DuplicateIliasId);
     }
-    //TODO better err handling
-    if let Some(assignment) = config.get(&para.assigment_id) {
-        let test_result = match run(assignment, script_file.into_temp_path().to_path_buf()) {
-            ScriptResult::Correct => (true, None),
-            ScriptResult::InCorrect(msg) => (false, Some(msg)),
-        };
-        rets.insert(
-            para.ilias_id,
-            AssignmentResult::new(test_result.0, test_result.1, None),
-        );
+    if let Some(assignment) = config.get(&para.assigment_id).map(|x| x.clone()) {
+        tokio::task::spawn(async move {
+            let mut attempts_counter = 0;
+            loop {
+                if attempts_counter >= 5 {
+                    panic!("Server Stopped! System might be corrupted due to to many errors.")
+                }
+                match run(&assignment, &para.source_code).await {
+                    Err(crash_test::Error::CantCreatTempFile(e)) => {
+                        tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
+                        log::info!("System Error. Waiting for 3 secs. {}", e);
+                    }
+                    Err(e) => {
+                        break state.pending_results.insert(
+                            para.ilias_id,
+                            AssignmentResult::new(false, Some(e.to_string()), None),
+                        );
+                    }
+                    Ok(_) => {
+                        break state
+                            .pending_results
+                            .insert(para.ilias_id, AssignmentResult::new(true, None, None));
+                    }
+                }
+                attempts_counter = attempts_counter + 1;
+            }
+        });
     };
+
     Ok(HttpResponse::Created().body(""))
 }
 
-pub fn get_assignments(state: web::Data<State>) -> HttpResponse {
+pub async fn get_assignments(state: web::Data<State>) -> HttpResponse {
     let list = state
         .config
         .iter()
@@ -62,12 +74,12 @@ pub fn get_assignments(state: web::Data<State>) -> HttpResponse {
     HttpResponse::Ok().json(list)
 }
 
-pub fn index() -> impl Responder {
+pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }
 
-pub fn version() -> web::Json<MetaJson> {
-    web::Json(MetaJson::new(0.1, EndPointStatus::Online))
+pub async fn version() -> web::Json<MetaJson> {
+    web::Json(MetaJson::new(0.2, EndPointStatus::Online))
 }
 #[derive(serde::Serialize)]
 struct ErrJson {
@@ -99,7 +111,6 @@ pub enum Error {
     #[fail(display = "Request body error. {:?}.", _0)]
     Body(JsonPayloadError),
 }
-
 impl<T> From<T> for Error
 where
     T: std::error::Error + Sync + Send + 'static,
@@ -110,13 +121,25 @@ where
 }
 
 impl ResponseError for Error {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Error::DuplicateIliasId => StatusCode::CONFLICT,
+            Error::NotFoundIliasId(_) => StatusCode::NOT_FOUND,
+            Error::Parameter(_, _) => StatusCode::BAD_REQUEST,
+            Error::Body(_err) => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
     fn error_response(&self) -> HttpResponse {
         let err = ErrJson::from(self);
+        let code = self.status_code();
+        let mut response = HttpResponse::build(code);
         match self {
-            Error::DuplicateIliasId => HttpResponse::Conflict().json(err),
-            Error::NotFoundIliasId(_) => HttpResponse::NotFound().json(err),
-            Error::Parameter(_, _) => HttpResponse::BadRequest().json(err),
-            Error::Body(err) => HttpResponse::BadRequest().json(ErrSubmission {
+            Error::DuplicateIliasId | Error::NotFoundIliasId(_) | Error::Parameter(_, _) => {
+                response.json(err)
+            }
+            Error::Body(err) => response.json(ErrSubmission {
                 msg: err.to_string(),
                 example: SubmissionExample::new(
                     2009.into(),
@@ -126,9 +149,6 @@ impl ResponseError for Error {
             }),
             _ => HttpResponse::InternalServerError().json(err),
         }
-    }
-    fn render_response(&self) -> HttpResponse {
-        self.error_response()
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::base64::Base64;
-use crate::config::{Assignment, AssignmentId};
+use crate::config::Assignment;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
@@ -34,6 +34,12 @@ impl Assignment {
 #[display(fmt = "{}", _0)]
 pub struct IliasId(u64);
 
+#[derive(
+    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
+)]
+#[serde(rename_all = "camelCase")]
+pub struct AssignmentId(pub u64);
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Submission {
@@ -50,12 +56,6 @@ pub struct AssignmentResult {
     pub message: Option<String>,
     #[serde(default)]
     pub mark: Option<Mark>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ParaResult {
-    pub ilias_id: uuid::Uuid,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
