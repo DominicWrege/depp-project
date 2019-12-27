@@ -62,7 +62,7 @@ async fn run() -> Result<(), failure::Error> {
             .data(state.clone())
     })
     .bind("0.0.0.0:8080")?
-    .start()
+    .run()
     .await?;
     Ok(())
 }
