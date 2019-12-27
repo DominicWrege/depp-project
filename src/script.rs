@@ -18,9 +18,9 @@ pub enum Script {
     Awk,
     Sed,
 }
-#[cfg(target_os = "linux")]
+#[cfg(any(lunix, unix))]
 impl Script {
-    pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
+    pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
         match self {
             Script::PowerShell => ("pwsh", vec![]),
             Script::Shell => ("sh", vec![]),
@@ -33,15 +33,13 @@ impl Script {
 
 #[cfg(target_os = "windows")]
 impl Script {
-    pub fn commandline(self) -> (&'static str, Vec<PathBuf>) {
+    pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
         match self {
             Script::PowerShell => ("powershell.exe", vec![]),
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),
-            Script::Bash => ("bash", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![]),
+            Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
         }
     }
 }
