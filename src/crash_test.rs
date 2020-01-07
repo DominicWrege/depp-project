@@ -7,7 +7,6 @@ use crate::config::Assignment;
 use crate::fs_util::{cp_include_into, new_tmp_script_file};
 use log::info;
 use walkdir::WalkDir;
-//use walkdir::WalkDir;
 
 pub trait Tester {
     fn test(&self) -> Result<(), Error>;
@@ -51,12 +50,36 @@ impl Tester for Files {
     fn test(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir);
         print_dir_content("result after test:", &self.given_dir);
-        if let Ok(false) = dir_diff::is_different(&self.expected_dir, &self.given_dir) {
-            Ok(())
+        is_different(&self.expected_dir, &self.given_dir)
+    }
+}
+
+fn is_different<A: AsRef<Path>, B: AsRef<Path>>(a_base: A, b_base: B) -> Result<(), Error> {
+    for entry in WalkDir::new(&a_base)
+        .into_iter()
+        .skip(1)
+        .filter_map(|e| e.ok())
+    {
+        let new_path = b_base.as_ref().join(entry.path().strip_prefix(&a_base).unwrap());
+        //println!("new path {:?}", &new_path.as_path());
+        if new_path.exists() {
+            if new_path.is_dir() && entry.path().is_file()
+                || new_path.is_file() && entry.path().is_dir()
+            {
+                return Err(Error::ExpectedDirNotSame);
+            }
+            if entry.path().is_file() && new_path.is_file() {
+                let content_x = std::fs::read_to_string(&new_path)?;
+                let content_y = std::fs::read_to_string(&entry.path())?;
+                if content_x != content_y {
+                    return Err(Error::ExpectedFileNotSame(content_y, content_x));
+                }
+            }
         } else {
-            Err(Error::ExpectedDirNotSame)
+            return Err(Error::ExpectedDirNotSame);
         }
     }
+    Ok(())
 }
 
 fn print_dir_content<P: AsRef<Path>>(msg: &str, root: P) {
@@ -128,6 +151,8 @@ pub enum Error {
     ExpectedDirNotSame,
     #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
     ExitCode(String),
+    #[error(display = "Wrong file content. Expected({:#?}) Result({:#?})", _0, _1)]
+    ExpectedFileNotSame(String, String),
     #[from]
     #[error(display = "Can't create temp file. {}", _0)]
     CantCreatTempFile(std::io::Error),
