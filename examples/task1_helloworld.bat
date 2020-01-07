@@ -1,1 +1,0 @@
-echo "HalloWorld" >> hallo.txt

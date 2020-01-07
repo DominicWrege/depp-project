@@ -50,38 +50,40 @@ impl Tester for Files {
     fn test(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir);
         print_dir_content("result after test:", &self.given_dir);
-        is_different(&self.expected_dir, &self.given_dir)
-    }
-}
-
-fn is_different<A: AsRef<Path>, B: AsRef<Path>>(a_base: A, b_base: B) -> Result<(), Error> {
-    for entry in WalkDir::new(&a_base)
-        .into_iter()
-        .skip(1)
-        .filter_map(|e| e.ok())
-    {
-        let new_path = b_base.as_ref().join(entry.path().strip_prefix(&a_base).unwrap());
-        //println!("new path {:?}", &new_path.as_path());
-        if new_path.exists() {
-            if new_path.is_dir() && entry.path().is_file()
-                || new_path.is_file() && entry.path().is_dir()
+        for solution_entry in WalkDir::new(&self.expected_dir)
+            .follow_links(true) // maybe not follow them ?
+            .min_depth(1)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let path_to_check = &self.given_dir.as_path().join(
+                solution_entry
+                    .path()
+                    .strip_prefix(&self.expected_dir)
+                    .unwrap(), // TODO err handling
+            );
+            if path_to_check.exists()
+                && cmp_file_type(&solution_entry.path(), &path_to_check.as_path())
             {
+                if solution_entry.path().is_file() {
+                    let solution_content =
+                        trim_new_lines(&fs::read_to_string(&solution_entry.path())?);
+                    let result_content = trim_new_lines(&fs::read_to_string(&path_to_check)?);
+                    if solution_content != result_content {
+                        return Err(Error::ExpectedFileNotSame(solution_content, result_content));
+                    }
+                }
+            } else {
                 return Err(Error::ExpectedDirNotSame);
             }
-            if entry.path().is_file() && new_path.is_file() {
-                let content_x = std::fs::read_to_string(&new_path)?;
-                let content_y = std::fs::read_to_string(&entry.path())?;
-                if content_x != content_y {
-                    return Err(Error::ExpectedFileNotSame(content_y, content_x));
-                }
-            }
-        } else {
-            return Err(Error::ExpectedDirNotSame);
         }
+        Ok(())
     }
-    Ok(())
 }
 
+fn cmp_file_type(a: &Path, b: &Path) -> bool {
+    (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
+}
 fn print_dir_content<P: AsRef<Path>>(msg: &str, root: P) {
     info!("{}", &msg);
     for entry in WalkDir::new(root).into_iter().filter_map(|e| e.ok()) {
