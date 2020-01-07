@@ -131,9 +131,7 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
 
     tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
-    if assignment.check_files {
-        tests.push(Files::boxed(&dir_solution.path(), &dir_to_test.path()));
-    }
+    tests.push(Files::boxed(&dir_solution.path(), &dir_to_test.path()));
     tests
         .iter()
         .map(|item| item.test())

@@ -5,7 +5,6 @@ name = "Blatt 42"
 name = "Task 1 Hello World"
 type = "Shell"
 solution-path = "examples/task1_helloworld.sh"
-check-files = true
 
 ## takes 1 argument, reverse and print it out
 [[assignment]]

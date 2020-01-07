@@ -23,8 +23,6 @@ pub struct Assignment {
     #[serde(default)]
     pub include_files: Vec<PathBuf>,
     #[serde(default)]
-    pub check_files: bool,
-    #[serde(default)]
     #[serde(rename = "type")]
     pub script_type: Script,
     #[serde(default)]
