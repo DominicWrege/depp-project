@@ -43,13 +43,11 @@ pub async fn add_submission(
                 }
                 match run(&assignment, &para.source_code).await {
                     // TODO FIX ME
-                    Err(crash_test::Error::CantCreatTempFile(e)) => {
+                    Err(crash_test::Error::CantCreatTempFile(e))
+                    | Err(crash_test::Error::Copy(e)) => {
                         wait_print_err(e).await;
                     }
                     Err(crash_test::Error::ListDir(e)) => {
-                        wait_print_err(e).await;
-                    }
-                    Err(crash_test::Error::Copy(e)) => {
                         wait_print_err(e).await;
                     }
                     // TODO FIX ME
@@ -73,7 +71,7 @@ pub async fn add_submission(
     Ok(HttpResponse::Created().body(""))
 }
 
-pub async fn wait_print_err<E: Debug>(e: E) {
+async fn wait_print_err<E: Debug>(e: E) {
     tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
     log::info!("System Error. Waiting for 3 secs. {:?}", e);
 }
