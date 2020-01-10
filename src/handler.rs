@@ -5,6 +5,7 @@ use crate::state::State;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
+use std::fmt::Debug;
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
@@ -41,10 +42,17 @@ pub async fn add_submission(
                     panic!("Server Stopped! System might be corrupted due to to many errors.")
                 }
                 match run(&assignment, &para.source_code).await {
+                    // TODO FIX ME
                     Err(crash_test::Error::CantCreatTempFile(e)) => {
-                        tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
-                        log::info!("System Error. Waiting for 3 secs. {}", e);
+                        wait_print_err(e).await;
                     }
+                    Err(crash_test::Error::ListDir(e)) => {
+                        wait_print_err(e).await;
+                    }
+                    Err(crash_test::Error::Copy(e)) => {
+                        wait_print_err(e).await;
+                    }
+                    // TODO FIX ME
                     Err(e) => {
                         break state.pending_results.insert(
                             para.ilias_id,
@@ -63,6 +71,11 @@ pub async fn add_submission(
     };
 
     Ok(HttpResponse::Created().body(""))
+}
+
+pub async fn wait_print_err<E: Debug>(e: E) {
+    tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
+    log::info!("System Error. Waiting for 3 secs. {:?}", e);
 }
 
 pub async fn get_assignments(state: web::Data<State>) -> HttpResponse {

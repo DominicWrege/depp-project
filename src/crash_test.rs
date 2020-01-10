@@ -1,6 +1,6 @@
 use crate::base64::Base64;
 use crate::config::Assignment;
-use crate::fs_util::{cp_include_into, ls_dir, new_tmp_script_file};
+use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
 use async_trait::async_trait;
 use futures::future;
 use log::info;
@@ -51,7 +51,7 @@ impl Tester for Files {
         print_dir_content("expected dir:", &self.expected_dir).await?;
         print_dir_content("result after test:", &self.given_dir).await?;
 
-        for solution_entry in ls_dir(&self.expected_dir).await?.iter() {
+        for solution_entry in ls_dir_content(&self.expected_dir).await?.iter() {
             let path_to_check = &self.given_dir.as_path().join(
                 solution_entry.strip_prefix(&self.expected_dir).unwrap(), // TODO err handling
             );
@@ -78,7 +78,7 @@ fn cmp_file_type(a: &Path, b: &Path) -> bool {
 
 async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     info!("{}", &msg);
-    for entry in ls_dir(&root).await?.iter() {
+    for entry in ls_dir_content(&root).await?.iter() {
         info!("path: {}", &entry.display());
         if entry.is_file() {
             let content = fs::read_to_string(&entry).await.unwrap_or_default();
@@ -101,11 +101,12 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
 
+    cp_files(&assignment.include_files, &dir_solution).await?;
+    cp_files(&assignment.include_files, &dir_to_test).await?;
+
     let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
-    //fs::copy(&assignment.solution_path, &script_solution_path)?;
-    cp_include_into(&assignment.include_files, &dir_solution, &dir_to_test)?;
 
     let test_output = assignment
         .script_type
@@ -147,12 +148,11 @@ pub enum Error {
     ExitCode(String),
     #[error(display = "Wrong file content. Expected({:#?}) Result({:#?})", _0, _1)]
     ExpectedFileNotSame(String, String),
-    #[from]
     #[error(display = "Can't create temp file. {}", _0)]
     CantCreatTempFile(std::io::Error),
     #[from]
     #[error(display = "Could not copy included files for testing {}", _0)]
-    Copy(fs_extra::error::Error),
+    Copy(std::io::Error),
     #[error(display = "IO Error while reading the dir {:?}", _0)]
     ListDir(PathBuf),
 }
