@@ -1,15 +1,16 @@
-use std::path::{Path, PathBuf};
-use std::time;
-use std::{fmt, fs};
-
 use crate::base64::Base64;
 use crate::config::Assignment;
-use crate::fs_util::{cp_include_into, new_tmp_script_file};
+use crate::fs_util::{cp_include_into, ls_dir, new_tmp_script_file};
+use async_trait::async_trait;
+use futures::future;
 use log::info;
-use walkdir::WalkDir;
-
-pub trait Tester {
-    fn test(&self) -> Result<(), Error>;
+use std::fmt;
+use std::path::{Path, PathBuf};
+use std::time;
+use tokio::fs;
+#[async_trait]
+pub trait Tester: Sync + Send {
+    async fn test(&self) -> Result<(), Error>;
 }
 pub struct Stdout {
     expected: String,
@@ -20,9 +21,9 @@ pub struct Files {
     given_dir: PathBuf,
 }
 //struct Contains;
-
+#[async_trait]
 impl Tester for Stdout {
-    fn test(&self) -> Result<(), Error> {
+    async fn test(&self) -> Result<(), Error> {
         let stdout = trim_new_lines(&self.std_out);
         let expected_output = trim_new_lines(&self.expected);
         log::info!("expected: {:#?}", expected_output);
@@ -44,31 +45,21 @@ impl Stdout {
     }
 }
 
-// Booth dirs have to have exact the same content
-// Maybe use your own impl
+#[async_trait]
 impl Tester for Files {
-    fn test(&self) -> Result<(), Error> {
-        print_dir_content("expected dir:", &self.expected_dir);
-        print_dir_content("result after test:", &self.given_dir);
-        for solution_entry in WalkDir::new(&self.expected_dir)
-            .follow_links(true) // maybe not follow them ?
-            .min_depth(1)
-            .into_iter()
-            .filter_map(|e| e.ok())
-        {
+    async fn test(&self) -> Result<(), Error> {
+        print_dir_content("expected dir:", &self.expected_dir).await?;
+        print_dir_content("result after test:", &self.given_dir).await?;
+
+        for solution_entry in ls_dir(&self.expected_dir).await?.iter() {
             let path_to_check = &self.given_dir.as_path().join(
-                solution_entry
-                    .path()
-                    .strip_prefix(&self.expected_dir)
-                    .unwrap(), // TODO err handling
+                solution_entry.strip_prefix(&self.expected_dir).unwrap(), // TODO err handling
             );
-            if path_to_check.exists()
-                && cmp_file_type(&solution_entry.path(), &path_to_check.as_path())
-            {
-                if solution_entry.path().is_file() {
+            if path_to_check.exists() && cmp_file_type(&solution_entry, &path_to_check.as_path()) {
+                if solution_entry.is_file() {
                     let solution_content =
-                        trim_new_lines(&fs::read_to_string(&solution_entry.path())?);
-                    let result_content = trim_new_lines(&fs::read_to_string(&path_to_check)?);
+                        trim_new_lines(&fs::read_to_string(&solution_entry).await?);
+                    let result_content = trim_new_lines(&fs::read_to_string(&path_to_check).await?);
                     if solution_content != result_content {
                         return Err(Error::ExpectedFileNotSame(solution_content, result_content));
                     }
@@ -84,16 +75,17 @@ impl Tester for Files {
 fn cmp_file_type(a: &Path, b: &Path) -> bool {
     (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
 }
-fn print_dir_content<P: AsRef<Path>>(msg: &str, root: P) {
+
+async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     info!("{}", &msg);
-    for entry in WalkDir::new(root).into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
-        info!("path: {}", &path.display());
-        if path.is_file() {
-            let content = fs::read_to_string(&path).unwrap_or_default();
+    for entry in ls_dir(&root).await?.iter() {
+        info!("path: {}", &entry.display());
+        if entry.is_file() {
+            let content = fs::read_to_string(&entry).await.unwrap_or_default();
             info!("file content: {:#?}\n", &content);
         }
     }
+    Ok(())
 }
 
 impl Files {
@@ -131,11 +123,13 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
 
     tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
-    tests.push(Files::boxed(&dir_solution.path(), &dir_to_test.path()));
-    tests
-        .iter()
-        .map(|item| item.test())
-        .collect::<Result<_, _>>()
+    tests.push(Files::boxed(
+        &dir_solution.path().clone(),
+        &dir_to_test.path().clone(),
+    ));
+
+    let _ = future::try_join_all(tests.iter().map(|item| async move { item.test().await })).await?;
+    Ok(())
 }
 
 #[derive(Debug, err_derive::Error, derive_more::From)]
@@ -159,6 +153,8 @@ pub enum Error {
     #[from]
     #[error(display = "Could not copy included files for testing {}", _0)]
     Copy(fs_extra::error::Error),
+    #[error(display = "IO Error while reading the dir {:?}", _0)]
+    ListDir(PathBuf),
 }
 #[derive(Debug, derive_more::From)]
 pub struct DurationDisplay(time::Duration);
