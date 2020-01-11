@@ -1,6 +1,8 @@
 use crate::base64::Base64;
 use crate::crash_test::Error;
 use crate::script::Script;
+use async_stream::try_stream;
+use futures::stream::Stream;
 use futures::try_join;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -27,23 +29,21 @@ pub async fn cp_files(files: &Vec<PathBuf>, dir: &TempDir) -> Result<(), Error> 
     Ok(())
 }
 
-pub async fn ls_dir_content(root: &Path) -> Result<Vec<PathBuf>, Error> {
-    let mut paths: Vec<PathBuf> = vec![];
-    if root.is_file() {
-        return Ok(vec![]);
-    }
-    let mut stack = vec![root.to_path_buf()];
-    while let Some(dir) = stack.pop() {
-        let mut dir_entrys = fs::read_dir(&dir).await.map_err(|_e| Error::ListDir(dir))?;
-        while let Ok(Some(entry)) = dir_entrys.next_entry().await {
-            paths.push(entry.path());
-            if entry.file_type().await?.is_dir() {
-                stack.push(entry.path());
+pub fn ls_dir_content(root: PathBuf) -> impl Stream<Item = Result<PathBuf, Error>> {
+    try_stream! {
+        if !root.is_file() {
+            let mut stack = vec![root.to_path_buf()];
+            while let Some(dir) = stack.pop() {
+                let mut dir_entry = fs::read_dir(&dir).await.map_err(|_e| Error::ListDir(dir))?;
+                while let Ok(Some(entry)) = dir_entry.next_entry().await {
+                    if entry.file_type().await?.is_dir() {
+                        stack.push(entry.path());
+                    }
+                    yield entry.path();
+                }
             }
         }
     }
-
-    Ok(paths)
 }
 
 async fn copy<P: AsRef<Path>, Q: AsRef<Path>>(from: P, to: Q) -> Result<u64, std::io::Error> {

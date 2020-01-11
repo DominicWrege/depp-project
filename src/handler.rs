@@ -42,15 +42,10 @@ pub async fn add_submission(
                     panic!("Server Stopped! System might be corrupted due to to many errors.")
                 }
                 match run(&assignment, &para.source_code).await {
-                    // TODO FIX ME
                     Err(crash_test::Error::CantCreatTempFile(e))
                     | Err(crash_test::Error::Copy(e)) => {
                         wait_print_err(e).await;
                     }
-                    Err(crash_test::Error::ListDir(e)) => {
-                        wait_print_err(e).await;
-                    }
-                    // TODO FIX ME
                     Err(e) => {
                         break state.pending_results.insert(
                             para.ilias_id,

@@ -2,7 +2,8 @@ use crate::base64::Base64;
 use crate::config::Assignment;
 use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
 use async_trait::async_trait;
-use futures::future;
+use futures::pin_mut;
+use futures::{future, try_join, StreamExt};
 use log::info;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -26,13 +27,13 @@ impl Tester for Stdout {
     async fn test(&self) -> Result<(), Error> {
         let stdout = trim_new_lines(&self.std_out);
         let expected_output = trim_new_lines(&self.expected);
-        log::info!("expected: {:#?}", expected_output);
-        log::info!("result: {:#?}", stdout);
+        log::info!("expected stdout: {:#?}", expected_output);
+        log::info!("result stdout: {:#?}", stdout);
         if expected_output.contains(&stdout) {
             Ok(())
         } else {
             Err(Error::WrongOutput(format!(
-                "expected: ({:#?}) result: ({:#?})",
+                "expected stdout:({:#?}) result stdout:({:#?})",
                 expected_output, stdout
             )))
         }
@@ -50,8 +51,9 @@ impl Tester for Files {
     async fn test(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir).await?;
         print_dir_content("result after test:", &self.given_dir).await?;
-
-        for solution_entry in ls_dir_content(&self.expected_dir).await?.iter() {
+        let stream = ls_dir_content(self.expected_dir.clone());
+        pin_mut!(stream);
+        while let Some(Ok(solution_entry)) = stream.next().await {
             let path_to_check = &self.given_dir.as_path().join(
                 solution_entry.strip_prefix(&self.expected_dir).unwrap(), // TODO err handling
             );
@@ -68,6 +70,7 @@ impl Tester for Files {
                 return Err(Error::ExpectedDirNotSame);
             }
         }
+
         Ok(())
     }
 }
@@ -78,7 +81,9 @@ fn cmp_file_type(a: &Path, b: &Path) -> bool {
 
 async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     info!("{}", &msg);
-    for entry in ls_dir_content(&root).await?.iter() {
+    let stream = ls_dir_content(root.to_path_buf().clone());
+    pin_mut!(stream);
+    while let Some(Ok(entry)) = stream.next().await {
         info!("path: {}", &entry.display());
         if entry.is_file() {
             let content = fs::read_to_string(&entry).await.unwrap_or_default();
@@ -89,10 +94,10 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
 }
 
 impl Files {
-    fn boxed(a: &Path, b: &Path) -> Box<dyn Tester> {
+    fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn Tester> {
         Box::new(Files {
-            expected_dir: a.to_path_buf(),
-            given_dir: b.to_path_buf(),
+            expected_dir: a,
+            given_dir: b,
         })
     }
 }
@@ -101,8 +106,10 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
 
-    cp_files(&assignment.include_files, &dir_solution).await?;
-    cp_files(&assignment.include_files, &dir_to_test).await?;
+    try_join!(
+        cp_files(&assignment.include_files, &dir_solution),
+        cp_files(&assignment.include_files, &dir_to_test)
+    )?;
 
     let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
@@ -125,8 +132,8 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
 
     tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
     tests.push(Files::boxed(
-        &dir_solution.path().clone(),
-        &dir_to_test.path().clone(),
+        dir_solution.path().to_path_buf(),
+        dir_to_test.path().to_path_buf(),
     ));
 
     let _ = future::try_join_all(tests.iter().map(|item| async move { item.test().await })).await?;

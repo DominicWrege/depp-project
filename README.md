@@ -64,7 +64,6 @@ type = "Shell"                              # required, set the script type
 args = ["rackrent"]                         # optional, a list arguments passed to the 
 include-files = ["examples/akademisches_jahrbuch.txt"] # optional inlcude needed files
 solution-path  = "examples/pk7-Aufgabe1.sh" # required sample solution
-check-files = true                          # optional default is false
 ```
 
 # Discussion
