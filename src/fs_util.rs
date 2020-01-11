@@ -33,8 +33,7 @@ pub async fn ls_dir_content(root: &Path) -> Result<Vec<PathBuf>, Error> {
         return Ok(vec![]);
     }
     let mut stack = vec![root.to_path_buf()];
-    while !stack.is_empty() {
-        let dir = stack.pop().unwrap();
+    while let Some(dir) = stack.pop() {
         let mut dir_entrys = fs::read_dir(&dir).await.map_err(|_e| Error::ListDir(dir))?;
         while let Ok(Some(entry)) = dir_entrys.next_entry().await {
             paths.push(entry.path());
