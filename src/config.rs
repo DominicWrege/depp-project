@@ -27,7 +27,7 @@ pub struct Assignment {
     pub script_type: Script,
     #[serde(default)]
     pub args: Vec<String>,
-    pub script_contains: Option<Pattern>, // delete me
+    //pub script_contains: Option<Pattern>, //
 }
 
 fn into_absolute_path<'de, D>(deserial: D) -> Result<PathBuf, D::Error>

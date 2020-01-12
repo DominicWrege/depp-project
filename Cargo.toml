@@ -2,7 +2,7 @@
 authors = ["Dominic <email@domi-me.de>"]
 edition = "2018"
 name = "deep-api"
-version = "0.2.0"
+version = "0.3.0"
 [dependencies]
 actix-web = "2.0.0"
 base64 = "0.11.0"
@@ -10,15 +10,15 @@ env_logger = "0.7.1"
 err-derive = "0.2.1"
 failure = "0.1.6"
 log = "0.4.8"
-serde = "1.0.102"
-serde_json = "1.0.41"
+serde = "1.0.104"
+serde_json = "1.0.44"
 tempfile = "3.1.0"
 toml = "0.5.5"
 structopt = "0.3.4"
 derive_more = "0.99.2"
 actix-cors = "0.2.0"
 actix-rt = "1.0.0"
-tokio = { version = "0.2.4", features = ["full"] }
+tokio = { version = "0.2.9", features = ["full"] }
 futures = "0.3.1"
 dashmap = "2.1.0"
 async-stream = "0.2.0"
