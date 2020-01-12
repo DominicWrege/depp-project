@@ -32,7 +32,6 @@ pub async fn add_submission(
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
     //let config = state.config.clone();
-    dbg!(&para);
     let mut client = TestClient::connect("http://[::1]:50051")
         .await
         .map_err(|_| Error::RpcOffline)?;
