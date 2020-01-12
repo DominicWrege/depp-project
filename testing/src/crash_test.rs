@@ -1,14 +1,17 @@
-use crate::base64::Base64;
-use crate::config::Assignment;
-use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
+use std::fmt;
+use std::path::{Path, PathBuf};
+use std::time;
+
 use async_trait::async_trait;
 use futures::pin_mut;
 use futures::{future, try_join, StreamExt};
 use log::info;
-use std::fmt;
-use std::path::{Path, PathBuf};
-use std::time;
 use tokio::fs;
+
+use crate::config::Assignment;
+use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
+use crate::script;
+
 #[async_trait]
 pub trait Tester: Sync + Send {
     async fn test(&self) -> Result<(), Error>;
@@ -102,7 +105,7 @@ impl Files {
     }
 }
 
-pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
+pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
 
@@ -114,7 +117,6 @@ pub async fn run(assignment: &Assignment, code: &Base64) -> Result<(), Error> {
     let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
-
     let test_output = assignment
         .script_type
         .run(&script_test_path, &dir_to_test.path(), &assignment.args)

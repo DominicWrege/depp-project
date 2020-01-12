@@ -3,8 +3,8 @@ use std::convert::TryFrom;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::api::AssignmentId;
-use crate::script::Script;
+//use crate::api::AssignmentId;
+use crate::deep_project::Script;
 use serde::{de, Deserialize, Deserializer};
 
 #[derive(Debug, Deserialize)]
@@ -91,3 +91,12 @@ fn path_exists_and_is_file(p: &Path) {
         )
     }
 }
+
+// TODO remove this later and use it
+#[derive(
+    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
+)]
+#[serde(rename_all = "camelCase")]
+pub struct AssignmentId(pub u64);
+
+// TODO remove this later and use it

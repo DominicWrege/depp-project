@@ -1,29 +1,24 @@
-use crate::api;
 use crate::api::{AssignmentId, IliasId};
-use crate::config::Assignment;
-use std::collections::HashMap;
+use crate::deep_project;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
-
 #[derive(Clone)]
 pub struct State {
     pub inner: Arc<InnerState>,
 }
 
 impl State {
-    pub fn new(c: HashMap<AssignmentId, Assignment>) -> State {
+    pub fn new() -> State {
         State {
             inner: Arc::new(InnerState {
                 pending_results: dashmap::DashMap::new(),
-                config: c,
             }),
         }
     }
 }
 
 pub struct InnerState {
-    pub pending_results: dashmap::DashMap<IliasId, api::AssignmentResult>,
-    pub config: HashMap<AssignmentId, Assignment>,
+    pub pending_results: dashmap::DashMap<IliasId, deep_project::AssignmentResult>,
 }
 
 impl Deref for State {

@@ -1,11 +1,12 @@
-use crate::api::{AssignmentId, AssignmentResult, AssignmentShort, IliasId, Submission};
-use crate::crash_test;
-use crate::crash_test::run;
+use crate::api::{AssignmentId, IliasId, Submission};
 use crate::state::State;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use std::fmt::Debug;
+
+use crate::deep_project::test_client::TestClient;
+use crate::deep_project::{AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg};
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
@@ -30,54 +31,54 @@ pub async fn add_submission(
     para: web::Json<Submission>,
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
-    let config = state.config.clone();
+    //let config = state.config.clone();
+
+    let mut client = TestClient::connect("http://[::1]:50051").await.unwrap();
+
     if state.pending_results.contains_key(&para.ilias_id) {
         return Err(Error::DuplicateIliasId);
     }
-    if let Some(assignment) = config.get(&para.assigment_id).map(|x| x.clone()) {
-        tokio::task::spawn(async move {
-            let mut attempts_counter = 0;
-            loop {
-                if attempts_counter >= 5 {
-                    panic!("Server Stopped! System might be corrupted due to to many errors.")
-                }
-                match run(&assignment, &para.source_code).await {
-                    Err(crash_test::Error::CantCreatTempFile(e))
-                    | Err(crash_test::Error::Copy(e)) => {
-                        wait_print_err(e).await;
-                    }
-                    Err(e) => {
-                        break state.pending_results.insert(
-                            para.ilias_id,
-                            AssignmentResult::new(false, Some(e.to_string()), None),
-                        );
-                    }
-                    Ok(_) => {
-                        break state
-                            .pending_results
-                            .insert(para.ilias_id, AssignmentResult::new(true, None, None));
-                    }
-                }
-                attempts_counter = attempts_counter + 1;
-            }
-        });
-    };
 
+    let a_req = tonic::Request::new(AssignmentIdRequest {
+        assignment_id: para.assigment_id.0,
+    });
+
+    if client
+        .assignment_exists(a_req)
+        .await
+        .unwrap()
+        .into_inner()
+        .found
+        == false
+    {
+        return Err(Error::NotAssignment(para.assigment_id));
+    }
+    tokio::task::spawn(async move {
+        let request = tonic::Request::new(AssignmentMsg {
+            assignment_id: para.assigment_id.0,
+            src_code: para.source_code.0,
+        });
+        // TODO fix unwrap
+        let response = client.run_test(request).await.unwrap();
+
+        state
+            .pending_results
+            .insert(para.ilias_id, response.into_inner());
+    });
     Ok(HttpResponse::Created().body(""))
 }
 
-async fn wait_print_err<E: Debug>(e: E) {
-    tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
-    log::info!("System Error. Waiting for 3 secs. {:?}", e);
-}
+// async fn wait_print_err<E: Debug>(e: E) {
+//     tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
+//     log::info!("System Error. Waiting for 3 secs. {:?}", e);
+// }
 
-pub async fn get_assignments(state: web::Data<State>) -> HttpResponse {
-    let list = state
-        .config
-        .iter()
-        .map(|(k, v)| v.into_short(*k))
-        .collect::<Vec<AssignmentShort<'_>>>();
-    HttpResponse::Ok().json(list)
+pub async fn get_assignments(_state: web::Data<State>) -> HttpResponse {
+    let mut client = TestClient::connect("http://[::1]:50051").await.unwrap();
+    let request = tonic::Request::new(());
+
+    let response = client.get_assignments(request).await.unwrap();
+    HttpResponse::Ok().json(response.into_inner().assignments)
 }
 
 pub async fn index() -> HttpResponse {
@@ -112,6 +113,8 @@ pub enum Error {
     // maybe return the ilias id back
     #[fail(display = "No Results not found for given Ilias ID: {}.", _0)]
     NotFoundIliasId(IliasId),
+    #[fail(display = "No Results not found for given assignment ID: {:?}.", _0)]
+    NotAssignment(AssignmentId),
     #[fail(display = "Parameter error {}. {}.", _0, _1)]
     Parameter(String, &'static str),
     #[fail(display = "Request body error. {:?}.", _0)]
@@ -130,7 +133,7 @@ impl ResponseError for Error {
     fn status_code(&self) -> StatusCode {
         match self {
             Error::DuplicateIliasId => StatusCode::CONFLICT,
-            Error::NotFoundIliasId(_) => StatusCode::NOT_FOUND,
+            Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
             Error::Parameter(_, _) => StatusCode::BAD_REQUEST,
             Error::Body(_err) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
@@ -142,9 +145,10 @@ impl ResponseError for Error {
         let code = self.status_code();
         let mut response = HttpResponse::build(code);
         match self {
-            Error::DuplicateIliasId | Error::NotFoundIliasId(_) | Error::Parameter(_, _) => {
-                response.json(err)
-            }
+            Error::DuplicateIliasId
+            | Error::NotFoundIliasId(_)
+            | Error::Parameter(_, _)
+            | Error::NotAssignment(_) => response.json(err),
             Error::Body(err) => response.json(ErrSubmission {
                 msg: err.to_string(),
                 example: SubmissionExample::new(

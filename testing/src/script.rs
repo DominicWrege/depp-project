@@ -1,3 +1,5 @@
+use crate::crash_test::Error;
+use crate::deep_project::Script;
 use serde::Deserialize;
 use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
@@ -6,18 +8,6 @@ use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
-use crate::crash_test::Error;
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
-#[serde(rename_all = "PascalCase")]
-pub enum Script {
-    PowerShell,
-    Batch,
-    Python3,
-    Shell,
-    Bash,
-    Awk,
-    Sed,
-}
 #[cfg(any(lunix, unix))]
 impl Script {
     pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
@@ -26,7 +16,7 @@ impl Script {
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => ("python3", vec![]),
-            Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
+            Script::Bash | Script::Awk | Script::Sed | _ => ("bash", vec![]),
         }
     }
 }
@@ -39,14 +29,8 @@ impl Script {
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),
-            Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
+            Script::Bash | Script::Awk | Script::Sed | _ => ("bash", vec![]),
         }
-    }
-}
-
-impl Default for Script {
-    fn default() -> Self {
-        Script::Batch
     }
 }
 
@@ -56,7 +40,7 @@ impl Script {
             Script::Batch => ".bat",
             Script::PowerShell => ".ps1",
             Script::Python3 => ".py",
-            Script::Shell | Script::Bash | Script::Sed | Script::Awk => ".sh",
+            Script::Shell | Script::Bash | Script::Sed | Script::Awk | _ => ".sh",
         }
     }
 

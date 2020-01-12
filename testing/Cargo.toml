@@ -1,27 +1,19 @@
 [package]
-name = "deep-api"
+name = "testing-server"
+version = "0.3.0"
 authors = ["Dominic <email@domi-me.de>"]
 edition = "2018"
-version = "0.3.0"
-
-[[bin]]
-name = "api-client"
-path = "api/src/main.rs"
 
 [[bin]]
 name = "testing-server"
-path = "testing/src/server.rs"
+path = "src/server.rs"
 
 [dependencies]
 tonic = "0.1.0-beta.1"
 bytes = "0.4"
 prost = "0.5"
-tokio = { version = "0.2.9", features = ["full"] }
-futures = "0.3.1"
 
-actix-web = "2.0.0"
-actix-cors = "0.2.0"
-actix-rt = "1.0.0"
+tokio = { version = "0.2.9", features = ["full"] }
 
 err-derive = "0.2.1"
 failure = "0.1.6"
@@ -32,15 +24,13 @@ tempfile = "3.1.0"
 toml = "0.5.5"
 structopt = "0.3.4"
 derive_more = "0.99.2"
+futures = "0.3.1"
 async-stream = "0.2.0"
 async-trait = "0.1.22"
-env_logger = "0.7.1"
-dashmap = "2.1.1"
+
+prost-types = "0.5"
 base64 = "0.11.0"
 
-[dependencies.uuid]
-features = ["serde", "v4"]
-version = "0.8.1"
 
 [build-dependencies]
 tonic-build = "0.1.0-beta.1"

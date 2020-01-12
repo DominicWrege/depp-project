@@ -1,6 +1,5 @@
-use crate::base64::Base64;
 use crate::crash_test::Error;
-use crate::script::Script;
+use crate::deep_project::Script;
 use async_stream::try_stream;
 use futures::stream::Stream;
 use futures::try_join;
@@ -11,12 +10,12 @@ use tokio::{fs, io};
 
 pub fn new_tmp_script_file(
     script_type: Script,
-    content: &Base64,
+    content: &str,
 ) -> Result<NamedTempFile, std::io::Error> {
     let mut file = Builder::new()
         .suffix(script_type.file_extension())
         .tempfile()?;
-    file.write(&content.0.as_bytes())?;
+    file.write(&content.as_bytes())?;
     Ok(file)
 }
 pub async fn cp_files(files: &Vec<PathBuf>, dir: &TempDir) -> Result<(), Error> {
