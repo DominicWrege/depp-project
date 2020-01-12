@@ -53,15 +53,15 @@ pub async fn add_submission(
             assignment: Some(assignment),
             source_code: para.source_code.0,
         });
-        // TODO fix unwrap
-        if let Ok() = client.run_test(request).await {
-        } else {
-        }
         match client.run_test(request).await {
-            Ok(response) => state
-                .pending_results
-                .insert(para.ilias_id, response.into_inner()),
-            Err(e) => log::info!("error from rpc {:?}", e),
+            Ok(response) => {
+                state
+                    .pending_results
+                    .insert(para.ilias_id, response.into_inner());
+            }
+            Err(e) => {
+                log::info!("error from rpc {:?}", e);
+            }
         }
     });
     Ok(HttpResponse::Created().body(""))
