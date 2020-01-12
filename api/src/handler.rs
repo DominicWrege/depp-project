@@ -33,8 +33,9 @@ pub async fn add_submission(
     let para = para.into_inner();
     //let config = state.config.clone();
     dbg!(&para);
-    let mut client = TestClient::connect("http://[::1]:50051").await.unwrap();
-
+    let mut client = TestClient::connect("http://[::1]:50051")
+        .await
+        .map_err(|_| Error::RpcOffline)?;
     if state.pending_results.contains_key(&para.ilias_id) {
         return Err(Error::DuplicateIliasId);
     }
@@ -72,12 +73,14 @@ pub async fn add_submission(
 //     log::info!("System Error. Waiting for 3 secs. {:?}", e);
 // }
 
-pub async fn get_assignments(_state: web::Data<State>) -> HttpResponse {
-    let mut client = TestClient::connect("http://[::1]:50051").await.unwrap();
+pub async fn get_assignments(_state: web::Data<State>) -> Result<HttpResponse, Error> {
+    let mut client = TestClient::connect("http://[::1]:50051")
+        .await
+        .map_err(|_| Error::RpcOffline)?;
     let request = tonic::Request::new(());
 
     let response = client.get_assignments(request).await.unwrap();
-    HttpResponse::Ok().json(response.into_inner().assignments)
+    Ok(HttpResponse::Ok().json(response.into_inner().assignments))
 }
 
 pub async fn index() -> HttpResponse {
@@ -118,6 +121,8 @@ pub enum Error {
     Parameter(String, &'static str),
     #[fail(display = "Request body error. {:?}.", _0)]
     Body(JsonPayloadError),
+    #[fail(display = "The Testing Server is offline")]
+    RpcOffline,
 }
 impl<T> From<T> for Error
 where
