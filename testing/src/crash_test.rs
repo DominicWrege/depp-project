@@ -10,7 +10,7 @@ use tokio::fs;
 
 use crate::config::Assignment;
 use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
-use crate::script;
+// use crate::script;
 
 #[async_trait]
 pub trait Tester: Sync + Send {

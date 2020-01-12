@@ -6,10 +6,11 @@ import "google/protobuf/wrappers.proto";
 
 service Test {
   rpc RunTest(AssignmentMsg) returns (AssignmentResult) {}
-  rpc GetAssignments(google.protobuf.Empty) returns (VecAssignmentsShort) {}
-  rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse) {}
+  rpc GetAssignments(google.protobuf.Empty) returns (VecAssignmentsShort);
+  rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse);
+  rpc GetAssignment(AssignmentIdRequest) returns (Assignment);
 }
-message AssignmentIdRequest{ uint64 assignment_id = 1; }
+message AssignmentIdRequest { uint64 assignment_id = 1; }
 message AssignmentIdResponse { bool found = 1; }
 
 message VecAssignmentsShort { repeated AssignmentShort assignments = 1; }
@@ -25,10 +26,6 @@ message AssignmentResult {
   google.protobuf.StringValue mark = 3; // type mark
 }
 
-message Mark {
-
-}
-
 enum Script {
   Unknown = 0;
   PowerShell = 1;
@@ -40,9 +37,17 @@ enum Script {
   Sed = 7;
 }
 
+message Assignment {
+  string name = 1;
+  string solution_path = 2;
+  repeated string include_files = 3;
+  Script script_type = 4;
+  repeated string args = 5;
+}
+
 message AssignmentMsg {
-  string src_code = 1;
-  uint64 assignment_id = 2;
+  Assignment assignment = 1;
+  string source_code = 2;
 }
 
 // The response message containing the greetings

@@ -32,7 +32,7 @@ pub async fn add_submission(
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
     //let config = state.config.clone();
-
+    dbg!(&para);
     let mut client = TestClient::connect("http://[::1]:50051").await.unwrap();
 
     if state.pending_results.contains_key(&para.ilias_id) {
@@ -40,30 +40,29 @@ pub async fn add_submission(
     }
 
     let a_req = tonic::Request::new(AssignmentIdRequest {
-        assignment_id: para.assigment_id.0,
+        assignment_id: para.assignment_id.0,
     });
-
-    if client
-        .assignment_exists(a_req)
+    let assignment = client
+        .get_assignment(a_req)
         .await
-        .unwrap()
-        .into_inner()
-        .found
-        == false
-    {
-        return Err(Error::NotAssignment(para.assigment_id));
-    }
+        .map_err(|_| Error::NotAssignment(para.assignment_id))?
+        .into_inner();
+    dbg!(&assignment);
     tokio::task::spawn(async move {
         let request = tonic::Request::new(AssignmentMsg {
-            assignment_id: para.assigment_id.0,
-            src_code: para.source_code.0,
+            assignment: Some(assignment),
+            source_code: para.source_code.0,
         });
         // TODO fix unwrap
-        let response = client.run_test(request).await.unwrap();
-
-        state
-            .pending_results
-            .insert(para.ilias_id, response.into_inner());
+        if let Ok() = client.run_test(request).await {
+        } else {
+        }
+        match client.run_test(request).await {
+            Ok(response) => state
+                .pending_results
+                .insert(para.ilias_id, response.into_inner()),
+            Err(e) => log::info!("error from rpc {:?}", e),
+        }
     });
     Ok(HttpResponse::Created().body(""))
 }
@@ -113,7 +112,7 @@ pub enum Error {
     // maybe return the ilias id back
     #[fail(display = "No Results not found for given Ilias ID: {}.", _0)]
     NotFoundIliasId(IliasId),
-    #[fail(display = "No Results not found for given assignment ID: {:?}.", _0)]
+    #[fail(display = "No Results not found for given assignment ID: {}.", _0)]
     NotAssignment(AssignmentId),
     #[fail(display = "Parameter error {}. {}.", _0, _1)]
     Parameter(String, &'static str),
@@ -168,7 +167,7 @@ impl ResponseError for Error {
 pub struct SubmissionExample {
     pub ilias_id: IliasId,
     pub source_code: &'static str,
-    pub assigment_id: AssignmentId,
+    pub assignment_id: AssignmentId,
 }
 
 #[derive(serde::Serialize, Debug, Clone, derive_more::Constructor)]

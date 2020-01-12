@@ -28,8 +28,6 @@ where
     std::fs::canonicalize(relative_path).map_err(de::Error::custom)
 }
 
-/// TODO
-
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssignmentShort<'a> {
@@ -55,7 +53,16 @@ pub struct AssignmentShort<'a> {
 pub struct IliasId(u64);
 
 #[derive(
-    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
+    Debug,
+    Clone,
+    Hash,
+    Eq,
+    PartialEq,
+    Deserialize,
+    serde::Serialize,
+    Copy,
+    derive_more::From,
+    derive_more::Display,
 )]
 #[serde(rename_all = "camelCase")]
 pub struct AssignmentId(pub u64);
@@ -65,7 +72,7 @@ pub struct AssignmentId(pub u64);
 pub struct Submission {
     pub ilias_id: IliasId,
     pub source_code: Base64,
-    pub assigment_id: AssignmentId,
+    pub assignment_id: AssignmentId,
 }
 
 // #[derive(Debug, Deserialize, Serialize)]

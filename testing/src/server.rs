@@ -8,14 +8,13 @@ mod script;
 
 use deep_project::test_server::{Test, TestServer};
 use deep_project::{
-    AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, AssignmentShort,
-    Script, VecAssignmentsShort,
+    AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, VecAssignmentsShort,
 };
 use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 
 //use base64;
-use config::{parse_config, Assignment, AssignmentId};
+use config::{parse_config, AssignmentId};
 
 pub mod deep_project {
     tonic::include_proto!("deep_project");
@@ -29,11 +28,11 @@ struct Opt {
 
 #[derive(Default, Debug)]
 pub struct Tester {
-    assignments: HashMap<AssignmentId, Assignment>,
+    assignments: HashMap<AssignmentId, config::Assignment>,
 }
 
 impl Tester {
-    fn new(assignments: HashMap<AssignmentId, Assignment>) -> Self {
+    fn new(assignments: HashMap<AssignmentId, config::Assignment>) -> Self {
         Tester { assignments }
     }
 }
@@ -45,12 +44,9 @@ impl Test for Tester {
         request: Request<AssignmentMsg>,
     ) -> Result<Response<AssignmentResult>, Status> {
         let msg = request.into_inner();
-        let id = AssignmentId(msg.assignment_id);
-        // TODO fix it
-        if let Some(assignment) = &self.assignments.get(&id).map(|x| x.clone()) {
-            // let _ = crash_test::run(&assignment, &msg.src_code).await.unwrap();
-
-            let reply = match crash_test::run(&assignment, &msg.src_code).await {
+        let (assignment, code) = (msg.assignment, msg.source_code);
+        if let Some(assignment) = assignment {
+            let reply = match crash_test::run(&config::Assignment::from(assignment), &code).await {
                 Err(crash_test::Error::CantCreatTempFile(e)) | Err(crash_test::Error::Copy(e)) => {
                     //wait_print_err(e).await;
                     panic!(e);
@@ -68,12 +64,10 @@ impl Test for Tester {
             };
             Ok(Response::new(reply))
         } else {
-            // TODO terrible
-            Ok(Response::new(AssignmentResult {
-                passed: true,
-                message: None,
-                mark: None,
-            }))
+            Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "assignment is null",
+            ))
         }
     }
 
@@ -93,13 +87,59 @@ impl Test for Tester {
 
         Ok(Response::new(AssignmentIdResponse { found: ret }))
     }
+
+    async fn get_assignment(
+        &self,
+        request: Request<AssignmentIdRequest>,
+    ) -> Result<Response<deep_project::Assignment>, Status> {
+        let id = AssignmentId(request.into_inner().assignment_id);
+        if let Some(assignment) = &self.assignments.get(&id) {
+            let ret = deep_project::Assignment {
+                name: assignment.name.clone(),
+                solution_path: assignment
+                    .solution_path
+                    .to_str()
+                    .unwrap_or_default()
+                    .to_string(),
+                include_files: assignment
+                    .include_files
+                    .iter()
+                    .map(|p| p.to_str().unwrap_or_default().to_string())
+                    .collect::<Vec<_>>(),
+                script_type: assignment.script_type.into(),
+                args: assignment.args.clone(),
+            };
+            Ok(Response::new(ret))
+        } else {
+            Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "id is not found",
+            ))
+        }
+    }
+}
+
+impl From<deep_project::Assignment> for config::Assignment {
+    fn from(assignment: deep_project::Assignment) -> Self {
+        config::Assignment {
+            name: assignment.name.clone(),
+            solution_path: Path::new(&assignment.solution_path).to_path_buf(),
+            include_files: assignment
+                .include_files
+                .iter()
+                .map(|p| Path::new(&p).to_path_buf())
+                .collect::<Vec<_>>(),
+            script_type: assignment.script_type.into(),
+            args: assignment.args.clone(),
+        }
+    }
 }
 
 impl From<HashMap<config::AssignmentId, config::Assignment>> for VecAssignmentsShort {
     fn from(thing: HashMap<config::AssignmentId, config::Assignment>) -> Self {
         let a = thing
             .into_iter()
-            .map(|(id, a)| AssignmentShort {
+            .map(|(id, a)| deep_project::AssignmentShort {
                 name: a.name,
                 assignment_id: id.0,
             })

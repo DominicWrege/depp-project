@@ -21,6 +21,20 @@ impl Script {
     }
 }
 
+impl From<i32> for Script {
+    fn from(n: i32) -> Self {
+        match n {
+            1 => Script::PowerShell,
+            3 => Script::Python3,
+            4 => Script::Shell,
+            5 => Script::Bash,
+            6 => Script::Awk,
+            7 => Script::Sed,
+            2 | _ => Script::Batch,
+        }
+    }
+}
+
 #[cfg(target_os = "windows")]
 impl Script {
     pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
