@@ -33,7 +33,7 @@ pub async fn add_submission(
     if state.pending_results.contains_key(&para.ilias_id) {
         return Err(Error::DuplicateIliasId);
     }
-    if let Some(assignment) = config.get(&para.assigment_id).map(|x| x.clone()) {
+    if let Some(assignment) = config.get(&para.assignment_id).map(|x| x.clone()) {
         tokio::task::spawn(async move {
             let mut attempts_counter = 0;
             loop {
@@ -158,7 +158,7 @@ impl ResponseError for Error {
 pub struct SubmissionExample {
     pub ilias_id: IliasId,
     pub source_code: &'static str,
-    pub assigment_id: AssignmentId,
+    pub assignment_id: AssignmentId,
 }
 
 #[derive(serde::Serialize, Debug, Clone, derive_more::Constructor)]

@@ -13,12 +13,12 @@ servers:
 paths:
     /assignments:
         get:
-            summary: "Lists of all existings assigments"
-            description: "The Endpoint stores all assigments provied by the docent."
+            summary: "Lists of all existings assignments"
+            description: "The Endpoint stores all assignments provied by the docent."
             operationId: "getAssignments"
             responses:
                 200:
-                    description: "All assigments as an array."
+                    description: "All assignments as an array."
                     content:
                         application/json:
                             schema:
@@ -116,13 +116,13 @@ components:
                     example: "QGVjaG8gb2ZmDQpta2RpciBTY2hyaWZ0c3R1ZWNrZQ0KY2QgLlxTY2hyaWZ0c3R1ZWNrZQ0KbWtk
     aXIgQWx0DQpta2RpciBOZXUNCm1rZGlyIC5cQWx0XExhdGV4DQpta2RpciAuXE5ldVxMYXRleA0K
     Zm9yIC9SICUlYSBpbiAoLikgZG8gZWNobyAiJSV+ZmEiPiUlfmZhXHRlc3QudGV4DQpjZCAuLg=="
-                assigmentId:
+                assignmentId:
                     type: integer
                     format: int64
             required:
                 - iliasId
                 - sourceCode
-                - assigmentId
+                - assignmentId
         Result:
             type: object
             properties:
@@ -143,7 +143,7 @@ components:
         Assignment:
             type: object
             properties: 
-                assigmentId: 
+                assignmentId: 
                     type: integer
                     format: int64
                 name:

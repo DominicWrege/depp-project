@@ -45,7 +45,7 @@ pub struct AssignmentId(pub u64);
 pub struct Submission {
     pub ilias_id: IliasId,
     pub source_code: Base64,
-    pub assigment_id: AssignmentId,
+    pub assignment_id: AssignmentId,
 }
 
 #[derive(Debug, Deserialize, Serialize, derive_more::Constructor)]
