@@ -57,7 +57,6 @@ impl Script {
             Script::Shell | Script::Bash | Script::Sed | Script::Awk | _ => ".sh",
         }
     }
-
     pub async fn run(
         &self,
         script_path: &Path,

@@ -48,7 +48,6 @@ pub async fn add_submission(
         .await
         .map_err(|_| Error::NotAssignment(para.assignment_id))?
         .into_inner();
-    dbg!(&assignment);
     tokio::task::spawn(async move {
         let request = tonic::Request::new(AssignmentMsg {
             assignment: Some(assignment),
