@@ -87,9 +87,8 @@ pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }
 
-pub async fn version(state: web::Data<State>) -> HttpResponse {
-    let rpc_status = &state.status.read().unwrap();
-    HttpResponse::Ok().json(Meta::new("0.3", rpc_status))
+pub async fn version() -> HttpResponse {
+    HttpResponse::Ok().json(Meta::new("0.3", &get_rpc_status().await))
 }
 #[derive(serde::Serialize)]
 struct ErrJson {

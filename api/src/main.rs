@@ -21,7 +21,7 @@ async fn run() -> Result<(), failure::Error> {
     tokio::task::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60 * 10));
         while let Some(_) = interval.next().await {
-            c_state.pending_results.shrink_to_fit()
+            c_state.pending_results.shrink_to_fit();
         }
     });
     env_logger::init();

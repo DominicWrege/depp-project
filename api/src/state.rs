@@ -3,7 +3,6 @@ use crate::deep_project;
 use crate::deep_project::test_client::TestClient;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
-use std::sync::RwLock;
 
 #[derive(Clone)]
 pub struct State {
@@ -11,11 +10,10 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new() -> State {
+    pub fn new() -> State {
         State {
             inner: Arc::new(InnerState {
                 pending_results: dashmap::DashMap::new(),
-                status: RwLock::new(get_rpc_status().await),
             }),
         }
     }
@@ -45,12 +43,11 @@ pub struct Meta<'a> {
 #[serde(rename_all = "camelCase")]
 pub enum EndPointStatus {
     Online,
-    Maintenance,
+    // Maintenance,
     Offline,
 }
 pub struct InnerState {
     pub pending_results: dashmap::DashMap<IliasId, deep_project::AssignmentResult>,
-    pub status: RwLock<EndPointStatus>,
 }
 
 impl Deref for State {
