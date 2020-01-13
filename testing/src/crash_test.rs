@@ -24,7 +24,13 @@ pub struct Files {
     expected_dir: PathBuf,
     given_dir: PathBuf,
 }
-//struct Contains;
+
+impl Stdout {
+    fn boxed(expected: String, std_out: String) -> Box<dyn Tester> {
+        Box::new(Stdout { expected, std_out })
+    }
+}
+
 #[async_trait]
 impl Tester for Stdout {
     async fn test(&self) -> Result<(), Error> {
@@ -43,9 +49,15 @@ impl Tester for Stdout {
     }
 }
 
-impl Stdout {
-    fn boxed(expected: String, std_out: String) -> Box<dyn Tester> {
-        Box::new(Stdout { expected, std_out })
+impl Files {
+    fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn Tester> {
+        Box::new(Files {
+            expected_dir: a,
+            given_dir: b,
+        })
+    }
+    fn cmp_file_type(&self, a: &Path, b: &Path) -> bool {
+        (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
     }
 }
 
@@ -60,7 +72,9 @@ impl Tester for Files {
             let path_to_check = &self.given_dir.as_path().join(
                 solution_entry.strip_prefix(&self.expected_dir).unwrap(), // TODO err handling
             );
-            if path_to_check.exists() && cmp_file_type(&solution_entry, &path_to_check.as_path()) {
+            if path_to_check.exists()
+                && self.cmp_file_type(&solution_entry, &path_to_check.as_path())
+            {
                 if solution_entry.is_file() {
                     let solution_content =
                         trim_new_lines(&fs::read_to_string(&solution_entry).await?);
@@ -78,10 +92,6 @@ impl Tester for Files {
     }
 }
 
-fn cmp_file_type(a: &Path, b: &Path) -> bool {
-    (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
-}
-
 async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     info!("{}", &msg);
     let stream = ls_dir_content(root.to_path_buf().clone());
@@ -94,15 +104,6 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
         }
     }
     Ok(())
-}
-
-impl Files {
-    fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn Tester> {
-        Box::new(Files {
-            expected_dir: a,
-            given_dir: b,
-        })
-    }
 }
 
 pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {

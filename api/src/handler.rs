@@ -1,14 +1,16 @@
-use crate::api::{AssignmentId, IliasId, Submission};
-use crate::state::{get_rpc_status, EndPointStatus, Meta, State};
+use std::fmt::Debug;
+
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
-use std::fmt::Debug;
+
+use uuid::Uuid;
+
+use crate::api::{AssignmentId, IliasId, Submission};
+use crate::state::{get_rpc_status, Meta, State};
 
 use crate::deep_project::test_client::TestClient;
-use crate::deep_project::{AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg};
-use std::io::Write;
-use std::sync::RwLock;
+use crate::deep_project::{AssignmentIdRequest, AssignmentMsg};
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
@@ -42,7 +44,7 @@ pub async fn add_submission(
     }
 
     let a_req = tonic::Request::new(AssignmentIdRequest {
-        assignment_id: para.assignment_id.0,
+        assignment_id: para.assignment_id.0.to_string(),
     });
     let assignment = client
         .get_assignment(a_req)
@@ -158,7 +160,9 @@ impl ResponseError for Error {
                 example: SubmissionExample::new(
                     2009.into(),
                     "ZWNobyAiSGFsbG8iID4+IGhhbGxvLnR4dAo=",
-                    AssignmentId(64),
+                    Uuid::parse_str("936DA01F9ABD4d9d80C702AF85C822A8")
+                        .unwrap()
+                        .into(),
                 ),
             }),
             _ => HttpResponse::InternalServerError().json(err),

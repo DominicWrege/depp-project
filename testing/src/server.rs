@@ -12,7 +12,7 @@ use deep_project::{
 };
 use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
-
+use uuid::Uuid;
 //use base64;
 use config::{parse_config, AssignmentId};
 
@@ -82,7 +82,8 @@ impl Test for Tester {
         &self,
         request: Request<AssignmentIdRequest>,
     ) -> Result<Response<AssignmentIdResponse>, Status> {
-        let id = AssignmentId(request.into_inner().assignment_id);
+        let uuid = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
+        let id = AssignmentId(uuid);
         let ret = self.assignments.get(&id).map(|x| x.clone()).is_some();
 
         Ok(Response::new(AssignmentIdResponse { found: ret }))
@@ -92,7 +93,8 @@ impl Test for Tester {
         &self,
         request: Request<AssignmentIdRequest>,
     ) -> Result<Response<deep_project::Assignment>, Status> {
-        let id = AssignmentId(request.into_inner().assignment_id);
+        let uuid = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
+        let id = AssignmentId(uuid);
         if let Some(assignment) = &self.assignments.get(&id) {
             let ret = deep_project::Assignment {
                 name: assignment.name.clone(),
@@ -141,7 +143,7 @@ impl From<HashMap<config::AssignmentId, config::Assignment>> for VecAssignmentsS
             .into_iter()
             .map(|(id, a)| deep_project::AssignmentShort {
                 name: a.name,
-                assignment_id: id.0,
+                assignment_id: id.0.to_string(),
             })
             .collect::<_>();
         VecAssignmentsShort { assignments: a }

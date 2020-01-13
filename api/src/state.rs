@@ -1,4 +1,4 @@
-use crate::api::{AssignmentId, IliasId};
+use crate::api::IliasId;
 use crate::deep_project;
 use crate::deep_project::test_client::TestClient;
 use std::ops::{Deref, DerefMut};

@@ -10,14 +10,14 @@ service Test {
   rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse);
   rpc GetAssignment(AssignmentIdRequest) returns (Assignment);
 }
-message AssignmentIdRequest { uint64 assignment_id = 1; }
+message AssignmentIdRequest { string assignment_id = 1; }
 message AssignmentIdResponse { bool found = 1; }
 
 message VecAssignmentsShort { repeated AssignmentShort assignments = 1; }
 
 message AssignmentShort {
   string name = 1;
-  uint64 assignment_id = 2;
+  string assignment_id = 2;
 }
 
 message AssignmentResult {
@@ -49,6 +49,3 @@ message AssignmentMsg {
   Assignment assignment = 1;
   string source_code = 2;
 }
-
-// The response message containing the greetings
-message HelloReply { string message = 1; }

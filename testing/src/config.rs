@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::fs;
-use std::path::{Path, PathBuf};
-
-//use crate::api::AssignmentId;
 use crate::deep_project::Script;
 use serde::{de, Deserialize, Deserializer};
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -39,12 +37,6 @@ where
     fs::canonicalize(relative_path).map_err(de::Error::custom)
 }
 
-impl From<usize> for AssignmentId {
-    fn from(n: usize) -> Self {
-        AssignmentId(u64::try_from(n).unwrap_or_default())
-    }
-}
-
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Pattern {
@@ -72,13 +64,12 @@ pub fn parse_config(path: &Path) -> Result<HashMap<AssignmentId, Assignment>, Er
 fn into_config_map(conf: Config) -> HashMap<AssignmentId, Assignment> {
     conf.assignment
         .into_iter()
-        .enumerate()
-        .map(|(id, assignment)| {
+        .map(|assignment| {
             for path in &assignment.include_files {
                 path_exists_and_is_file(&path);
             }
             path_exists_and_is_file(&assignment.solution_path);
-            (AssignmentId::from(id), assignment)
+            (Uuid::new_v4().into(), assignment)
         })
         .collect::<HashMap<AssignmentId, Assignment>>()
 }
@@ -97,6 +88,6 @@ fn path_exists_and_is_file(p: &Path) {
     Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
 )]
 #[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub u64);
+pub struct AssignmentId(pub Uuid);
 
 // TODO remove this later and use it

@@ -1,6 +1,5 @@
 use crate::crash_test::Error;
 use crate::deep_project::Script;
-use serde::Deserialize;
 use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
 use std::process::Output;

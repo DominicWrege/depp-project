@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 //TODO fix me
 use serde::{de, Deserializer};
 use std::path::PathBuf;
+use uuid::Uuid;
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Assignment {
@@ -65,7 +66,7 @@ pub struct IliasId(u64);
     derive_more::Display,
 )]
 #[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub u64);
+pub struct AssignmentId(pub Uuid);
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
