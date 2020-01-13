@@ -1,5 +1,5 @@
 use crate::api::{AssignmentId, IliasId, Submission};
-use crate::state::State;
+use crate::state::{get_rpc_status, EndPointStatus, Meta, State};
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
@@ -7,6 +7,8 @@ use std::fmt::Debug;
 
 use crate::deep_project::test_client::TestClient;
 use crate::deep_project::{AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg};
+use std::io::Write;
+use std::sync::RwLock;
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
@@ -85,8 +87,9 @@ pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }
 
-pub async fn version() -> web::Json<MetaJson> {
-    web::Json(MetaJson::new(0.2, EndPointStatus::Online))
+pub async fn version(state: web::Data<State>) -> HttpResponse {
+    let rpc_status = &state.status.read().unwrap();
+    HttpResponse::Ok().json(Meta::new("0.3", rpc_status))
 }
 #[derive(serde::Serialize)]
 struct ErrJson {
@@ -171,26 +174,4 @@ pub struct SubmissionExample {
     pub ilias_id: IliasId,
     pub source_code: &'static str,
     pub assignment_id: AssignmentId,
-}
-
-#[derive(serde::Serialize, Debug, Clone, derive_more::Constructor)]
-#[serde(rename_all = "camelCase")]
-pub struct MetaJson {
-    pub version: f32,
-    pub status: EndPointStatus,
-}
-
-#[derive(serde::Serialize, Debug, Clone)]
-#[allow(dead_code)]
-#[serde(rename_all = "camelCase")]
-pub enum EndPointStatus {
-    Online,
-    Maintenance,
-    Offline,
-}
-
-impl Default for EndPointStatus {
-    fn default() -> Self {
-        EndPointStatus::Online
-    }
 }
