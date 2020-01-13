@@ -1,6 +1,5 @@
 use crate::api::IliasId;
-use crate::deep_project;
-use crate::deep_project::test_client::TestClient;
+use grpc_api::test_client::TestClient;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
@@ -26,7 +25,7 @@ impl Default for EndPointStatus {
 }
 
 pub async fn get_rpc_status() -> EndPointStatus {
-    match TestClient::connect("http://[::1]:50051").await {
+    match TestClient::connect("http://testing:50051").await {
         Ok(_) => EndPointStatus::Online,
         Err(_) => EndPointStatus::Offline,
     }
@@ -47,7 +46,7 @@ pub enum EndPointStatus {
     Offline,
 }
 pub struct InnerState {
-    pub pending_results: dashmap::DashMap<IliasId, deep_project::AssignmentResult>,
+    pub pending_results: dashmap::DashMap<IliasId, grpc_api::AssignmentResult>,
 }
 
 impl Deref for State {

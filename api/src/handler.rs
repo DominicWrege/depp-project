@@ -9,8 +9,8 @@ use uuid::Uuid;
 use crate::api::{AssignmentId, IliasId, Submission};
 use crate::state::{get_rpc_status, Meta, State};
 
-use crate::deep_project::test_client::TestClient;
-use crate::deep_project::{AssignmentIdRequest, AssignmentMsg};
+use grpc_api::test_client::TestClient;
+use grpc_api::{AssignmentIdRequest, AssignmentMsg};
 
 fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
     let id = para;
@@ -36,7 +36,7 @@ pub async fn add_submission(
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
     //let config = state.config.clone();
-    let mut client = TestClient::connect("http://[::1]:50051")
+    let mut client = TestClient::connect("http://testing:50051")
         .await
         .map_err(|_| Error::RpcOffline)?;
     if state.pending_results.contains_key(&para.ilias_id) {
@@ -44,7 +44,7 @@ pub async fn add_submission(
     }
 
     let a_req = tonic::Request::new(AssignmentIdRequest {
-        assignment_id: para.assignment_id.0.to_string(),
+        assignment_id: para.assignment_id.to_string(),
     });
     let assignment = client
         .get_assignment(a_req)
@@ -76,7 +76,7 @@ pub async fn add_submission(
 // }
 
 pub async fn get_assignments(_state: web::Data<State>) -> Result<HttpResponse, Error> {
-    let mut client = TestClient::connect("http://[::1]:50051")
+    let mut client = TestClient::connect("http://testing:50051")
         .await
         .map_err(|_| Error::RpcOffline)?;
     let request = tonic::Request::new(());
@@ -110,20 +110,20 @@ impl From<&Error> for ErrJson {
 
 #[derive(failure::Fail, Debug)]
 pub enum Error {
-    #[fail(display = "Generic Error {}.", _0)]
+    #[fail(display = "Generic Error {}", _0)]
     General(Box<dyn std::error::Error + Sync + Send>),
-    #[fail(display = "Duplicate Ilias ID.")]
+    #[fail(display = "Duplicate IliasID")]
     DuplicateIliasId,
     // maybe return the ilias id back
-    #[fail(display = "No Results not found for given Ilias ID: {}.", _0)]
+    #[fail(display = "No Results not found for given IliasID: {}", _0)]
     NotFoundIliasId(IliasId),
-    #[fail(display = "No Results not found for given assignment ID: {}.", _0)]
+    #[fail(display = "No Results not found for given AssignmentID: {}", _0)]
     NotAssignment(AssignmentId),
-    #[fail(display = "Parameter error {}. {}.", _0, _1)]
+    #[fail(display = "Parameter error {} {}", _0, _1)]
     Parameter(String, &'static str),
-    #[fail(display = "Request body error. {:?}.", _0)]
+    #[fail(display = "Request body error. {:?}", _0)]
     Body(JsonPayloadError),
-    #[fail(display = "The Testing Server is offline")]
+    #[fail(display = "The testing server is offline")]
     RpcOffline,
 }
 impl<T> From<T> for Error
@@ -160,9 +160,7 @@ impl ResponseError for Error {
                 example: SubmissionExample::new(
                     2009.into(),
                     "ZWNobyAiSGFsbG8iID4+IGhhbGxvLnR4dAo=",
-                    Uuid::parse_str("936DA01F9ABD4d9d80C702AF85C822A8")
-                        .unwrap()
-                        .into(),
+                    Uuid::parse_str("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
                 ),
             }),
             _ => HttpResponse::InternalServerError().json(err),
@@ -172,9 +170,8 @@ impl ResponseError for Error {
 
 #[derive(Debug, serde::Serialize, derive_more::Constructor)]
 #[serde(rename_all = "camelCase")]
-
 pub struct SubmissionExample {
     pub ilias_id: IliasId,
     pub source_code: &'static str,
-    pub assignment_id: AssignmentId,
+    pub assignment_id: Uuid,
 }

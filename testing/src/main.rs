@@ -6,8 +6,8 @@ mod crash_test;
 mod fs_util;
 mod script;
 
-use deep_project::test_server::{Test, TestServer};
-use deep_project::{
+use grpc_api::test_server::{Test, TestServer};
+use grpc_api::{
     AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, VecAssignmentsShort,
 };
 use structopt::StructOpt;
@@ -15,10 +15,6 @@ use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 //use base64;
 use config::{parse_config, AssignmentId};
-
-pub mod deep_project {
-    tonic::include_proto!("deep_project");
-}
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -75,7 +71,7 @@ impl Test for Tester {
         &self,
         _: Request<()>,
     ) -> Result<Response<VecAssignmentsShort>, Status> {
-        let reply = self.assignments.clone().into();
+        let reply = assignments_to_msg(self.assignments.clone());
         Ok(Response::new(reply))
     }
     async fn assignment_exists(
@@ -92,11 +88,11 @@ impl Test for Tester {
     async fn get_assignment(
         &self,
         request: Request<AssignmentIdRequest>,
-    ) -> Result<Response<deep_project::Assignment>, Status> {
+    ) -> Result<Response<grpc_api::Assignment>, Status> {
         let uuid = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
         let id = AssignmentId(uuid);
         if let Some(assignment) = &self.assignments.get(&id) {
-            let ret = deep_project::Assignment {
+            let ret = grpc_api::Assignment {
                 name: assignment.name.clone(),
                 solution_path: assignment
                     .solution_path
@@ -121,8 +117,8 @@ impl Test for Tester {
     }
 }
 
-impl From<deep_project::Assignment> for config::Assignment {
-    fn from(assignment: deep_project::Assignment) -> Self {
+impl From<grpc_api::Assignment> for config::Assignment {
+    fn from(assignment: grpc_api::Assignment) -> Self {
         config::Assignment {
             name: assignment.name.clone(),
             solution_path: Path::new(&assignment.solution_path).to_path_buf(),
@@ -137,24 +133,24 @@ impl From<deep_project::Assignment> for config::Assignment {
     }
 }
 
-impl From<HashMap<config::AssignmentId, config::Assignment>> for VecAssignmentsShort {
-    fn from(thing: HashMap<config::AssignmentId, config::Assignment>) -> Self {
-        let a = thing
-            .into_iter()
-            .map(|(id, a)| deep_project::AssignmentShort {
-                name: a.name,
-                assignment_id: id.0.to_string(),
-            })
-            .collect::<_>();
-        VecAssignmentsShort { assignments: a }
-    }
+fn assignments_to_msg(
+    thing: HashMap<config::AssignmentId, config::Assignment>,
+) -> VecAssignmentsShort {
+    let a = thing
+        .into_iter()
+        .map(|(id, a)| grpc_api::AssignmentShort {
+            name: a.name,
+            assignment_id: id.0.to_string(),
+        })
+        .collect::<_>();
+    VecAssignmentsShort { assignments: a }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    let addr = "[::1]:50051".parse().unwrap();
+    let addr = "0.0.0.0:50051".parse().unwrap();
     let opt = Opt::from_args();
     let test = Tester::new(parse_config(&opt.config)?);
     println!("Tester listening on {}", addr);

@@ -1,19 +1,11 @@
 [package]
-name = "deep-api"
+name = "api"
 authors = ["Dominic <email@domi-me.de>"]
 edition = "2018"
 version = "0.3.0"
 
-[[bin]]
-name = "api-client"
-path = "src/main.rs"
-
-[[bin]]
-name = "testing-server"
-path = "testing/src/server.rs"
 
 [dependencies]
-
 tonic = "0.1.0-beta.1"
 bytes = "0.4"
 prost = "0.5"
@@ -33,11 +25,7 @@ serde = "1.0.104"
 serde_json = "1.0.44"
 derive_more = "0.99.2"
 dashmap = "2.1.0"
-uuid = { version = "0.8", features = ["serde", "v4"] }
-
+grpc-api = {path = "../grpc-api"}
 [dependencies.uuid]
 features = ["serde", "v4"]
 version = "0.8.1"
-
-[build-dependencies]
-tonic-build = "0.1.0-beta.1"

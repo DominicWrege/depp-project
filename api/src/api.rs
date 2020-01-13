@@ -1,10 +1,13 @@
 use crate::base64::Base64;
-use crate::deep_project::Script;
+use grpc_api::Script;
 use serde::{Deserialize, Serialize};
 //TODO fix me
 use serde::{de, Deserializer};
 use std::path::PathBuf;
 use uuid::Uuid;
+
+pub type AssignmentId = Uuid;
+
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Assignment {
@@ -53,7 +56,7 @@ pub struct AssignmentShort<'a> {
 #[display(fmt = "{}", _0)]
 pub struct IliasId(u64);
 
-#[derive(
+/*#[derive(
     Debug,
     Clone,
     Hash,
@@ -66,7 +69,7 @@ pub struct IliasId(u64);
     derive_more::Display,
 )]
 #[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub Uuid);
+pub struct AssignmentId(pub Uuid);*/
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

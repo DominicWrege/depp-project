@@ -10,7 +10,7 @@ use tokio::fs;
 
 use crate::config::Assignment;
 use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
-// use crate::script;
+use crate::script;
 
 #[async_trait]
 pub trait Tester: Sync + Send {
@@ -118,19 +118,21 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
-    let test_output = assignment
-        .script_type
-        .run(&script_test_path, &dir_to_test.path(), &assignment.args)
-        .await?;
+    let test_output = script::run(
+        &assignment.script_type,
+        &script_test_path,
+        &dir_to_test.path(),
+        &assignment.args,
+    )
+    .await?;
     info!("running task: {}", &assignment.name);
-    let solution_output = assignment
-        .script_type
-        .run(
-            &assignment.solution_path,
-            &dir_solution.path(),
-            &assignment.args,
-        )
-        .await?;
+    let solution_output = script::run(
+        &assignment.script_type,
+        &assignment.solution_path,
+        &dir_solution.path(),
+        &assignment.args,
+    )
+    .await?;
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
 
     tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));

@@ -46,9 +46,15 @@ paths:
                         application/json:
                                 schema:
                                     $ref: "#/components/schemas/SubmissionError"
+                404:
+                    description: "AssignmentID does not exits"
+                    content:
+                        application/json:
+                                schema:
+                                    $ref: "#/components/schemas/SubmissionError"
                 409:
                     description: "Duplicate iliasID. I excpet to that every iliasId should be unique and you submitted the same iliasId 
-                    without calling ```get:  /result/{iliasId}``` twice "
+                    without calling ```get:  /result/{iliasId}``` twice"
                     content:
                         application/json:
                             schema:
@@ -63,7 +69,8 @@ paths:
                   required: true
                   description: "Needs and existing iliasId to find the result. After that I will remove this iliasId from the cache."
                   schema:
-                    $ref: "#/components/schemas/IliasId"
+                        type: integer
+                        format: int64
             responses:
                 200:
                     description: "Returns the result for the submission"
@@ -117,8 +124,8 @@ components:
     aXIgQWx0DQpta2RpciBOZXUNCm1rZGlyIC5cQWx0XExhdGV4DQpta2RpciAuXE5ldVxMYXRleA0K
     Zm9yIC9SICUlYSBpbiAoLikgZG8gZWNobyAiJSV+ZmEiPiUlfmZhXHRlc3QudGV4DQpjZCAuLg=="
                 assignmentId:
-                    type: integer
-                    format: int64
+                    type: string
+                    format: uuid
             required:
                 - iliasId
                 - sourceCode
@@ -144,8 +151,8 @@ components:
             type: object
             properties: 
                 assignmentId: 
-                    type: integer
-                    format: int64
+                    type: string
+                    format: uuid  
                 name:
                     type: string
                     example: "Aufgabe 7 Powershell Dateien auslesen"
@@ -161,9 +168,6 @@ components:
             required:
                 - version
                 - status
-        IliasId:
-            type: integer
-            format: int64
         ApiError:
             type: "object"
             properties:

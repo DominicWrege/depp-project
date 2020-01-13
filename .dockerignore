@@ -1,0 +1,14 @@
+testing/target/
+api/target/
+grpc-api/target/
+**/*.rs.bk
+.git
+Dockerfile
+docker-compose.yml
+tests
+.dockerignore
+.gitignore
+examples
+docs
+*.md
+*.txt

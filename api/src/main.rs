@@ -10,10 +10,6 @@ use futures::prelude::*;
 use handler::{add_submission, get_assignments, get_result, index, version};
 use state::State;
 
-pub mod deep_project {
-    tonic::include_proto!("deep_project");
-}
-
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     let state = State::new();

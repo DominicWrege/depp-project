@@ -1,4 +1,4 @@
-use crate::deep_project::Script;
+use grpc_api::Script;
 use serde::{de, Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::fs;

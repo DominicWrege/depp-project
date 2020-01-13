@@ -10,7 +10,8 @@ service Test {
   rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse);
   rpc GetAssignment(AssignmentIdRequest) returns (Assignment);
 }
-message AssignmentIdRequest { string assignment_id = 1; }
+
+message AssignmentIdRequest { string assignment_id = 1; } // change to id or tuple
 message AssignmentIdResponse { bool found = 1; }
 
 message VecAssignmentsShort { repeated AssignmentShort assignments = 1; }

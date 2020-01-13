@@ -1,8 +1,8 @@
 use crate::crash_test::Error;
-use crate::deep_project::Script;
 use async_stream::try_stream;
 use futures::stream::Stream;
 use futures::try_join;
+use grpc_api::Script;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::{Builder, NamedTempFile, TempDir};
