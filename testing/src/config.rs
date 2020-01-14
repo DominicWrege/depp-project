@@ -57,22 +57,21 @@ pub enum Error {
     Toml(toml::de::Error),
 }
 
-pub fn parse_config(path: &Path) -> Result<AssignmentsMap, Error> {
+pub fn parse_config(path: &Path) -> Result<Config, Error> {
     let file_content = fs::read_to_string(path)?;
-    let conf: Config = toml::from_str(&file_content)?;
-    Ok(into_to_assignments_map(conf.assignments))
+    let conf = toml::from_str::<Config>(&file_content)?;
+    check_config(&conf);
+    Ok(conf)
 }
 
-pub fn into_to_assignments_map(am: HashMap<Uuid, Assignment>) -> AssignmentsMap {
-    am.into_iter()
-        .map(|(id, assignment)| {
-            for path in &assignment.include_files {
-                path_exists_and_is_file(&path);
-            }
-            path_exists_and_is_file(&assignment.solution_path);
-            (id.into(), assignment)
-        })
-        .collect::<_>()
+// can panic
+fn check_config(conf: &Config) {
+    for assignment in conf.assignments.values() {
+        for path in &assignment.include_files {
+            path_exists_and_is_file(&path);
+        }
+        path_exists_and_is_file(&assignment.solution_path);
+    }
 }
 
 fn path_exists_and_is_file(p: &Path) {

@@ -159,7 +159,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     env_logger::init();
     let opt = Opt::from_args();
-    let test = Tester::new(parse_config(&opt.config)?);
+    let config = parse_config(&opt.config)?;
+    log::info!("Exercise: {}", &config.name);
+    let test = Tester::new(config.assignments);
     let port = envy::from_env::<ServerConfig>()?.port;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     log::info!("Tester listening on {}", &addr);
