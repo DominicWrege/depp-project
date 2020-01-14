@@ -1,4 +1,4 @@
-use grpc_api::Script;
+use grpc_api::{AssignmentId, Script};
 use serde::{de, Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::fs;
@@ -6,12 +6,6 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
-
-#[derive(
-    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub Uuid);
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]

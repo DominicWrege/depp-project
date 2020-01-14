@@ -1,12 +1,9 @@
 use crate::base64::Base64;
-use grpc_api::Script;
+use grpc_api::{AssignmentId, Script};
 use serde::{Deserialize, Serialize};
 //TODO fix me
 use serde::{de, Deserializer};
 use std::path::PathBuf;
-use uuid::Uuid;
-
-pub type AssignmentId = Uuid;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
