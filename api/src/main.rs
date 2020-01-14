@@ -1,39 +1,23 @@
 mod api;
 mod base64;
-mod config;
-mod crash_test;
-mod fs_util;
 mod handler;
-mod script;
 mod state;
-
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{middleware, web, App, HttpServer};
-use config::parse_config;
 use failure::_core::time::Duration;
 use futures::prelude::*;
 use handler::{add_submission, get_assignments, get_result, index, version};
-use state::State;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Opt {
-    #[structopt(short, long)]
-    config: std::path::PathBuf,
-}
+use state::{RpcConfig, State};
 
 async fn run() -> Result<(), failure::Error> {
-    let opt = Opt::from_args();
-    let config = parse_config(&opt.config)?;
     std::env::set_var("RUST_LOG", "info");
-    //dbg!(&config);
-    let state = State::new(config);
+    let state = State::new(envy::from_env::<RpcConfig>()?);
     let c_state = state.clone();
     tokio::task::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60 * 10));
         while let Some(_) = interval.next().await {
-            c_state.pending_results.shrink_to_fit()
+            c_state.pending_results.shrink_to_fit();
         }
     });
     env_logger::init();
@@ -52,7 +36,11 @@ async fn run() -> Result<(), failure::Error> {
                     )
                     .route(web::post().to(add_submission)),
             )
-            .service(web::resource("/result/{iliasId}").route(web::get().to(get_result)))
+            .service(
+                web::resource("/result/{iliasId}")
+                    .route(web::get().to(get_result))
+                    .route(web::post().to(get_result)),
+            )
             .wrap(
                 Cors::new()
                     .allowed_methods(vec!["GET", "POST"])

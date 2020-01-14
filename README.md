@@ -1,7 +1,7 @@
 # Description
 
-Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do  **not move or delete this file**.
-The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the ```assignments.yaml``` file after start **once**. So a restart is necessary after change to take effect. I also includded some example scripts you can encode to base64 for testing.
+Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do **not move or delete this file**.
+The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the `assignments.yaml` file after start **once**. So a restart is necessary after change to take effect. I also includded some example scripts you can encode to base64 for testing.
 
 ### Batch Files On Linux
 
@@ -42,13 +42,13 @@ Please use the openapi 3.0 docs via swagger ui for more information how to use t
 
 ## Currently Supported Script Types
 
--   Python3
--   PowerShell\*
--   Shell
--   Bash
--   Batch\* (windows only without docker)
--   Sed
--   Awk
+- Python3
+- PowerShell\*
+- Shell
+- Bash
+- Batch\* (windows only without docker)
+- Sed
+- Awk
 
 \*Inside Linux only core features are working.
 
@@ -61,21 +61,21 @@ Here I go into more details how the assignment is structured.
 [[assignment]]
 name = "Task 9 loops in shell"              # required
 type = "Shell"                              # required, set the script type
-args = ["rackrent"]                         # optional, a list arguments passed to the 
+args = ["rackrent"]                         # optional, a list arguments passed to the
 include-files = ["examples/akademisches_jahrbuch.txt"] # optional inlcude needed files
 solution-path  = "examples/pk7-Aufgabe1.sh" # required sample solution
-check-files = true                          # optional default is false
 ```
 
 # Discussion
 
--   Do you want pass each request an API key?
--   Do we need some auth (LTI)?
+- Do you want pass each request an API key?
+- Do we need some auth (LTI)?
 
 # TODO For API
 
--   [X] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
--   [ ] Memory limit for script
--   [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
--   [ ] remove pause keyword from bat scripts?!
--   [ ] auth using some token
+- [x] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
+- [ ] Memory limit for script
+- [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
+- [ ] remove pause keyword from bat scripts?!
+- [ ] auth using some token
+- [ ] update testing-server status `/version`

@@ -4,7 +4,7 @@ info:
     This Rest API uses `JSON only`. Everytime an error occurs, I send and ApiError json object. 
     For more information see the README file at git.
     "
-    version: "0.1"
+    version: "0.3"
     title: "DEPP Project API"
     contact:
         email: "dominic.wrege001@stud.fh-dortmud.de"
@@ -46,24 +46,31 @@ paths:
                         application/json:
                                 schema:
                                     $ref: "#/components/schemas/SubmissionError"
+                404:
+                    description: "AssignmentID does not exits"
+                    content:
+                        application/json:
+                                schema:
+                                    $ref: "#/components/schemas/SubmissionError"
                 409:
                     description: "Duplicate iliasID. I excpet to that every iliasId should be unique and you submitted the same iliasId 
-                    without calling ```get:  /result/{iliasId}``` twice "
+                    without calling ```get:  /result/{iliasId}``` twice"
                     content:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ApiError"
     /result/{iliasId}:
         get:
-            summary: "Returns the result for the submission by given iliasID"
+            summary: "Returns the result and keps until the post method is invoked for the submission by given iliasID"
             operationId: "getResults"
             parameters:
                 - name: iliasId
                   in: path
                   required: true
-                  description: "Needs and existing iliasId to find the result. After that I will remove this iliasId from the cache."
+                  description: "Needs and existing iliasID to find the result. After that I will remove this iliasId from the cache."
                   schema:
-                    $ref: "#/components/schemas/IliasId"
+                        type: integer
+                        format: int64
             responses:
                 200:
                     description: "Returns the result for the submission"
@@ -71,6 +78,39 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/Result"
+                400:
+                    description: "Parameter error invalid digit found in string. An interger64 is required"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+
+                404:
+                    description: "No Results not found for given Ilias ID: {id}"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+                500:
+                    description: "Generic Error"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ApiError"
+        post:
+            summary: "Drops the result for the given iliasID"
+            operationId: "rmResults"
+            parameters:
+                - name: iliasId
+                  in: path
+                  required: true
+                  description: "Needs and existing iliasId to find the result. After that I will remove this iliasId from the cache."
+                  schema:
+                    type: integer
+                    format: int64
+            responses:
+                200:
+                    description: "Returns the result for the submission"
                 400:
                     description: "Parameter error invalid digit found in string. An interger64 is required"
                     content:
@@ -117,8 +157,8 @@ components:
     aXIgQWx0DQpta2RpciBOZXUNCm1rZGlyIC5cQWx0XExhdGV4DQpta2RpciAuXE5ldVxMYXRleA0K
     Zm9yIC9SICUlYSBpbiAoLikgZG8gZWNobyAiJSV+ZmEiPiUlfmZhXHRlc3QudGV4DQpjZCAuLg=="
                 assignmentId:
-                    type: integer
-                    format: int64
+                    type: string
+                    format: uuid
             required:
                 - iliasId
                 - sourceCode
@@ -144,8 +184,8 @@ components:
             type: object
             properties: 
                 assignmentId: 
-                    type: integer
-                    format: int64
+                    type: string
+                    format: uuid  
                 name:
                     type: string
                     example: "Aufgabe 7 Powershell Dateien auslesen"
@@ -161,9 +201,6 @@ components:
             required:
                 - version
                 - status
-        IliasId:
-            type: integer
-            format: int64
         ApiError:
             type: "object"
             properties:

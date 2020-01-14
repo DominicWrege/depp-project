@@ -1,17 +1,23 @@
+use grpc_api::Script;
+use serde::{de, Deserialize, Deserializer};
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::fs;
 use std::path::{Path, PathBuf};
+use uuid::Uuid;
 
-use crate::api::AssignmentId;
-use crate::script::Script;
-use serde::{de, Deserialize, Deserializer};
+pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
+
+#[derive(
+    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
+)]
+#[serde(rename_all = "camelCase")]
+pub struct AssignmentId(pub Uuid);
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub name: String,
-    pub assignment: Vec<Assignment>,
+    pub assignments: HashMap<Uuid, Assignment>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -23,13 +29,11 @@ pub struct Assignment {
     #[serde(default)]
     pub include_files: Vec<PathBuf>,
     #[serde(default)]
-    pub check_files: bool,
-    #[serde(default)]
     #[serde(rename = "type")]
     pub script_type: Script,
     #[serde(default)]
     pub args: Vec<String>,
-    pub script_contains: Option<Pattern>, // delete me
+    //pub script_contains: Option<Pattern>, //
 }
 
 fn into_absolute_path<'de, D>(deserial: D) -> Result<PathBuf, D::Error>
@@ -39,12 +43,6 @@ where
     let relative_path = PathBuf::deserialize(deserial)?;
 
     fs::canonicalize(relative_path).map_err(de::Error::custom)
-}
-
-impl From<usize> for AssignmentId {
-    fn from(n: usize) -> Self {
-        AssignmentId(u64::try_from(n).unwrap_or_default())
-    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -65,24 +63,22 @@ pub enum Error {
     Toml(toml::de::Error),
 }
 
-pub fn parse_config(path: &Path) -> Result<HashMap<AssignmentId, Assignment>, Error> {
+pub fn parse_config(path: &Path) -> Result<AssignmentsMap, Error> {
     let file_content = fs::read_to_string(path)?;
-    let exercise = toml::from_str(&file_content)?;
-    Ok(into_config_map(exercise))
+    let conf: Config = toml::from_str(&file_content)?;
+    Ok(into_to_assignments_map(conf.assignments))
 }
 
-fn into_config_map(conf: Config) -> HashMap<AssignmentId, Assignment> {
-    conf.assignment
-        .into_iter()
-        .enumerate()
+pub fn into_to_assignments_map(am: HashMap<Uuid, Assignment>) -> AssignmentsMap {
+    am.into_iter()
         .map(|(id, assignment)| {
             for path in &assignment.include_files {
                 path_exists_and_is_file(&path);
             }
             path_exists_and_is_file(&assignment.solution_path);
-            (AssignmentId::from(id), assignment)
+            (id.into(), assignment)
         })
-        .collect::<HashMap<AssignmentId, Assignment>>()
+        .collect::<_>()
 }
 
 fn path_exists_and_is_file(p: &Path) {
