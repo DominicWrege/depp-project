@@ -1,10 +1,30 @@
 FROM rust:1.40 as builder
-RUN mkdir testing
-WORKDIR /testing
+USER root
+ENV USER=root
+RUN mkdir workspace && \
+    cd workspace && \
+    cargo new api --lib && \
+    cargo new grpc-api --lib && \
+    cargo new testing --lib
+WORKDIR /workspace
+
+RUN rustup component add rustfmt
+
+COPY Cargo.toml .
+COPY grpc-api/Cargo.toml grpc-api
+COPY grpc-api/proto grpc-api/proto
+COPY grpc-api/build.rs grpc-api
+COPY testing/Cargo.lock testing
+COPY testing/Cargo.toml testing
+RUN cd testing && cargo build --release
+COPY . .
+
+
+RUN cd testing && cargo build --release
 
 COPY . .
 
-RUN rustup component add rustfmt && cd testing && cargo build --release
+RUN cd testing && cargo build --release
 
 FROM rust:1.40
 
@@ -30,7 +50,7 @@ RUN apt-get update &&\
     apt-get install -y --no-install-recommends wine python3 && \
     ln -s /media/examples/ examples
 
-COPY --from=builder /testing/target/release/testing .
+COPY --from=builder /workspace/target/release/testing .
 EXPOSE 50051
 
 CMD ["./testing","--config", "examples/assignments.toml"]

@@ -14,7 +14,7 @@ use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 //use base64;
-use config::{parse_config, AssignmentId};
+use config::{parse_config, AssignmentId, AssignmentsMap};
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -24,11 +24,11 @@ struct Opt {
 
 #[derive(Default, Debug)]
 pub struct Tester {
-    assignments: HashMap<AssignmentId, config::Assignment>,
+    assignments: AssignmentsMap,
 }
 
 impl Tester {
-    fn new(assignments: HashMap<AssignmentId, config::Assignment>) -> Self {
+    fn new(assignments: AssignmentsMap) -> Self {
         Tester { assignments }
     }
 }
@@ -146,15 +146,26 @@ fn assignments_to_msg(
     VecAssignmentsShort { assignments: a }
 }
 
+fn default_port() -> u16 {
+    50051
+}
+
+#[derive(serde::Deserialize, Debug)]
+pub struct ServerConfig {
+    #[serde(default = "default_port")]
+    port: u16,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
+
     env_logger::init();
-    let addr = "0.0.0.0:50051".parse().unwrap();
     let opt = Opt::from_args();
     let test = Tester::new(parse_config(&opt.config)?);
-    println!("Tester listening on {}", addr);
-
+    let port = envy::from_env::<ServerConfig>()?.port;
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    log::info!("Tester listening on {}", &addr);
     Server::builder()
         .add_service(TestServer::new(test))
         .serve(addr)

@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
 use actix_web::error::JsonPayloadError;
-use actix_web::http::StatusCode;
-use actix_web::{web, HttpResponse, ResponseError};
+use actix_web::http::{Method, StatusCode};
+use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 
 use uuid::Uuid;
 
@@ -12,22 +12,33 @@ use crate::state::{get_rpc_status, Meta, State};
 use grpc_api::test_client::TestClient;
 use grpc_api::{AssignmentIdRequest, AssignmentMsg};
 
-fn inner_get_result(state: web::Data<State>, para: IliasId) -> Result<HttpResponse, Error> {
-    let id = para;
-    if let Some(ret) = state.pending_results.remove(&id) {
-        return Ok(HttpResponse::Ok().json(ret.1));
-    }
-    Err(Error::NotFoundIliasId(id))
-}
-
 pub async fn get_result(
+    req: HttpRequest,
     state: web::Data<State>,
     para: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let str = para.into_inner();
-    match str.parse::<u64>() {
-        Ok(id) => inner_get_result(state, id.into()),
-        Err(e) => Err(Error::Parameter(e.to_string(), "An integer64 is required")),
+    let id = para
+        .into_inner()
+        .parse::<u64>()
+        .map_err(|e| Error::Parameter(e.to_string(), "An integer64 is required"))?
+        .into();
+
+    match req.method().to_owned() {
+        Method::POST => {
+            if state.pending_results.remove(&id).is_some() {
+                Ok(HttpResponse::Ok().body(""))
+            } else {
+                Err(Error::NotFoundIliasId(id))
+            }
+        }
+        Method::GET => {
+            if let Some(ret) = state.inner.pending_results.get(&id) {
+                Ok(HttpResponse::Ok().json(&ret.value()))
+            } else {
+                Err(Error::NotFoundIliasId(id))
+            }
+        }
+        _ => Err(Error::BadRequest),
     }
 }
 pub async fn add_submission(
@@ -36,7 +47,8 @@ pub async fn add_submission(
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
     //let config = state.config.clone();
-    let mut client = TestClient::connect("http://testing:50051")
+    // TODO only one test client
+    let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
         .await
         .map_err(|_| Error::RpcOffline)?;
     if state.pending_results.contains_key(&para.ilias_id) {
@@ -75,8 +87,8 @@ pub async fn add_submission(
 //     log::info!("System Error. Waiting for 3 secs. {:?}", e);
 // }
 
-pub async fn get_assignments(_state: web::Data<State>) -> Result<HttpResponse, Error> {
-    let mut client = TestClient::connect("http://testing:50051")
+pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
+    let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
         .await
         .map_err(|_| Error::RpcOffline)?;
     let request = tonic::Request::new(());
@@ -89,8 +101,11 @@ pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }
 
-pub async fn version() -> HttpResponse {
-    HttpResponse::Ok().json(Meta::new("0.3", &get_rpc_status().await))
+pub async fn version(state: web::Data<State>) -> HttpResponse {
+    HttpResponse::Ok().json(Meta::new(
+        "0.3",
+        &get_rpc_status(&state.inner.rpc_url).await,
+    ))
 }
 #[derive(serde::Serialize)]
 struct ErrJson {
@@ -125,6 +140,8 @@ pub enum Error {
     Body(JsonPayloadError),
     #[fail(display = "The testing server is offline")]
     RpcOffline,
+    #[fail(display = "Bad request")]
+    BadRequest,
 }
 impl<T> From<T> for Error
 where
@@ -140,7 +157,7 @@ impl ResponseError for Error {
         match self {
             Error::DuplicateIliasId => StatusCode::CONFLICT,
             Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
-            Error::Parameter(_, _) => StatusCode::BAD_REQUEST,
+            Error::Parameter(_, _) | Error::BadRequest => StatusCode::BAD_REQUEST,
             Error::Body(_err) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }

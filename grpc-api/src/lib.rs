@@ -15,6 +15,7 @@ impl Script {
     }
 }
 
+
 impl From<i32> for Script {
     fn from(n: i32) -> Self {
         match n {

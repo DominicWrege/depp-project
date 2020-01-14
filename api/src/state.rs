@@ -2,17 +2,28 @@ use crate::api::IliasId;
 use grpc_api::test_client::TestClient;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
+use url::Url;
 
 #[derive(Clone)]
 pub struct State {
     pub inner: Arc<InnerState>,
 }
 
+fn default_addr() -> Url {
+    Url::parse("http://127.0.0.1:50051").unwrap()
+}
+#[derive(serde::Deserialize, Debug)]
+pub struct RpcConfig {
+    #[serde(default = "default_addr")]
+    rpc_url: Url,
+}
+
 impl State {
-    pub fn new() -> State {
+    pub fn new(rpc_conf: RpcConfig) -> State {
         State {
             inner: Arc::new(InnerState {
                 pending_results: dashmap::DashMap::new(),
+                rpc_url: rpc_conf.rpc_url,
             }),
         }
     }
@@ -24,8 +35,8 @@ impl Default for EndPointStatus {
     }
 }
 
-pub async fn get_rpc_status() -> EndPointStatus {
-    match TestClient::connect("http://testing:50051").await {
+pub async fn get_rpc_status(rpc_url: &Url) -> EndPointStatus {
+    match TestClient::connect(rpc_url.as_str().to_owned()).await {
         Ok(_) => EndPointStatus::Online,
         Err(_) => EndPointStatus::Offline,
     }
@@ -47,6 +58,7 @@ pub enum EndPointStatus {
 }
 pub struct InnerState {
     pub pending_results: dashmap::DashMap<IliasId, grpc_api::AssignmentResult>,
+    pub rpc_url: Url,
 }
 
 impl Deref for State {

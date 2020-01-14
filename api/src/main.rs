@@ -8,11 +8,11 @@ use actix_web::{middleware, web, App, HttpServer};
 use failure::_core::time::Duration;
 use futures::prelude::*;
 use handler::{add_submission, get_assignments, get_result, index, version};
-use state::State;
+use state::{RpcConfig, State};
 
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
-    let state = State::new();
+    let state = State::new(envy::from_env::<RpcConfig>()?);
     let c_state = state.clone();
     tokio::task::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60 * 10));
@@ -36,7 +36,11 @@ async fn run() -> Result<(), failure::Error> {
                     )
                     .route(web::post().to(add_submission)),
             )
-            .service(web::resource("/result/{iliasId}").route(web::get().to(get_result)))
+            .service(
+                web::resource("/result/{iliasId}")
+                    .route(web::get().to(get_result))
+                    .route(web::post().to(get_result)),
+            )
             .wrap(
                 Cors::new()
                     .allowed_methods(vec!["GET", "POST"])

@@ -1,6 +1,7 @@
 testing/target/
 api/target/
 grpc-api/target/
+target
 **/*.rs.bk
 .git
 Dockerfile

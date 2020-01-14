@@ -1,40 +1,40 @@
 name = "Blatt 42"
 
 # takes writes 'HalloWorld' into hallo.txt
-[[assignment]]
+[assignments.f74f179b-6f8e-4d7d-9dae-299c4e3581de]
 name = "Task 1 Hello World"
 type = "Shell"
 solution-path = "examples/task1_helloworld.sh"
 
 ## takes 1 argument, reverse and print it out
-[[assignment]]
+[assignments."53dc1a88-2be1-40c5-8bbe-fe7efb04b03f"]
 name = "Task 2 Bash reverse"
 type = "Bash"
 solution-path = "examples/task2_reverse.sh"
 args = ["rackrent"]
 
 # calc fib by given number
-[[assignment]]
+[assignments.d836564e-1837-48c9-91d0-edf0c7f998e7]
 name = "Task 3 Python3 fib"
 type = "Python3"
 solution-path  = "examples/task3_fib.py"
 args = ["5", "7"]
 
-# from pk7
-[[assignment]]
+# # from pk7
+[assignments.667caf1f-91cd-48cd-93db-2d4c8410f594]
 name = "Pk7 Aufgabe 1 awk akademisches_jahrbuch"
 type = "Bash"
 include-files = ["examples/akademisches_jahrbuch.txt"]
 solution-path  = "examples/pk7-Aufgabe1.sh"
 
-# create some directories and files
-[[assignment]]
+# # create some directories and files
+[assignments.c29e0436-9c6f-466e-8e9d-6968416c846c]
 name = "Task 4 crate directories"
 type = "Batch"
 solution-path  = "examples/task4_directories.bat"
 
-# parse file
-[[assignment]]
+# # parse file
+[assignments.77ca13fe-dcda-4ec6-959c-fec31f181380]
 name = "Task 5 Powershell parse file with regex"
 type = "PowerShell"
 solution-path  = "examples/task5_regex.ps1"

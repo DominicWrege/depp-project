@@ -5,11 +5,19 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
+pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
+
+#[derive(
+    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
+)]
+#[serde(rename_all = "camelCase")]
+pub struct AssignmentId(pub Uuid);
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub name: String,
-    pub assignment: Vec<Assignment>,
+    pub assignments: HashMap<Uuid, Assignment>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -55,23 +63,22 @@ pub enum Error {
     Toml(toml::de::Error),
 }
 
-pub fn parse_config(path: &Path) -> Result<HashMap<AssignmentId, Assignment>, Error> {
+pub fn parse_config(path: &Path) -> Result<AssignmentsMap, Error> {
     let file_content = fs::read_to_string(path)?;
-    let exercise = toml::from_str(&file_content)?;
-    Ok(into_config_map(exercise))
+    let conf: Config = toml::from_str(&file_content)?;
+    Ok(into_to_assignments_map(conf.assignments))
 }
 
-fn into_config_map(conf: Config) -> HashMap<AssignmentId, Assignment> {
-    conf.assignment
-        .into_iter()
-        .map(|assignment| {
+pub fn into_to_assignments_map(am: HashMap<Uuid, Assignment>) -> AssignmentsMap {
+    am.into_iter()
+        .map(|(id, assignment)| {
             for path in &assignment.include_files {
                 path_exists_and_is_file(&path);
             }
             path_exists_and_is_file(&assignment.solution_path);
-            (Uuid::new_v4().into(), assignment)
+            (id.into(), assignment)
         })
-        .collect::<HashMap<AssignmentId, Assignment>>()
+        .collect::<_>()
 }
 
 fn path_exists_and_is_file(p: &Path) {
@@ -82,12 +89,3 @@ fn path_exists_and_is_file(p: &Path) {
         )
     }
 }
-
-// TODO remove this later and use it
-#[derive(
-    Debug, Clone, Hash, Eq, PartialEq, Deserialize, serde::Serialize, Copy, derive_more::From,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub Uuid);
-
-// TODO remove this later and use it
