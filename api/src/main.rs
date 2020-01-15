@@ -5,9 +5,10 @@ mod state;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{middleware, web, App, HttpServer};
+use actix_web_httpauth::middleware::HttpAuthentication;
 use failure::_core::time::Duration;
 use futures::prelude::*;
-use handler::{add_submission, get_assignments, get_result, index, version};
+use handler::{add_submission, auth, get_assignments, get_result, index, version};
 use state::{RpcConfig, State};
 
 async fn run() -> Result<(), failure::Error> {
@@ -25,6 +26,7 @@ async fn run() -> Result<(), failure::Error> {
         App::new()
             .wrap(middleware::Compress::default())
             .wrap(Logger::default())
+            .wrap(HttpAuthentication::basic(auth))
             .route("/", web::get().to(index))
             .route("/version", web::get().to(version))
             .route("/assignments", web::get().to(get_assignments))

@@ -1,9 +1,10 @@
 use std::fmt::Debug;
 
+use actix_web::dev::ServiceRequest;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::{Method, StatusCode};
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
-
+use actix_web_httpauth::extractors::basic::BasicAuth;
 use uuid::Uuid;
 
 use crate::api::{IliasId, Submission};
@@ -107,6 +108,22 @@ pub async fn version(state: web::Data<State>) -> HttpResponse {
         &get_rpc_status(&state.inner.rpc_url).await,
     ))
 }
+
+// TODO only for testing
+pub async fn auth(
+    req: ServiceRequest,
+    credentials: BasicAuth,
+) -> Result<ServiceRequest, actix_web::Error> {
+    //dbg!(&credentials);
+    if credentials.user_id() == "test"
+        && credentials.password() == Some(&std::borrow::Cow::from("wasd"))
+    {
+        Ok(req)
+    } else {
+        Err(Error::Unauthorized.into_actix_web_err())
+    }
+}
+
 #[derive(serde::Serialize)]
 struct ErrJson {
     msg: String,
@@ -142,6 +159,8 @@ pub enum Error {
     RpcOffline,
     #[fail(display = "Bad request")]
     BadRequest,
+    #[fail(display = " Wrong credentials")]
+    Unauthorized,
 }
 impl<T> From<T> for Error
 where
@@ -151,6 +170,13 @@ where
         Error::General(Box::new(error))
     }
 }
+
+impl Error {
+    fn into_actix_web_err(self) -> actix_web::Error {
+        actix_web::error::ErrorUnauthorized(self.to_string())
+    }
+}
+
 
 impl ResponseError for Error {
     fn status_code(&self) -> StatusCode {
