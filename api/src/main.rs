@@ -9,11 +9,14 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use failure::_core::time::Duration;
 use futures::prelude::*;
 use handler::{add_submission, auth, get_assignments, get_result, index, version};
-use state::{RpcConfig, State};
+use state::{get_credentials, RpcConfig, State};
 
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
-    let state = State::new(envy::from_env::<RpcConfig>()?);
+    let state = State::new(
+        envy::from_env::<RpcConfig>()?,
+        get_credentials().await?,
+    );
     let c_state = state.clone();
     tokio::task::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60 * 10));

@@ -1,10 +1,9 @@
-use std::fmt::Debug;
-
 use actix_web::dev::ServiceRequest;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::{Method, StatusCode};
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use actix_web_httpauth::extractors::basic::BasicAuth;
+use std::fmt::Debug;
 use uuid::Uuid;
 
 use crate::api::{IliasId, Submission};
@@ -12,6 +11,7 @@ use crate::state::{get_rpc_status, Meta, State};
 
 use grpc_api::test_client::TestClient;
 use grpc_api::{AssignmentId, AssignmentIdRequest, AssignmentMsg};
+use sha2::Digest;
 
 pub async fn get_result(
     req: HttpRequest,
@@ -115,13 +115,25 @@ pub async fn auth(
     credentials: BasicAuth,
 ) -> Result<ServiceRequest, actix_web::Error> {
     //dbg!(&credentials);
-    if credentials.user_id() == "test"
-        && credentials.password() == Some(&std::borrow::Cow::from("wasd"))
-    {
-        Ok(req)
-    } else {
-        Err(Error::Unauthorized.into_actix_web_err())
+    let state: web::Data<State> = req.app_data().unwrap();
+
+
+    match credentials.password(){
+        Some(cred) => {
+            let mut hasher = sha2::Sha256::new();
+            hasher.input(cred.to_string().as_str());
+            if credentials.user_id() == state.credentials.username()
+                && hasher.result().to_vec() == state.credentials.password()
+            {
+                Ok(req)
+            } else {
+                Err(Error::Unauthorized.into_actix_web_err())
+            }
+        }
+        None => Err(Error::Unauthorized.into_actix_web_err())
     }
+
+
 }
 
 #[derive(serde::Serialize)]
@@ -176,7 +188,6 @@ impl Error {
         actix_web::error::ErrorUnauthorized(self.to_string())
     }
 }
-
 
 impl ResponseError for Error {
     fn status_code(&self) -> StatusCode {
