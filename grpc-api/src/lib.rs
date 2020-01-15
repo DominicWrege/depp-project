@@ -2,6 +2,8 @@ tonic::include_proto!("deep_project");
 
 use std::path::PathBuf;
 
+pub type AssignmentId = uuid::Uuid;
+
 #[cfg(any(unix))]
 impl Script {
     pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
@@ -14,7 +16,6 @@ impl Script {
         }
     }
 }
-
 
 impl From<i32> for Script {
     fn from(n: i32) -> Self {

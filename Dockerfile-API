@@ -14,7 +14,6 @@ COPY Cargo.toml .
 COPY grpc-api/Cargo.toml grpc-api
 COPY grpc-api/proto grpc-api/proto
 COPY grpc-api/build.rs grpc-api
-COPY api/Cargo.lock api
 COPY api/Cargo.toml api
 RUN cd api && cargo build --release
 COPY . .

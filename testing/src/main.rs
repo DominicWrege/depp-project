@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::Path;
 
 mod config;
@@ -14,7 +13,7 @@ use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 //use base64;
-use config::{parse_config, AssignmentId, AssignmentsMap};
+use config::{parse_config, AssignmentsMap};
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -78,8 +77,8 @@ impl Test for Tester {
         &self,
         request: Request<AssignmentIdRequest>,
     ) -> Result<Response<AssignmentIdResponse>, Status> {
-        let uuid = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
-        let id = AssignmentId(uuid);
+        //TODO fix unwrap
+        let id = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
         let ret = self.assignments.get(&id).map(|x| x.clone()).is_some();
 
         Ok(Response::new(AssignmentIdResponse { found: ret }))
@@ -89,8 +88,8 @@ impl Test for Tester {
         &self,
         request: Request<AssignmentIdRequest>,
     ) -> Result<Response<grpc_api::Assignment>, Status> {
-        let uuid = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
-        let id = AssignmentId(uuid);
+        //TODO fix unwrap
+        let id = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
         if let Some(assignment) = &self.assignments.get(&id) {
             let ret = grpc_api::Assignment {
                 name: assignment.name.clone(),
@@ -133,14 +132,12 @@ impl From<grpc_api::Assignment> for config::Assignment {
     }
 }
 
-fn assignments_to_msg(
-    thing: HashMap<config::AssignmentId, config::Assignment>,
-) -> VecAssignmentsShort {
+fn assignments_to_msg(thing: AssignmentsMap) -> VecAssignmentsShort {
     let a = thing
         .into_iter()
         .map(|(id, a)| grpc_api::AssignmentShort {
             name: a.name,
-            assignment_id: id.0.to_string(),
+            assignment_id: id.to_string(),
         })
         .collect::<_>();
     VecAssignmentsShort { assignments: a }
@@ -162,7 +159,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     env_logger::init();
     let opt = Opt::from_args();
-    let test = Tester::new(parse_config(&opt.config)?);
+    let config = parse_config(&opt.config)?;
+    log::info!("Exercise: {}", &config.name);
+    let test = Tester::new(config.assignments);
     let port = envy::from_env::<ServerConfig>()?.port;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     log::info!("Tester listening on {}", &addr);

@@ -6,11 +6,11 @@ use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 
 use uuid::Uuid;
 
-use crate::api::{AssignmentId, IliasId, Submission};
+use crate::api::{IliasId, Submission};
 use crate::state::{get_rpc_status, Meta, State};
 
 use grpc_api::test_client::TestClient;
-use grpc_api::{AssignmentIdRequest, AssignmentMsg};
+use grpc_api::{AssignmentId, AssignmentIdRequest, AssignmentMsg};
 
 pub async fn get_result(
     req: HttpRequest,
