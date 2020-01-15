@@ -5,7 +5,7 @@ import "google/protobuf/wrappers.proto";
 // import "google/protobuf/enum.proto";
 
 service Test {
-	rpc RunTest(AssignmentMsg) returns (AssignmentResult) {}
+	rpc RunTest(AssignmentMsg) returns (AssignmentResult);
 	rpc GetAssignments(google.protobuf.Empty) returns (VecAssignmentsShort);
 	rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse);
 	rpc GetAssignment(AssignmentIdRequest) returns (Assignment);
