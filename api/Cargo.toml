@@ -31,6 +31,7 @@ envy = "0.4.1"
 sha2 = "0.8.1"
 toml = "0.5.5"
 hex-serde = "0.1.0"
+structopt = "0.3.7"
 [dependencies.url]
 version = "2.1.1"
 features = ["serde"]

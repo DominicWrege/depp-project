@@ -2,11 +2,13 @@ use crate::api::IliasId;
 use grpc_api::test_client::TestClient;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
-use std::convert::TryInto;
+//use std::convert::TryInto;
 use std::ops::{Deref, DerefMut};
-use std::path::Path;
+//use std::path::Path;
 use std::sync::Arc;
-use tokio::fs;
+//use tokio::fs;
+use failure::_core::str::FromStr;
+use structopt::StructOpt;
 use url::Url;
 
 #[derive(Clone)]
@@ -23,52 +25,37 @@ pub struct RpcConfig {
     rpc_url: Url,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Sha256(#[serde(with = "hex_serde")] pub [u8; 32]);
+impl FromStr for Sha256 {
+    type Err = failure::Error;
 
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let pwd = sha2::Sha256::digest(&s.as_bytes()).to_vec();
+        Ok(Sha256(pwd))
+    }
+}
+
+#[derive(Debug, StructOpt, serde::Deserialize, serde::Serialize)]
 pub struct Credentials {
+    #[structopt(short, long, default_value = "user")]
     username: String,
+    #[structopt(short = "p", long = "password", default_value = "wasd")]
     password: Sha256,
 }
 
-impl Credentials {
-    pub fn new(username: String, pwd: Sha256) -> Credentials {
-        Credentials {
-            username: username,
-            password: pwd,
-        }
-    }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Sha256(#[serde(with = "hex_serde")] pub Vec<u8>);
 
+impl Credentials {
     pub fn username(&self) -> &str {
         &self.username
     }
     pub fn password(&self) -> Vec<u8> {
-       self.password.0.to_vec()
+        self.password.0.to_vec()
     }
 }
 
-impl Default for Credentials{
-    fn default() -> Self {
-        let mut haser = sha2::Sha256::new();
-        haser.input("wasd");
-        let result = haser.result().try_into().unwrap();
-        Credentials::new("user".into(), Sha256(result) )
-    }
-}
-
-pub async fn get_credentials() -> Result<Credentials, tokio::io::Error> {
-    let file_path = Path::new("./credentials_api.toml");
-    if !file_path.exists() {
-        fs::File::create(file_path).await?;
-        let cred = Credentials::default();
-        fs::write(&file_path, toml::to_string(&cred).unwrap()).await?;
-        Ok(cred)
-    }else{
-        let file_content = fs::read_to_string(file_path).await?;
-        let cred = toml::from_str::<Credentials>(&file_content)?;
-        Ok(cred)
-    }
+pub fn get_credentials() -> Credentials {
+    Credentials::from_args()
 }
 
 impl State {
