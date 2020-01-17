@@ -117,23 +117,19 @@ pub async fn auth(
     //dbg!(&credentials);
     let state: web::Data<State> = req.app_data().unwrap();
 
-
-    match credentials.password(){
+    match credentials.password() {
         Some(cred) => {
-            let mut hasher = sha2::Sha256::new();
-            hasher.input(cred.to_string().as_str());
+            let pwd = sha2::Sha256::digest(cred.as_bytes()).to_vec();
             if credentials.user_id() == state.credentials.username()
-                && hasher.result().to_vec() == state.credentials.password()
+                && pwd == state.credentials.password()
             {
                 Ok(req)
             } else {
                 Err(Error::Unauthorized.into_actix_web_err())
             }
         }
-        None => Err(Error::Unauthorized.into_actix_web_err())
+        None => Err(Error::Unauthorized.into_actix_web_err()),
     }
-
-
 }
 
 #[derive(serde::Serialize)]
