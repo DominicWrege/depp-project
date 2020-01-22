@@ -1,12 +1,13 @@
 tonic::include_proto!("deep_project");
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
+use std::ffi::{OsStr, OsString};
 
 pub type AssignmentId = uuid::Uuid;
 
 #[cfg(any(unix))]
 impl Script {
-    pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
+    pub fn commandline(&self) -> (&'static str, Vec<OsString>) {
         match self {
             Script::PowerShell => ("pwsh", vec![]),
             Script::Shell => ("sh", vec![]),
@@ -33,13 +34,12 @@ impl From<i32> for Script {
 
 #[cfg(target_os = "windows")]
 impl Script {
-    pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
+    pub fn commandline(&self) -> (&'static str, Vec<OsString>) {
         match self {
             Script::PowerShell => ("powershell.exe", vec![]),
-            Script::Shell => ("sh", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
             Script::Python3 => ("python3", vec![]),
-            Script::Bash | Script::Awk | Script::Sed | _ => ("bash", vec![]),
+            Script::Shell | Script::Bash | Script::Awk | Script::Sed | Script::Unknown  => ("bash", vec![]),
         }
     }
 }

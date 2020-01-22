@@ -11,10 +11,11 @@ use tokio::{fs, io};
 pub fn new_tmp_script_file(
     script_type: Script,
     content: &str,
+    dest_dir: &Path
 ) -> Result<NamedTempFile, std::io::Error> {
     let mut file = Builder::new()
         .suffix(script_type.file_extension())
-        .tempfile()?;
+        .tempfile_in(&dest_dir)?;
     file.write(&content.as_bytes())?;
     Ok(file)
 }

@@ -109,13 +109,16 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
 pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
-
+    //dbg!(&dir_solution);
+    //TODO change it later
+    let mut soltuion_files = vec![assignment.solution_path.clone()];
+    soltuion_files.append(&mut assignment.include_files.clone());
     try_join!(
-        cp_files(&assignment.include_files, &dir_solution),
-        cp_files(&assignment.include_files, &dir_to_test)
+        cp_files(&soltuion_files, &dir_solution),
+        cp_files(&assignment.include_files, &dir_to_test),
     )?;
 
-    let script_test_path = new_tmp_script_file(assignment.script_type, code)
+    let script_test_path = new_tmp_script_file(assignment.script_type, code, dir_to_test.path())
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
     let test_output = script::run(
@@ -126,6 +129,7 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     )
     .await?;
     info!("running task: {}", &assignment.name);
+
     let solution_output = script::run(
         &assignment.script_type,
         &assignment.solution_path,
