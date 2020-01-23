@@ -7,6 +7,25 @@ use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
+use path_slash::PathExt;
+use regex::{Captures, Regex};
+use std::ffi::OsString;
+
+#[cfg(target_os = "windows")]
+fn fix_windows_path(script: &Script, script_path: &Path) -> OsString {
+    if script == &Script::Bash || script == &Script::Shell {
+        let str = script_path.to_slash_lossy().replace("\\\\?\\", "");
+        let re = Regex::new(r"^([A-Z])://").unwrap();
+        re.replace(&str, |caps: &Captures| {
+            format!("/mnt/{}/", caps[1].to_ascii_lowercase())
+        })
+        .to_string()
+        .into()
+    } else {
+        script_path.into()
+    }
+}
+
 pub async fn run(
     script: &Script,
     script_path: &Path,
@@ -15,7 +34,17 @@ pub async fn run(
 ) -> Result<ScriptOutput, Error> {
     let (prog, mut args) = script.commandline();
     let dur = Duration::from_secs(30);
-    args.push(script_path.file_name().unwrap().to_os_string());
+
+    #[cfg(target_os = "windows")]
+    {
+        args.push(fix_windows_path(&script, &script_path));
+    }
+
+    #[cfg(target_os = "unix")]
+    {
+        args.push(script_path.to_path_buf());
+    }
+    dbg!(&args);
     let out = timeout(
         dur,
         Command::new(prog)

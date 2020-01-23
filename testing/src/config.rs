@@ -60,18 +60,21 @@ pub enum Error {
 pub fn parse_config(path: &Path) -> Result<Config, Error> {
     let file_content = fs::read_to_string(path)?;
     let conf = toml::from_str::<Config>(&file_content)?;
-    check_config(&conf);
+    check_config(&conf)?;
     Ok(conf)
 }
 
 // can panic
-fn check_config(conf: &Config) {
+fn check_config(conf: &Config)-> Result<(), std::io::Error> {
     for assignment in conf.assignments.values() {
         for path in &assignment.include_files {
             path_exists_and_is_file(&path);
         }
         path_exists_and_is_file(&assignment.solution_path);
+        let code = fs::read_to_string(&assignment.solution_path)?;
+        fs::write(&assignment.solution_path, fix_win_ln(&code))?;
     }
+    Ok(())
 }
 
 fn path_exists_and_is_file(p: &Path) {
@@ -81,4 +84,9 @@ fn path_exists_and_is_file(p: &Path) {
             p
         )
     }
+}
+
+// delete stupid windows newlines
+pub fn fix_win_ln(s :&str)->String{
+    s.chars().filter(|&c| c != '\r').collect::<_>()
 }

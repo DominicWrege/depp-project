@@ -7,16 +7,16 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::{Builder, NamedTempFile, TempDir};
 use tokio::{fs, io};
+use crate::config::fix_win_ln;
 
 pub fn new_tmp_script_file(
     script_type: Script,
     content: &str,
-    dest_dir: &Path
 ) -> Result<NamedTempFile, std::io::Error> {
     let mut file = Builder::new()
         .suffix(script_type.file_extension())
-        .tempfile_in(&dest_dir)?;
-    file.write(&content.as_bytes())?;
+        .tempfile()?;
+    file.write(&fix_win_ln(&content).as_bytes())?;
     Ok(file)
 }
 pub async fn cp_files(files: &Vec<PathBuf>, dir: &TempDir) -> Result<(), Error> {

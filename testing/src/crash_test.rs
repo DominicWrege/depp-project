@@ -118,7 +118,7 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
         cp_files(&assignment.include_files, &dir_to_test),
     )?;
 
-    let script_test_path = new_tmp_script_file(assignment.script_type, code, dir_to_test.path())
+    let script_test_path = new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
     let test_output = script::run(

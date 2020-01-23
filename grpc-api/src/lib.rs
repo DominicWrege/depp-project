@@ -1,13 +1,13 @@
 tonic::include_proto!("deep_project");
 
-use std::path::{PathBuf, Path};
-use std::ffi::{OsStr, OsString};
+use std::path::PathBuf;
+use std::ffi::OsString;
 
 pub type AssignmentId = uuid::Uuid;
 
 #[cfg(any(unix))]
 impl Script {
-    pub fn commandline(&self) -> (&'static str, Vec<OsString>) {
+    pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
         match self {
             Script::PowerShell => ("pwsh", vec![]),
             Script::Shell => ("sh", vec![]),
@@ -21,13 +21,13 @@ impl Script {
 impl From<i32> for Script {
     fn from(n: i32) -> Self {
         match n {
-            1 => Script::PowerShell,
-            3 => Script::Python3,
-            4 => Script::Shell,
-            5 => Script::Bash,
-            6 => Script::Awk,
-            7 => Script::Sed,
-            2 | _ => Script::Batch,
+            0 => Script::PowerShell,
+            1 => Script::Batch,
+            2 => Script::Python3,
+            3 => Script::Shell,
+            5 => Script::Awk,
+            6 => Script::Sed,
+            4 | _ => Script::Bash,
         }
     }
 }
@@ -38,8 +38,8 @@ impl Script {
         match self {
             Script::PowerShell => ("powershell.exe", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
-            Script::Python3 => ("python3", vec![]),
-            Script::Shell | Script::Bash | Script::Awk | Script::Sed | Script::Unknown  => ("bash", vec![]),
+            Script::Python3 => ("python", vec![]),
+            Script::Shell | Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
         }
     }
 }
@@ -50,7 +50,7 @@ impl Script {
             Script::Batch => ".bat",
             Script::PowerShell => ".ps1",
             Script::Python3 => ".py",
-            Script::Shell | Script::Bash | Script::Sed | Script::Awk | _ => ".sh",
+            Script::Shell | Script::Bash | Script::Sed | Script::Awk  => ".sh",
         }
     }
 }

@@ -28,14 +28,13 @@ message AssignmentResult {
 }
 
 enum Script {
-	Unknown = 0;
-	PowerShell = 1;
-	Batch = 2;
-	Python3 = 3;
-	Shell = 4;
-	Bash = 5;
-	Awk = 6;
-	Sed = 7;
+	PowerShell = 0;
+	Batch = 1;
+	Python3 = 2;
+	Shell = 3;
+	Bash = 4;
+	Awk = 5;
+	Sed = 6;
 }
 
 message Assignment {
