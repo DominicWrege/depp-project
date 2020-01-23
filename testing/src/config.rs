@@ -65,14 +65,12 @@ pub fn parse_config(path: &Path) -> Result<Config, Error> {
 }
 
 // can panic
-fn check_config(conf: &Config)-> Result<(), std::io::Error> {
+fn check_config(conf: &Config) -> Result<(), std::io::Error> {
     for assignment in conf.assignments.values() {
         for path in &assignment.include_files {
             path_exists_and_is_file(&path);
         }
         path_exists_and_is_file(&assignment.solution_path);
-        let code = fs::read_to_string(&assignment.solution_path)?;
-        fs::write(&assignment.solution_path, fix_win_ln(&code))?;
     }
     Ok(())
 }
@@ -87,6 +85,6 @@ fn path_exists_and_is_file(p: &Path) {
 }
 
 // delete stupid windows newlines
-pub fn fix_win_ln(s :&str)->String{
+pub fn fix_win_ln(s: &str) -> String {
     s.chars().filter(|&c| c != '\r').collect::<_>()
 }

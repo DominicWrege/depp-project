@@ -1,3 +1,4 @@
+use crate::config::fix_win_ln;
 use crate::crash_test::Error;
 use async_stream::try_stream;
 use futures::stream::Stream;
@@ -7,7 +8,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::{Builder, NamedTempFile, TempDir};
 use tokio::{fs, io};
-use crate::config::fix_win_ln;
 
 pub fn new_tmp_script_file(
     script_type: Script,
@@ -16,7 +16,16 @@ pub fn new_tmp_script_file(
     let mut file = Builder::new()
         .suffix(script_type.file_extension())
         .tempfile()?;
-    file.write(&fix_win_ln(&content).as_bytes())?;
+    let bytes = if script_type != Script::PowerShell
+        && script_type != Script::Batch
+        && content.contains(r"\r\n")
+    {
+        let c = content.clone();
+        fix_win_ln(&c).as_bytes().to_owned()
+    } else {
+        content.as_bytes().to_owned()
+    };
+    file.write(&bytes)?;
     Ok(file)
 }
 pub async fn cp_files(files: &Vec<PathBuf>, dir: &TempDir) -> Result<(), Error> {

@@ -5,21 +5,16 @@ mod crash_test;
 mod fs_util;
 mod script;
 
+use config::{fix_win_ln, parse_config, AssignmentsMap};
+use futures::future;
 use grpc_api::test_server::{Test, TestServer};
 use grpc_api::{
-    AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, VecAssignmentsShort,
+    AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, Script,
+    VecAssignmentsShort,
 };
 use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
-//use base64;
-use config::{parse_config, AssignmentsMap};
-
-#[derive(Debug, StructOpt)]
-struct Opt {
-    #[structopt(short, long)]
-    config: std::path::PathBuf,
-}
 
 #[derive(Default, Debug)]
 pub struct Tester {
@@ -153,13 +148,24 @@ pub struct ServerConfig {
     port: u16,
 }
 
+#[derive(Debug, StructOpt)]
+struct Opt {
+    #[structopt(short, long, help = "File for all assignments")]
+    config: std::path::PathBuf,
+    #[structopt(short, long, help = "Convert windows newlines into unix newlines")]
+    dos_to_unix: bool,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
-
     env_logger::init();
     let opt = Opt::from_args();
     let config = parse_config(&opt.config)?;
+    if opt.dos_to_unix {
+        convert_dos_to_unix(&config).await?;
+        log::info!("Done converting")
+    }
     log::info!("Exercise: {}", &config.name);
     let test = Tester::new(config.assignments);
     let port = envy::from_env::<ServerConfig>()?.port;
@@ -169,6 +175,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(TestServer::new(test))
         .serve(addr)
         .await?;
+    Ok(())
+}
 
+async fn convert_dos_to_unix(config: &config::Config) -> Result<(), std::io::Error> {
+    future::try_join_all(
+        config
+            .assignments
+            .iter()
+            .filter(|(_id, a)| {
+                a.script_type != Script::PowerShell || a.script_type != Script::Batch
+            })
+            .map(|(_id, a)| async move { fix_and_save(&a.solution_path).await }),
+    )
+    .await?;
+    Ok(())
+}
+
+async fn fix_and_save(path: &Path) -> Result<(), std::io::Error> {
+    let code = tokio::fs::read_to_string(&path).await?;
+    if code.contains(r"\r\n") {
+        tokio::fs::write(&path, fix_win_ln(&code)).await?;
+        log::info!("Converted: {:#?}", &path);
+    }
     Ok(())
 }
