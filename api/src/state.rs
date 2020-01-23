@@ -38,7 +38,7 @@ impl FromStr for Sha256 {
 pub struct Credentials {
     #[structopt(short, long, default_value = "user")]
     username: String,
-    #[structopt(short = "p", long = "password", default_value = "wasd")]
+    #[structopt(short = "p", long = "password", default_value = "wasd4221")]
     password: Sha256,
 }
 
