@@ -7,12 +7,10 @@ use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
-use path_slash::PathExt;
-use regex::{Captures, Regex};
-use std::ffi::OsString;
-
-#[cfg(target_os = "windows")]
-fn fix_windows_path(script: &Script, script_path: &Path) -> OsString {
+#[cfg(target_family = "windows")]
+fn fix_windows_path(script: &Script, script_path: &Path) -> std::ffi::OsString {
+    use path_slash::PathExt;
+    use regex::{Captures, Regex};
     if script == &Script::Bash || script == &Script::Shell {
         let str = script_path.to_slash_lossy().replace("\\\\?\\", "");
         let re = Regex::new(r"^([A-Z])://").unwrap();
@@ -32,15 +30,15 @@ pub async fn run(
     dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
-    let (prog, mut args) = script.commandline();
+    let (prog, mut args) = script.command_line();
     let dur = Duration::from_secs(30);
 
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     {
         args.push(fix_windows_path(&script, &script_path));
     }
 
-    #[cfg(target_os = "unix")]
+    #[cfg(target_family = "unix")]
     {
         args.push(script_path.to_path_buf());
     }
@@ -78,7 +76,6 @@ pub struct ScriptOutput {
     pub stdout: String,
     pub output: Output,
 }
-
 
 fn exited_fine(out: &Output) -> Result<(), Error> {
     if out.status.success() && out.stderr.is_empty() {

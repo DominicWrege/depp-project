@@ -1,19 +1,32 @@
 tonic::include_proto!("deep_project");
 
-use std::path::PathBuf;
-use std::ffi::OsString;
-
 pub type AssignmentId = uuid::Uuid;
 
-#[cfg(any(unix))]
+#[cfg(target_family = "unix")]
 impl Script {
-    pub fn commandline(&self) -> (&'static str, Vec<PathBuf>) {
+    pub fn command_line(&self) -> (&'static str, Vec<std::path::PathBuf>) {
         match self {
             Script::PowerShell => ("pwsh", vec![]),
             Script::Shell => ("sh", vec![]),
             Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => ("python3", vec![]),
-            Script::Bash | Script::Awk | Script::Sed | _ => ("bash", vec![]),
+            Script::Awk => ("awk", vec![]),
+            Script::Sed => ("sed", vec![]),
+            Script::Bash => ("bash", vec![]),
+        }
+    }
+}
+
+#[cfg(target_family = "windows")]
+impl Script {
+    pub fn command_line(&self) -> (&'static str, Vec<std::ffi::OsString>) {
+        match self {
+            Script::PowerShell => ("powershell.exe", vec![]),
+            Script::Batch => ("cmd.exe", vec!["/C".into()]),
+            Script::Python3 => ("python", vec![]),
+            Script::Awk => ("awk", vec![]),
+            Script::Sed => ("sed", vec![]),
+            Script::Bash => ("bash", vec![]),
         }
     }
 }
@@ -32,25 +45,13 @@ impl From<i32> for Script {
     }
 }
 
-#[cfg(target_os = "windows")]
-impl Script {
-    pub fn commandline(&self) -> (&'static str, Vec<OsString>) {
-        match self {
-            Script::PowerShell => ("powershell.exe", vec![]),
-            Script::Batch => ("cmd.exe", vec!["/C".into()]),
-            Script::Python3 => ("python", vec![]),
-            Script::Shell | Script::Bash | Script::Awk | Script::Sed => ("bash", vec![]),
-        }
-    }
-}
-
 impl Script {
     pub fn file_extension(&self) -> &'static str {
         match self {
             Script::Batch => ".bat",
             Script::PowerShell => ".ps1",
             Script::Python3 => ".py",
-            Script::Shell | Script::Bash | Script::Sed | Script::Awk  => ".sh",
+            Script::Shell | Script::Bash | Script::Sed | Script::Awk => ".sh",
         }
     }
 }
