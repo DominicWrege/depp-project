@@ -20,8 +20,7 @@ pub fn new_tmp_script_file(
         && script_type != Script::Batch
         && content.contains(r"\r\n")
     {
-        let c = content.clone();
-        fix_win_ln(&c).as_bytes().to_owned()
+        fix_win_ln(&content).as_bytes().to_owned()
     } else {
         content.as_bytes().to_owned()
     };

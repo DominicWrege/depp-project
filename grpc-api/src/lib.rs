@@ -7,12 +7,12 @@ impl Script {
     pub fn command_line(&self) -> (&'static str, Vec<std::path::PathBuf>) {
         match self {
             Script::PowerShell => ("pwsh", vec![]),
-            Script::Shell => ("sh", vec![]),
             Script::Batch => ("wine", vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => ("python3", vec![]),
             Script::Awk => ("awk", vec![]),
             Script::Sed => ("sed", vec![]),
             Script::Bash => ("bash", vec![]),
+            Script::Shell => ("sh", vec![]),
         }
     }
 }
@@ -26,7 +26,8 @@ impl Script {
             Script::Python3 => ("python", vec![]),
             Script::Awk => ("awk", vec![]),
             Script::Sed => ("sed", vec![]),
-            Script::Bash => ("bash", vec![]),
+            Script::Bash => ("bash -c", vec![]), // bash -c are forwarded to the WSL process without modification.
+            Script::Shell => ("wsl sh", vec![]),
         }
     }
 }

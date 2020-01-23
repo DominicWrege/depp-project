@@ -7,23 +7,6 @@ use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
-#[cfg(target_family = "windows")]
-fn fix_windows_path(script: &Script, script_path: &Path) -> std::ffi::OsString {
-    use path_slash::PathExt;
-    use regex::{Captures, Regex};
-    if script == &Script::Bash || script == &Script::Shell {
-        let str = script_path.to_slash_lossy().replace("\\\\?\\", "");
-        let re = Regex::new(r"^([A-Z])://").unwrap();
-        re.replace(&str, |caps: &Captures| {
-            format!("/mnt/{}/", caps[1].to_ascii_lowercase())
-        })
-        .to_string()
-        .into()
-    } else {
-        script_path.into()
-    }
-}
-
 pub async fn run(
     script: &Script,
     script_path: &Path,
@@ -84,5 +67,22 @@ fn exited_fine(out: &Output) -> Result<(), Error> {
         Err(Error::ExitCode(
             String::from_utf8(out.stderr.clone()).unwrap_or_default(),
         ))
+    }
+}
+
+#[cfg(target_family = "windows")]
+fn fix_windows_path(script: &Script, script_path: &Path) -> std::ffi::OsString {
+    use path_slash::PathExt;
+    use regex::{Captures, Regex};
+    if script == &Script::Bash || script == &Script::Shell {
+        let str = script_path.to_slash_lossy().replace("\\\\?\\", "");
+        let re = Regex::new(r"^([A-Z])://").unwrap();
+        re.replace(&str, |caps: &Captures| {
+            format!("/mnt/{}/", caps[1].to_ascii_lowercase())
+        })
+        .to_string()
+        .into()
+    } else {
+        script_path.into()
     }
 }
