@@ -9,7 +9,7 @@ use log::info;
 use tokio::fs;
 
 use crate::config::Assignment;
-use crate::fs_util::{cp_files, ls_dir_content, new_tmp_script_file};
+use crate::fs_util;
 use crate::script;
 
 #[async_trait]
@@ -66,7 +66,7 @@ impl Tester for Files {
     async fn test(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir).await?;
         print_dir_content("result after test:", &self.given_dir).await?;
-        let stream = ls_dir_content(self.expected_dir.clone());
+        let stream = fs_util::ls_dir_content(self.expected_dir.clone());
         pin_mut!(stream);
         while let Some(Ok(solution_entry)) = stream.next().await {
             let path_to_check = &self.given_dir.as_path().join(
@@ -94,7 +94,7 @@ impl Tester for Files {
 
 async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     info!("{}", &msg);
-    let stream = ls_dir_content(root.to_path_buf().clone());
+    let stream = fs_util::ls_dir_content(root.to_path_buf().clone());
     pin_mut!(stream);
     while let Some(Ok(entry)) = stream.next().await {
         info!("path: {}", &entry.display());
@@ -114,14 +114,14 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     let mut soltuion_files = vec![assignment.solution_path.clone()];
     soltuion_files.append(&mut assignment.include_files.clone());
     try_join!(
-        cp_files(&soltuion_files, &dir_solution),
-        cp_files(&assignment.include_files, &dir_to_test),
+        fs_util::cp_files(&soltuion_files, &dir_solution),
+        fs_util::cp_files(&assignment.include_files, &dir_to_test),
     )?;
 
-    let script_test_path = new_tmp_script_file(assignment.script_type, code)
+    let script_test_path = fs_util::new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
-    let test_output = script::run(
+    let test_output = script::run_router(
         &assignment.script_type,
         &script_test_path,
         &dir_to_test.path(),
@@ -130,7 +130,7 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     .await?;
     info!("running task: {}", &assignment.name);
 
-    let solution_output = script::run(
+    let solution_output = script::run_router(
         &assignment.script_type,
         &assignment.solution_path,
         &dir_solution.path(),

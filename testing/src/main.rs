@@ -2,9 +2,9 @@ use std::path::Path;
 
 mod config;
 mod crash_test;
+mod docker;
 mod fs_util;
 mod script;
-
 use config::{fix_win_ln, parse_config, AssignmentsMap};
 use futures::future;
 use grpc_api::test_server::{Test, TestServer};
@@ -158,6 +158,13 @@ struct Opt {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /*
+        testing and playing
+        let script_dir = Path::new("/home/dominic/Code/depp-project-api/testing/examples/");
+        let tmp = Path::new("/tmp/temp42/");
+        script::run_in_container("task1_helloworld.sh", script_dir, tmp).await;
+    */
+
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     let opt = Opt::from_args();
