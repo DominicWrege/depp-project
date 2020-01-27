@@ -11,6 +11,7 @@ use tokio::fs;
 use crate::config::Assignment;
 use crate::fs_util;
 use crate::script;
+use crate::script::ScriptOutput;
 
 #[async_trait]
 pub trait Tester: Sync + Send {
@@ -65,7 +66,7 @@ impl Files {
 impl Tester for Files {
     async fn test(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir).await?;
-        print_dir_content("result after test:", &self.given_dir).await?;
+        print_dir_content("dir after test:", &self.given_dir).await?;
         let stream = fs_util::ls_dir_content(self.expected_dir.clone());
         pin_mut!(stream);
         while let Some(Ok(solution_entry)) = stream.next().await {
@@ -97,10 +98,10 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     let stream = fs_util::ls_dir_content(root.to_path_buf().clone());
     pin_mut!(stream);
     while let Some(Ok(entry)) = stream.next().await {
-        info!("path: {}", &entry.display());
+        info!("    path: {}", &entry.display());
         if entry.is_file() {
             let content = fs::read_to_string(&entry).await.unwrap_or_default();
-            info!("file content: {:#?}\n", &content);
+            info!("    file content: {:#?}\n", &content);
         }
     }
     Ok(())
@@ -109,18 +110,17 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
 pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
-    //dbg!(&dir_solution);
-    //TODO change it later
-    let mut soltuion_files = vec![assignment.solution_path.clone()];
-    soltuion_files.append(&mut assignment.include_files.clone());
+    dbg!(&dir_solution);
+    dbg!(&dir_to_test);
     try_join!(
-        fs_util::cp_files(&soltuion_files, &dir_solution),
+        fs_util::cp_files(&assignment.include_files, &dir_solution),
         fs_util::cp_files(&assignment.include_files, &dir_to_test),
     )?;
 
     let script_test_path = fs_util::new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
+    info!("running task: {}", &assignment.name);
     let test_output = script::run_router(
         &assignment.script_type,
         &script_test_path,
@@ -128,8 +128,6 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
         &assignment.args,
     )
     .await?;
-    info!("running task: {}", &assignment.name);
-
     let solution_output = script::run_router(
         &assignment.script_type,
         &assignment.solution_path,

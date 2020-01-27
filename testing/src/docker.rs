@@ -32,8 +32,8 @@ fn create_mount_point<'a>(
     permission: MountPermission,
 ) -> MountPoint<&'a str> {
     MountPoint {
-        target: target,
-        source: source,
+        target,
+        source,
         type_: "bind",
         read_only: permission.into(),
         consistency: "default",
@@ -55,8 +55,10 @@ pub fn create_host_config<'a>(
         script_mount.target_dir,
         MountPermission::Read,
     );
+    /*    dbg!(&script_mount_point);
+    dbg!(&output_mount_point);*/
     Some(HostConfig {
-        mounts: Some(vec![output_mount_point, script_mount_point]),
+        mounts: Some(vec![script_mount_point, output_mount_point]),
         ..Default::default()
     })
 }
@@ -67,13 +69,14 @@ pub async fn create_container(
     host_config: Option<HostConfig<&str>>,
     docker: &bollard::Docker,
     script: &grpc_api::Script,
+    args_from_conf: &Vec<String>,
 ) -> Result<CreateContainerResults, bollard::errors::Error> {
     let (prog, _args) = script.command_line(); //TODO rm _args
-
     let arg1 = ["/script_dir/".as_ref(), script_name].join("");
-    let cmd = vec![prog, arg1.as_ref()];
-
-    dbg!(&cmd);
+    let mut cmd = vec![prog, arg1.as_ref()];
+    let mut args2: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
+    cmd.append(args2.as_mut());
+    //dbg!(&cmd);
 
     let image = if script == &grpc_api::Script::Python3 {
         Some("my_python3")
@@ -92,8 +95,6 @@ pub async fn create_container(
         host_config,
         ..Default::default()
     };
-    //dbg!(&container_config);
-
     docker
         .create_container(None::<CreateContainerOptions<&str>>, container_config)
         .await

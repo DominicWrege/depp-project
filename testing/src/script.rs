@@ -10,33 +10,6 @@ use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
-pub async fn run_router(
-    script: &Script,
-    script_path: &Path,
-    out_dir: &Path,
-    args_from_conf: &Vec<String>,
-) -> Result<ScriptOutput, Error> {
-    match script {
-        Script::PowerShell | Script::Batch => {
-            run(&script, &script_path, &out_dir, &args_from_conf).await
-        }
-        _ => {
-            run_in_container(
-                &script,
-                script_path
-                    .to_path_buf()
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap(),
-                &script_path.parent().unwrap(),
-                &out_dir,
-            )
-            .await
-        }
-    }
-}
-
 pub async fn run(
     script: &Script,
     script_path: &Path,
@@ -78,11 +51,40 @@ pub async fn run(
     })
 }
 
+pub async fn run_router(
+    script: &Script,
+    script_path: &Path,
+    out_dir: &Path,
+    args_from_conf: &Vec<String>,
+) -> Result<ScriptOutput, Error> {
+    match script {
+        Script::PowerShell | Script::Batch => {
+            run(&script, &script_path, &out_dir, &args_from_conf).await
+        }
+        _ => {
+            run_in_container(
+                &script,
+                script_path
+                    .to_path_buf()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+                script_path.parent().unwrap().as_ref(),
+                &out_dir,
+                &args_from_conf,
+            )
+            .await
+        }
+    }
+}
+
 async fn run_in_container(
     script: &Script,
     script_name: &str,
     script_dir: &Path,
     out_dir: &Path,
+    args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
     let out_dir_mount = Mount {
         source_dir: out_dir.to_str().unwrap(),
@@ -101,6 +103,7 @@ async fn run_in_container(
         host_config,
         &docker,
         &script,
+        &args_from_conf,
     )
     .await
     .unwrap();
