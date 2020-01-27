@@ -55,8 +55,8 @@ pub fn create_host_config<'a>(
         script_mount.target_dir,
         MountPermission::Read,
     );
-    /*    dbg!(&script_mount_point);
-    dbg!(&output_mount_point);*/
+    //dbg!(&script_mount_point);
+    //dbg!(&output_mount_point);
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
         ..Default::default()

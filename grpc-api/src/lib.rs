@@ -23,11 +23,11 @@ impl Script {
         match self {
             Script::PowerShell => ("powershell.exe", vec![]),
             Script::Batch => ("cmd.exe", vec!["/C".into()]),
-            Script::Python3 => ("python", vec![]),
+            Script::Python3 => ("python3", vec![]),
             Script::Awk => ("awk", vec![]),
             Script::Sed => ("sed", vec![]),
-            Script::Bash => ("bash -c", vec![]), // bash -c are forwarded to the WSL process without modification.
-            Script::Shell => ("wsl sh", vec![]),
+            Script::Bash => ("bash", vec![]), // bash -c are forwarded to the WSL process without modification.
+            Script::Shell => ("sh", vec![]),
         }
     }
 }

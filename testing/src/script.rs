@@ -62,6 +62,7 @@ pub async fn run_router(
             run(&script, &script_path, &out_dir, &args_from_conf).await
         }
         _ => {
+            //script_path.parent().unwrap().as_ref(),
             run_in_container(
                 &script,
                 script_path
@@ -70,7 +71,7 @@ pub async fn run_router(
                     .unwrap()
                     .to_str()
                     .unwrap(),
-                script_path.parent().unwrap().as_ref(),
+                script_path.parent().unwrap().to_string_lossy().replace("\\\\?\\", "").as_ref(),
                 &out_dir,
                 &args_from_conf,
             )
@@ -106,7 +107,7 @@ async fn run_in_container(
         &args_from_conf,
     )
     .await
-    .unwrap();
+    .expect("cant crate container");
     let out = start_container(&container.id, &docker).await;
     dbg!(&out);
     docker
