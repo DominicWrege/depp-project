@@ -110,8 +110,8 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
 pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
-    dbg!(&dir_solution);
-    dbg!(&dir_to_test);
+    /*    dbg!(&dir_solution);
+    dbg!(&dir_to_test);*/
     try_join!(
         fs_util::cp_files(&assignment.include_files, &dir_solution),
         fs_util::cp_files(&assignment.include_files, &dir_to_test),

@@ -1,7 +1,7 @@
 use crate::script::ScriptOutput;
 use bollard::container::{
     CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
-    StartContainerOptions,
+    RemoveContainerOptions, StartContainerOptions, WaitContainerOptions,
 };
 use futures::StreamExt;
 use std::fmt::Write;
@@ -79,11 +79,10 @@ pub async fn create_container(
     //dbg!(&cmd);
 
     let image = if script == &grpc_api::Script::Python3 {
-        Some("my_python3")
+        Some("my-ubuntu")
     } else {
         Some("ubuntu:latest")
     };
-
     let container_config = bollard::container::Config {
         attach_stdout: Some(true),
         attach_stderr: Some(true),
@@ -105,10 +104,35 @@ pub async fn start_container(container_id: &str, docker: &bollard::Docker) -> Sc
         .start_container(container_id, None::<StartContainerOptions<String>>)
         .await
         .expect("error start container");
-    get_out_put(container_id, &docker).await
+    let mut wait_stream = docker.wait_container(
+        &container_id,
+        Some(WaitContainerOptions {
+            condition: "not-running",
+        }),
+    );
+
+    let status_code = wait_stream.next().await.unwrap().unwrap().status_code;
+    let (stdout, stderr) = get_out_put(container_id, &docker).await;
+
+    docker
+        .remove_container(
+            &container_id,
+            Some(RemoveContainerOptions {
+                force: false,
+                ..Default::default()
+            }),
+        )
+        .await
+        .expect("error delete container");
+
+    ScriptOutput {
+        stdout,
+        stderr,
+        status_code,
+    }
 }
 
-async fn get_out_put(container_id: &str, docker: &bollard::Docker) -> ScriptOutput {
+async fn get_out_put(container_id: &str, docker: &bollard::Docker) -> (String, String) {
     let log_opt = Some(LogsOptions {
         stdout: true,
         stderr: true,
@@ -124,5 +148,5 @@ async fn get_out_put(container_id: &str, docker: &bollard::Docker) -> ScriptOutp
             _ => (),
         }
     }
-    ScriptOutput { stdout, stderr }
+    (stdout, stderr)
 }

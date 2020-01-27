@@ -1,9 +1,6 @@
 use crate::crash_test::Error;
 use crate::docker::{create_container, create_host_config, start_container, Mount};
-use bollard::container::RemoveContainerOptions;
 use grpc_api::Script;
-use std::convert::TryFrom;
-use std::fmt::Write;
 use std::path::Path;
 use std::process::Output;
 use std::time::Duration;
@@ -48,6 +45,7 @@ pub async fn run(
     Ok(ScriptOutput {
         stdout: String::from_utf8(out.stdout).unwrap(),
         stderr: String::from_utf8(out.stderr).unwrap(),
+        status_code: out.status.code().unwrap() as u64,
     })
 }
 
@@ -62,7 +60,20 @@ pub async fn run_router(
             run(&script, &script_path, &out_dir, &args_from_conf).await
         }
         _ => {
-            //script_path.parent().unwrap().as_ref(),
+            //because windows
+            #[cfg(target_family = "windows")]
+            let script_dir = {
+                script_path
+                    .parent()
+                    .unwrap()
+                    .to_string_lossy()
+                    .replace("\\\\?\\", "")
+                    .as_ref()
+            };
+
+            #[cfg(target_family = "unix")]
+            let script_dir = { script_path.parent().unwrap().as_ref() };
+
             run_in_container(
                 &script,
                 script_path
@@ -71,7 +82,7 @@ pub async fn run_router(
                     .unwrap()
                     .to_str()
                     .unwrap(),
-                script_path.parent().unwrap().to_string_lossy().replace("\\\\?\\", "").as_ref(),
+                script_dir,
                 &out_dir,
                 &args_from_conf,
             )
@@ -109,17 +120,8 @@ async fn run_in_container(
     .await
     .expect("cant crate container");
     let out = start_container(&container.id, &docker).await;
+
     dbg!(&out);
-    docker
-        .remove_container(
-            &container.id,
-            Some(RemoveContainerOptions {
-                force: true,
-                ..Default::default()
-            }),
-        )
-        .await
-        .expect("error delete container");
     Ok(out)
 }
 
@@ -137,6 +139,7 @@ async fn run_in_container(
 pub struct ScriptOutput {
     pub stdout: String,
     pub stderr: String,
+    pub status_code: u64,
 }
 
 fn exited_fine(out: &Output) -> Result<(), Error> {
