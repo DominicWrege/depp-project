@@ -55,4 +55,22 @@ impl Script {
             Script::Shell | Script::Bash | Script::Sed | Script::Awk => ".sh",
         }
     }
+    pub fn target_os(&self) -> TargetOs {
+        match self {
+            Script::PowerShell | Script::Batch => TargetOs::Windows,
+            _ => TargetOs::Unix,
+        }
+    }
+    pub fn docker_image(&self) -> &'static str {
+        match self.target_os() {
+            TargetOs::Windows => "mcr.microsoft.com/powershell:latest",
+            TargetOs::Unix => "my-ubuntu",
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum TargetOs {
+    Windows,
+    Unix,
 }

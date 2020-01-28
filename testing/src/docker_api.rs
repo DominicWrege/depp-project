@@ -64,30 +64,17 @@ pub fn create_host_config<'a>(
 }
 
 pub async fn create_container(
-    working_dir: &str,
-    script_name: &str,
+    cmd: Vec<&str>,
+    image: &str,
     host_config: Option<HostConfig<&str>>,
+    working_dir: &str,
     docker: &bollard::Docker,
-    script: &grpc_api::Script,
-    args_from_conf: &Vec<String>,
 ) -> Result<CreateContainerResults, bollard::errors::Error> {
-    let (prog, _args) = script.command_line(); //TODO rm _args
-    let arg1 = ["/script_dir/".as_ref(), script_name].join("");
-    let mut cmd = vec![prog, arg1.as_ref()];
-    let mut args2: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
-    cmd.append(args2.as_mut());
-    //dbg!(&cmd);
-
-    let image = if script == &grpc_api::Script::Python3 {
-        Some("my-ubuntu")
-    } else {
-        Some("ubuntu:latest")
-    };
     let container_config = bollard::container::Config {
         attach_stdout: Some(true),
         attach_stderr: Some(true),
         args_escaped: None,
-        image: image,
+        image: Some(image),
         working_dir: Some(working_dir),
         cmd: Some(cmd),
         env: None,

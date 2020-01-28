@@ -2,7 +2,7 @@ use std::path::Path;
 
 mod config;
 mod crash_test;
-mod docker;
+mod docker_api;
 mod fs_util;
 mod script;
 use config::{fix_win_ln, parse_config, AssignmentsMap};

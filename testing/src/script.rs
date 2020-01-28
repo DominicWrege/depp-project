@@ -1,5 +1,5 @@
 use crate::crash_test::Error;
-use crate::docker::{create_container, create_host_config, start_container, Mount};
+use crate::docker_api::{create_container, create_host_config, start_container, Mount};
 use grpc_api::Script;
 use std::path::Path;
 use std::process::Output;
@@ -55,10 +55,8 @@ pub async fn run_router(
     out_dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
-    match script {
-        Script::PowerShell | Script::Batch => {
-            run(&script, &script_path, &out_dir, &args_from_conf).await
-        }
+    match script.target_os() {
+        grpc_api::TargetOs::Windows => run(&script, &script_path, &out_dir, &args_from_conf).await,
         _ => {
             //because windows
             #[cfg(target_family = "windows")]
@@ -98,24 +96,35 @@ async fn run_in_container(
     out_dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
+    let inner_working_dir = "/testing";
+    let inner_script_dir = "/script_dir";
     let out_dir_mount = Mount {
         source_dir: out_dir.to_str().unwrap(),
-        target_dir: "/testing".as_ref(),
+        target_dir: inner_working_dir,
     };
 
     let script_dir_mount = Mount {
         source_dir: script_dir.to_str().unwrap(),
-        target_dir: "/script_dir".as_ref(),
+        target_dir: inner_script_dir,
     };
-    let docker = bollard::Docker::connect_with_local_defaults().unwrap();
+    let docker =
+        bollard::Docker::connect_with_local_defaults().expect("Cant connect to docker api");
     let host_config = create_host_config(&out_dir_mount, &script_dir_mount);
+
+    // TODO fix me
+    let (prog, _args) = script.command_line(); //TODO rm _args
+    let inner_script_path = ["/script_dir/", script_name].join("");
+    let mut cmd = vec![prog, inner_script_path.as_ref()];
+    let mut args2: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
+    cmd.append(args2.as_mut());
+    // TODO fix me
+
     let container = create_container(
-        "/testing".as_ref(),
-        script_name,
+        cmd,
+        script.docker_image(),
         host_config,
+        inner_working_dir,
         &docker,
-        &script,
-        &args_from_conf,
     )
     .await
     .expect("cant crate container");
