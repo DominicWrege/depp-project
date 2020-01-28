@@ -67,6 +67,13 @@ impl Script {
             TargetOs::Unix => "my-ubuntu",
         }
     }
+
+    pub fn docker_mount_points(&self) -> (&'static str, &'static str) {
+        match self.target_os() {
+            TargetOs::Windows => (r"c:\testing\", r"c:\script\"),
+            TargetOs::Unix => ("/testing/", "/script/"),
+        }
+    }
 }
 
 #[derive(Debug)]

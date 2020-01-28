@@ -101,13 +101,17 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
         info!("    path: {}", &entry.display());
         if entry.is_file() {
             let content = fs::read_to_string(&entry).await.unwrap_or_default();
-            info!("    file content: {:#?}\n", &content);
+            info!("    file content: {:#?}", &content);
         }
     }
     Ok(())
 }
 
-pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
+pub async fn run(
+    assignment: &Assignment,
+    code: &str,
+    docker: &bollard::Docker,
+) -> Result<(), Error> {
     let dir_to_test = tempfile::tempdir()?;
     let dir_solution = tempfile::tempdir()?;
     /*    dbg!(&dir_solution);
@@ -122,6 +126,7 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
         .into_temp_path();
     info!("running task: {}", &assignment.name);
     let test_output = script::run_router(
+        &docker,
         &assignment.script_type,
         &script_test_path,
         &dir_to_test.path(),
@@ -129,6 +134,7 @@ pub async fn run(assignment: &Assignment, code: &str) -> Result<(), Error> {
     )
     .await?;
     let solution_output = script::run_router(
+        &docker,
         &assignment.script_type,
         &assignment.solution_path,
         &dir_solution.path(),

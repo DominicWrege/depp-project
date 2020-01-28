@@ -1,5 +1,6 @@
 use crate::crash_test::Error;
-use crate::docker_api::{create_container, create_host_config, start_container, Mount};
+use crate::docker_api::{create_container, create_host_config, start_and_log_container, Mount};
+use bollard::container::RemoveContainerOptions;
 use grpc_api::Script;
 use std::path::Path;
 use std::process::Output;
@@ -50,6 +51,7 @@ pub async fn run(
 }
 
 pub async fn run_router(
+    docker: &bollard::Docker,
     script: &Script,
     script_path: &Path,
     out_dir: &Path,
@@ -73,6 +75,7 @@ pub async fn run_router(
             let script_dir = { script_path.parent().unwrap().as_ref() };
 
             run_in_container(
+                docker,
                 &script,
                 script_path
                     .to_path_buf()
@@ -90,14 +93,14 @@ pub async fn run_router(
 }
 
 async fn run_in_container(
+    docker: &bollard::Docker,
     script: &Script,
     script_name: &str,
     script_dir: &Path,
     out_dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
-    let inner_working_dir = "/testing";
-    let inner_script_dir = "/script_dir";
+    let (inner_working_dir, inner_script_dir) = script.docker_mount_points();
     let out_dir_mount = Mount {
         source_dir: out_dir.to_str().unwrap(),
         target_dir: inner_working_dir,
@@ -107,8 +110,6 @@ async fn run_in_container(
         source_dir: script_dir.to_str().unwrap(),
         target_dir: inner_script_dir,
     };
-    let docker =
-        bollard::Docker::connect_with_local_defaults().expect("Cant connect to docker api");
     let host_config = create_host_config(&out_dir_mount, &script_dir_mount);
 
     // TODO fix me
@@ -128,8 +129,25 @@ async fn run_in_container(
     )
     .await
     .expect("cant crate container");
-    let out = start_container(&container.id, &docker).await;
+    let dur = Duration::from_secs(45);
+    let out = timeout(dur, start_and_log_container(&container.id, &docker))
+        .await
+        .map_err(|e| {
+            let err = Error::Timeout(e, dur.into());
+            log::info!("{}", &err);
+            err
+        })?;
 
+    docker
+        .remove_container(
+            &container.id,
+            Some(RemoveContainerOptions {
+                force: false,
+                ..Default::default()
+            }),
+        )
+        .await
+        .expect("error delete container");
     dbg!(&out);
     Ok(out)
 }

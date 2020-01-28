@@ -16,14 +16,18 @@ use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Tester {
     assignments: AssignmentsMap,
+    docker: bollard::Docker,
 }
 
 impl Tester {
-    fn new(assignments: AssignmentsMap) -> Self {
-        Tester { assignments }
+    fn new(assignments: AssignmentsMap, docker: bollard::Docker) -> Self {
+        Tester {
+            assignments,
+            docker,
+        }
     }
 }
 
@@ -36,22 +40,26 @@ impl Test for Tester {
         let msg = request.into_inner();
         let (assignment, code) = (msg.assignment, msg.source_code);
         if let Some(assignment) = assignment {
-            let reply = match crash_test::run(&config::Assignment::from(assignment), &code).await {
-                Err(crash_test::Error::CantCreatTempFile(e)) | Err(crash_test::Error::Copy(e)) => {
-                    //wait_print_err(e).await;
-                    panic!(e);
-                }
-                Err(e) => AssignmentResult {
-                    passed: false,
-                    message: Some(e.to_string()),
-                    mark: None,
-                },
-                Ok(_) => AssignmentResult {
-                    passed: true,
-                    message: None,
-                    mark: None,
-                },
-            };
+            let reply =
+                match crash_test::run(&config::Assignment::from(assignment), &code, &self.docker)
+                    .await
+                {
+                    Err(crash_test::Error::CantCreatTempFile(e))
+                    | Err(crash_test::Error::Copy(e)) => {
+                        //wait_print_err(e).await;
+                        panic!(e);
+                    }
+                    Err(e) => AssignmentResult {
+                        passed: false,
+                        message: Some(e.to_string()),
+                        mark: None,
+                    },
+                    Ok(_) => AssignmentResult {
+                        passed: true,
+                        message: None,
+                        mark: None,
+                    },
+                };
             Ok(Response::new(reply))
         } else {
             Err(tonic::Status::new(
@@ -158,13 +166,6 @@ struct Opt {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /*
-        testing and playing
-        let script_dir = Path::new("/home/dominic/Code/depp-project-api/testing/examples/");
-        let tmp = Path::new("/tmp/temp42/");
-        script::run_in_container("task1_helloworld.sh", script_dir, tmp).await;
-    */
-
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     let opt = Opt::from_args();
@@ -174,7 +175,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         log::info!("Done converting")
     }
     log::info!("Exercise: {}", &config.name);
-    let test = Tester::new(config.assignments);
+    let docker =
+        bollard::Docker::connect_with_local_defaults().expect("Cant connect to docker api");
+    let test = Tester::new(config.assignments, docker);
     let port = envy::from_env::<ServerConfig>()?.port;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     log::info!("Tester listening on {}", &addr);

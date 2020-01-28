@@ -1,7 +1,7 @@
 use crate::script::ScriptOutput;
 use bollard::container::{
     CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
-    RemoveContainerOptions, StartContainerOptions, WaitContainerOptions,
+    StartContainerOptions, WaitContainerOptions,
 };
 use futures::StreamExt;
 use std::fmt::Write;
@@ -59,6 +59,7 @@ pub fn create_host_config<'a>(
     //dbg!(&output_mount_point);
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
+        memory: Some(256000000),
         ..Default::default()
     })
 }
@@ -78,6 +79,7 @@ pub async fn create_container(
         working_dir: Some(working_dir),
         cmd: Some(cmd),
         env: None,
+        stop_timeout: Some(30),
         host_config,
         ..Default::default()
     };
@@ -86,7 +88,7 @@ pub async fn create_container(
         .await
 }
 
-pub async fn start_container(container_id: &str, docker: &bollard::Docker) -> ScriptOutput {
+pub async fn start_and_log_container(container_id: &str, docker: &bollard::Docker) -> ScriptOutput {
     docker
         .start_container(container_id, None::<StartContainerOptions<String>>)
         .await
@@ -99,18 +101,7 @@ pub async fn start_container(container_id: &str, docker: &bollard::Docker) -> Sc
     );
 
     let status_code = wait_stream.next().await.unwrap().unwrap().status_code;
-    let (stdout, stderr) = get_out_put(container_id, &docker).await;
-
-    docker
-        .remove_container(
-            &container_id,
-            Some(RemoveContainerOptions {
-                force: false,
-                ..Default::default()
-            }),
-        )
-        .await
-        .expect("error delete container");
+    let (stdout, stderr) = get_output(container_id, &docker).await;
 
     ScriptOutput {
         stdout,
@@ -119,7 +110,7 @@ pub async fn start_container(container_id: &str, docker: &bollard::Docker) -> Sc
     }
 }
 
-async fn get_out_put(container_id: &str, docker: &bollard::Docker) -> (String, String) {
+async fn get_output(container_id: &str, docker: &bollard::Docker) -> (String, String) {
     let log_opt = Some(LogsOptions {
         stdout: true,
         stderr: true,
