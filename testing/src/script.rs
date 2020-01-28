@@ -113,7 +113,7 @@ async fn run_in_container(
 
     // TODO fix me
     let (prog, _args) = script.command_line(); //TODO rm _args
-    let inner_script_path = ["/script_dir/", script_name].join("");
+    let inner_script_path = [inner_script_dir, script_name].join("");
     let mut cmd = vec![prog, inner_script_path.as_ref()];
     let mut args2: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
     cmd.append(args2.as_mut());
