@@ -4,6 +4,7 @@ use bollard::container::{
     StartContainerOptions, WaitContainerOptions,
 };
 use futures::StreamExt;
+use grpc_api::{Script, TargetOs};
 use std::fmt::Write;
 
 pub struct Mount<'a> {
@@ -23,6 +24,20 @@ impl From<MountPermission> for Option<bool> {
             MountPermission::Write => false,
         };
         Some(p)
+    }
+}
+
+pub fn docker_image(script: &Script) -> &'static str {
+    match script.target_os() {
+        TargetOs::Windows => "mcr.microsoft.com/powershell:latest",
+        TargetOs::Unix => "my-ubuntu",
+    }
+}
+
+pub fn docker_mount_points(script: &Script) -> (&'static str, &'static str) {
+    match script.target_os() {
+        TargetOs::Windows => (r"c:\testing\", r"c:\script\"),
+        TargetOs::Unix => ("/testing/", "/script/"),
     }
 }
 

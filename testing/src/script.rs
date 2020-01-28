@@ -1,5 +1,8 @@
 use crate::crash_test::Error;
-use crate::docker_api::{create_container, create_host_config, start_and_log_container, Mount};
+use crate::docker_api::{
+    create_container, create_host_config, docker_image, docker_mount_points,
+    start_and_log_container, Mount,
+};
 use bollard::container::RemoveContainerOptions;
 use grpc_api::Script;
 use std::path::Path;
@@ -100,7 +103,7 @@ async fn run_in_container(
     out_dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
-    let (inner_working_dir, inner_script_dir) = script.docker_mount_points();
+    let (inner_working_dir, inner_script_dir) = docker_mount_points(script);
     let out_dir_mount = Mount {
         source_dir: out_dir.to_str().unwrap(),
         target_dir: inner_working_dir,
@@ -122,7 +125,7 @@ async fn run_in_container(
 
     let container = create_container(
         cmd,
-        script.docker_image(),
+        docker_image(&script),
         host_config,
         inner_working_dir,
         &docker,
