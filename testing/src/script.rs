@@ -60,39 +60,33 @@ pub async fn run_router(
     out_dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
-    match script.target_os() {
-        grpc_api::TargetOs::Windows => run(&script, &script_path, &out_dir, &args_from_conf).await,
-        _ => {
-            //because windows
-            #[cfg(target_family = "windows")]
-            let script_dir = {
-                script_path
-                    .parent()
-                    .unwrap()
-                    .to_string_lossy()
-                    .replace("\\\\?\\", "")
-                    .as_ref()
-            };
+    //because windows
+    #[cfg(target_family = "windows")]
+    let script_dir = {
+        script_path
+            .parent()
+            .unwrap()
+            .to_string_lossy()
+            .replace("\\\\?\\", "")
+    };
 
-            #[cfg(target_family = "unix")]
-            let script_dir = { script_path.parent().unwrap().as_ref() };
+    #[cfg(target_family = "unix")]
+    let script_dir = { script_path.parent().unwrap() };
 
-            run_in_container(
-                docker,
-                &script,
-                script_path
-                    .to_path_buf()
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap(),
-                script_dir,
-                &out_dir,
-                &args_from_conf,
-            )
-            .await
-        }
-    }
+    run_in_container(
+        docker,
+        &script,
+        script_path
+            .to_path_buf()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        script_dir.as_ref(),
+        &out_dir,
+        &args_from_conf,
+    )
+    .await
 }
 
 async fn run_in_container(
@@ -132,7 +126,7 @@ async fn run_in_container(
     )
     .await
     .expect("cant crate container");
-    let dur = Duration::from_secs(45);
+    let dur = Duration::from_secs(60);
     let out = timeout(dur, start_and_log_container(&container.id, &docker))
         .await
         .map_err(|e| {
@@ -145,7 +139,7 @@ async fn run_in_container(
         .remove_container(
             &container.id,
             Some(RemoveContainerOptions {
-                force: false,
+                force: true,
                 ..Default::default()
             }),
         )

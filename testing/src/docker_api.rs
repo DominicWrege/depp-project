@@ -36,7 +36,7 @@ pub fn docker_image(script: &Script) -> &'static str {
 
 pub fn docker_mount_points(script: &Script) -> (&'static str, &'static str) {
     match script.target_os() {
-        TargetOs::Windows => (r"c:\testing\", r"c:\script\"),
+        TargetOs::Windows => (r"C:\testing\", r"C:\script\"),
         TargetOs::Unix => ("/testing/", "/script/"),
     }
 }
@@ -94,7 +94,7 @@ pub async fn create_container(
         working_dir: Some(working_dir),
         cmd: Some(cmd),
         env: None,
-        stop_timeout: Some(30),
+        stop_timeout: Some(60),
         host_config,
         ..Default::default()
     };
