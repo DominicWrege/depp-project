@@ -12,6 +12,7 @@ use grpc_api::{
     AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, Script,
     VecAssignmentsShort,
 };
+use std::convert::TryFrom;
 use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
@@ -38,33 +39,31 @@ impl Test for Tester {
         request: Request<AssignmentMsg>,
     ) -> Result<Response<AssignmentResult>, Status> {
         let msg = request.into_inner();
-        let (assignment, code) = (msg.assignment, msg.source_code);
-        if let Some(assignment) = assignment {
-            let reply =
-                match crash_test::run(&config::Assignment::from(assignment), &code, &self.docker)
-                    .await
-                {
-                    Err(crash_test::Error::CantCreatTempFile(e))
-                    | Err(crash_test::Error::Copy(e)) => {
-                        //wait_print_err(e).await;
-                        panic!(e);
-                    }
-                    Err(e) => AssignmentResult {
-                        passed: false,
-                        message: Some(e.to_string()),
-                        mark: None,
-                    },
-                    Ok(_) => AssignmentResult {
-                        passed: true,
-                        message: None,
-                        mark: None,
-                    },
-                };
+        // Eror handling when no valid uuid
+        let id = Uuid::parse_str(&msg.assignment_id).unwrap();
+        if let Some(assignment) = self.assignments.get(&id) {
+            let reply = match crash_test::run(assignment, &msg.source_code, &self.docker).await {
+                Err(crash_test::Error::CantCreatTempFile(e)) | Err(crash_test::Error::Copy(e)) => {
+                    //wait_print_err(e).await;
+                    panic!(e);
+                }
+                Err(crash_test::Error::Docker(e)) => panic!(e),
+                Err(e) => AssignmentResult {
+                    passed: false,
+                    message: Some(e.to_string()),
+                    mark: None,
+                },
+                Ok(_) => AssignmentResult {
+                    passed: true,
+                    message: None,
+                    mark: None,
+                },
+            };
             Ok(Response::new(reply))
         } else {
             Err(tonic::Status::new(
                 tonic::Code::InvalidArgument,
-                "assignment is null",
+                "assignmentId was not found",
             ))
         }
     }
@@ -85,37 +84,6 @@ impl Test for Tester {
         let ret = self.assignments.get(&id).map(|x| x.clone()).is_some();
 
         Ok(Response::new(AssignmentIdResponse { found: ret }))
-    }
-
-    async fn get_assignment(
-        &self,
-        request: Request<AssignmentIdRequest>,
-    ) -> Result<Response<grpc_api::Assignment>, Status> {
-        //TODO fix unwrap
-        let id = Uuid::parse_str(&request.into_inner().assignment_id).unwrap();
-        if let Some(assignment) = &self.assignments.get(&id) {
-            let ret = grpc_api::Assignment {
-                name: assignment.name.clone(),
-                solution_path: assignment
-                    .solution_path
-                    .to_str()
-                    .unwrap_or_default()
-                    .to_string(),
-                include_files: assignment
-                    .include_files
-                    .iter()
-                    .map(|p| p.to_str().unwrap_or_default().to_string())
-                    .collect::<Vec<_>>(),
-                script_type: assignment.script_type.into(),
-                args: assignment.args.clone(),
-            };
-            Ok(Response::new(ret))
-        } else {
-            Err(tonic::Status::new(
-                tonic::Code::InvalidArgument,
-                "id is not found",
-            ))
-        }
     }
 }
 
@@ -176,7 +144,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     log::info!("Exercise: {}", &config.name);
     let docker =
-        bollard::Docker::connect_with_local_defaults().expect("Cant connect to docker api");
+        bollard::Docker::connect_with_local_defaults().expect("Cant connect to docker api.");
     let test = Tester::new(config.assignments, docker);
     let port = envy::from_env::<ServerConfig>()?.port;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));

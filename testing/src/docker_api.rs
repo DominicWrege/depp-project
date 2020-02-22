@@ -1,4 +1,5 @@
-use crate::script::ScriptOutput;
+use crate::crash_test::Error;
+use crate::script::{ScriptOutput, TIMEOUT};
 use bollard::container::{
     CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
     StartContainerOptions, WaitContainerOptions,
@@ -30,7 +31,7 @@ impl From<MountPermission> for Option<bool> {
 pub fn docker_image(script: &Script) -> &'static str {
     match script.target_os() {
         TargetOs::Windows => "mcr.microsoft.com/powershell:latest",
-        TargetOs::Unix => "my-ubuntu",
+        TargetOs::Unix => "deep-ubuntu",
     }
 }
 
@@ -94,7 +95,7 @@ pub async fn create_container(
         working_dir: Some(working_dir),
         cmd: Some(cmd),
         env: None,
-        stop_timeout: Some(60),
+        stop_timeout: Some(TIMEOUT as isize),
         host_config,
         ..Default::default()
     };
@@ -103,11 +104,13 @@ pub async fn create_container(
         .await
 }
 
-pub async fn start_and_log_container(container_id: &str, docker: &bollard::Docker) -> ScriptOutput {
+pub async fn start_and_log_container(
+    container_id: &str,
+    docker: &bollard::Docker,
+) -> Result<ScriptOutput, Error> {
     docker
         .start_container(container_id, None::<StartContainerOptions<String>>)
-        .await
-        .expect("error start container");
+        .await?;
     let mut wait_stream = docker.wait_container(
         &container_id,
         Some(WaitContainerOptions {
@@ -118,11 +121,11 @@ pub async fn start_and_log_container(container_id: &str, docker: &bollard::Docke
     let status_code = wait_stream.next().await.unwrap().unwrap().status_code;
     let (stdout, stderr) = get_output(container_id, &docker).await;
 
-    ScriptOutput {
+    Ok(ScriptOutput {
         stdout,
         stderr,
         status_code,
-    }
+    })
 }
 
 async fn get_output(container_id: &str, docker: &bollard::Docker) -> (String, String) {
@@ -142,4 +145,10 @@ async fn get_output(container_id: &str, docker: &bollard::Docker) -> (String, St
         }
     }
     (stdout, stderr)
+}
+
+impl From<bollard::errors::Error> for Error {
+    fn from(err: bollard::errors::Error) -> Self {
+        Error::Docker(err.to_string())
+    }
 }

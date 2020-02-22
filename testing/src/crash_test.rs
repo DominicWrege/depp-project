@@ -164,17 +164,19 @@ pub enum Error {
     WrongOutput(String),
     #[error(display = "Solution dir and tested dir have not the same content")]
     ExpectedDirNotSame,
-    #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
-    ExitCode(String),
-    #[error(display = "Wrong file content. Expected({:#?}) Result({:#?})", _0, _1)]
+    /*    #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
+    ExitCode(String),*/
+    #[error(display = "Wrong file content: expected({:#?}) result({:#?})", _0, _1)]
     ExpectedFileNotSame(String, String),
     #[error(display = "Can't create temp file. {}", _0)]
     CantCreatTempFile(std::io::Error),
     #[from]
     #[error(display = "Could not copy included files for testing {}", _0)]
     Copy(std::io::Error),
-    #[error(display = "IO Error while reading the dir {:?}", _0)]
+    #[error(display = "IO error while reading the dir {:?}", _0)]
     ListDir(PathBuf),
+    #[error(display = "Docker error {}", _0)]
+    Docker(String),
 }
 #[derive(Debug, derive_more::From)]
 pub struct DurationDisplay(time::Duration);

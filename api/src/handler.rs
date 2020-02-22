@@ -59,14 +59,13 @@ pub async fn add_submission(
     let a_req = tonic::Request::new(AssignmentIdRequest {
         assignment_id: para.assignment_id.to_string(),
     });
-    let assignment = client
-        .get_assignment(a_req)
+    client
+        .assignment_exists(a_req)
         .await
-        .map_err(|_| Error::NotAssignment(para.assignment_id))?
-        .into_inner();
+        .map_err(|_| Error::NotAssignment(para.assignment_id))?;
     tokio::task::spawn(async move {
         let request = tonic::Request::new(AssignmentMsg {
-            assignment: Some(assignment),
+            assignment_id: para.assignment_id.to_string(),
             source_code: para.source_code.0,
         });
         match client.run_test(request).await {
@@ -76,7 +75,7 @@ pub async fn add_submission(
                     .insert(para.ilias_id, response.into_inner());
             }
             Err(e) => {
-                log::info!("error from rpc {:?}", e);
+                log::error!("error from rpc {:?}", e);
             }
         }
     });

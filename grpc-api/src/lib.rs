@@ -4,30 +4,30 @@ pub type AssignmentId = uuid::Uuid;
 
 #[cfg(target_family = "unix")]
 impl Script {
-    pub fn command_line(&self) -> (&'static str, Vec<std::path::PathBuf>) {
+    pub fn command_line(&self) -> Vec<&str> {
         match self {
-            Script::PowerShell => ("pwsh", vec![]), // maybe ln -s pwsh -> powershell.exe
-            Script::Batch => ("cmd.exe", vec!["/C".into()]), // only works inside wsl
-            Script::Python3 => ("python3", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![]),
-            Script::Bash => ("bash", vec![]),
-            Script::Shell => ("sh", vec![]),
+            Script::PowerShell => (vec!["pwsh".into()]), // maybe ln -s pwsh -> powershell.exe
+            Script::Batch => (vec!["cmd.exe".into(), "/C".into()]), // only works inside wsl
+            Script::Python3 => (vec!["python3".into()]),
+            Script::Awk => (vec!["awk".into()]),
+            Script::Sed => (vec!["sed".into()]),
+            Script::Bash => (vec!["bash".into()]),
+            Script::Shell => (vec!["sh".into()]),
         }
     }
 }
 
 #[cfg(target_family = "windows")]
 impl Script {
-    pub fn command_line(&self) -> (&'static str, Vec<std::ffi::OsString>) {
+    pub fn command_line(&self) -> Vec<&str> {
         match self {
-            Script::PowerShell => ("powershell.exe", vec![]),
-            Script::Batch => ("cmd.exe", vec!["/C".into()]),
-            Script::Python3 => ("python3", vec![]),
-            Script::Awk => ("awk", vec![]),
-            Script::Sed => ("sed", vec![]),
-            Script::Bash => ("bash", vec![]), // bash -c are forwarded to the WSL process without modification.
-            Script::Shell => ("sh", vec![]),
+            Script::PowerShell => (vec!["powershell.exe".into()]),
+            Script::Batch => (vec!["cmd.exe".into(), "/C".into()]),
+            Script::Python3 => (vec!["python3".into()]),
+            Script::Awk => (vec!["awk".into()]),
+            Script::Sed => (vec!["sed".into()]),
+            Script::Bash => (vec!["bash".into()]), // bash -c are forwarded to the WSL process without modification.
+            Script::Shell => (vec!["sh".into()]),
         }
     }
 }

@@ -8,7 +8,6 @@ service Test {
 	rpc RunTest(AssignmentMsg) returns (AssignmentResult);
 	rpc GetAssignments(google.protobuf.Empty) returns (VecAssignmentsShort);
 	rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse);
-	rpc GetAssignment(AssignmentIdRequest) returns (Assignment);
 }
 
 message AssignmentIdRequest { string assignment_id = 1; } // change to id or tuple
@@ -46,6 +45,6 @@ message Assignment {
 }
 
 message AssignmentMsg {
-	Assignment assignment = 1;
+	string assignment_id = 1;
 	string source_code = 2;
 }

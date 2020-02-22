@@ -6,52 +6,12 @@ use crate::docker_api::{
 use bollard::container::RemoveContainerOptions;
 use grpc_api::Script;
 use std::path::Path;
-use std::process::Output;
+//use std::process::Output;
 use std::time::Duration;
-use tokio::process::Command;
+//use tokio::process::Command;
 use tokio::time::timeout;
 
-pub async fn run(
-    script: &Script,
-    script_path: &Path,
-    dir: &Path,
-    args_from_conf: &Vec<String>,
-) -> Result<ScriptOutput, Error> {
-    let (prog, mut args) = script.command_line();
-    let dur = Duration::from_secs(30);
-
-    #[cfg(target_family = "windows")]
-    {
-        args.push(fix_windows_path(&script, &script_path));
-    }
-
-    #[cfg(target_family = "unix")]
-    {
-        args.push(script_path.to_path_buf());
-    }
-    dbg!(&args);
-    let out = timeout(
-        dur,
-        Command::new(prog)
-            .current_dir(dir)
-            .args(args)
-            .args(args_from_conf)
-            .output(),
-    )
-    .await
-    .map_err(|e| Error::Timeout(e, dur.into()))?;
-    dbg!(&out);
-    let out = match out {
-        Err(_) => panic!("Command {} not found!", prog),
-        Ok(out) => out,
-    };
-    exited_fine(&out)?;
-    Ok(ScriptOutput {
-        stdout: String::from_utf8(out.stdout).unwrap(),
-        stderr: String::from_utf8(out.stderr).unwrap(),
-        status_code: out.status.code().unwrap() as u64,
-    })
-}
+pub const TIMEOUT: u64 = 120;
 
 pub async fn run_router(
     docker: &bollard::Docker,
@@ -109,14 +69,11 @@ async fn run_in_container(
     };
     let host_config = create_host_config(&out_dir_mount, &script_dir_mount);
 
-    // TODO fix me
-    let (prog, _args) = script.command_line(); //TODO rm _args
-    let inner_script_path = [inner_script_dir, script_name].join("");
-    let mut cmd = vec![prog, inner_script_path.as_ref()];
-    let mut args2: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
-    cmd.append(args2.as_mut());
-    // TODO fix me
-
+    let mut cmd = script.command_line();
+    let prog = format!("{}{}", inner_script_dir, script_name);
+    cmd.push(prog.as_str());
+    let mut args: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
+    cmd.append(args.as_mut());
     let container = create_container(
         cmd,
         docker_image(&script),
@@ -124,9 +81,9 @@ async fn run_in_container(
         inner_working_dir,
         &docker,
     )
-    .await
-    .expect("cant crate container");
-    let dur = Duration::from_secs(60);
+    .await?;
+    log::info!("Container created");
+    let dur = Duration::from_secs(TIMEOUT);
     let out = timeout(dur, start_and_log_container(&container.id, &docker))
         .await
         .map_err(|e| {
@@ -143,10 +100,17 @@ async fn run_in_container(
                 ..Default::default()
             }),
         )
-        .await
-        .expect("error delete container");
+        .await?;
+    log::info!("Container removed");
     dbg!(&out);
-    Ok(out)
+    out
+}
+
+#[derive(Debug, Clone)]
+pub struct ScriptOutput {
+    pub stdout: String,
+    pub stderr: String,
+    pub status_code: u64,
 }
 
 /*impl TryFrom<Output> for ScriptOutput {
@@ -159,14 +123,7 @@ async fn run_in_container(
         })
     }
 }*/
-#[derive(Debug, Clone)]
-pub struct ScriptOutput {
-    pub stdout: String,
-    pub stderr: String,
-    pub status_code: u64,
-}
-
-fn exited_fine(out: &Output) -> Result<(), Error> {
+/*fn exited_fine(out: &Output) -> Result<(), Error> {
     if out.status.success() && out.stderr.is_empty() {
         Ok(())
     } else {
@@ -174,7 +131,7 @@ fn exited_fine(out: &Output) -> Result<(), Error> {
             String::from_utf8(out.stderr.clone()).unwrap_or_default(),
         ))
     }
-}
+}*/
 
 #[cfg(target_family = "windows")]
 fn fix_windows_path(script: &Script, script_path: &Path) -> std::ffi::OsString {
