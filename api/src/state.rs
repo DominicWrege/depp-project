@@ -1,14 +1,11 @@
 use crate::api::IliasId;
+use failure::_core::convert::TryFrom;
 use grpc_api::test_client::TestClient;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
-//use std::convert::TryInto;
+use std::convert::TryInto;
 use std::ops::{Deref, DerefMut};
-//use std::path::Path;
 use std::sync::Arc;
-//use tokio::fs;
-use failure::_core::str::FromStr;
-use structopt::StructOpt;
 use url::Url;
 
 #[derive(Clone)]
@@ -25,21 +22,34 @@ pub struct RpcConfig {
     rpc_url: Url,
 }
 
-impl FromStr for Sha256 {
-    type Err = failure::Error;
+impl TryFrom<String> for Sha256 {
+    type Error = failure::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn try_from(s: String) -> Result<Sha256, Self::Error> {
         let pwd = sha2::Sha256::digest(&s.as_bytes()).to_vec();
         Ok(Sha256(pwd))
     }
 }
 
-#[derive(Debug, StructOpt, serde::Deserialize, serde::Serialize)]
+fn default_user() -> String {
+    String::from("user")
+}
+fn default_pwd() -> String {
+    String::from("wasd4221")
+}
+
+#[derive(Debug, serde::Deserialize)]
 pub struct Credentials {
-    #[structopt(short, long, default_value = "user")]
     username: String,
-    #[structopt(short = "p", long = "password", default_value = "wasd4221")]
     password: Sha256,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct CredentialsEnv {
+    #[serde(default = "default_user")]
+    username: String,
+    #[serde(default = "default_pwd")]
+    password: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,7 +65,13 @@ impl Credentials {
 }
 
 pub fn get_credentials() -> Credentials {
-    Credentials::from_args()
+    match envy::prefixed("API_").from_env::<CredentialsEnv>() {
+        Ok(cred) => Credentials {
+            username: cred.username,
+            password: cred.password.try_into().unwrap(),
+        },
+        Err(err) => panic!("Bad credentials! err: {}", err),
+    }
 }
 
 impl State {

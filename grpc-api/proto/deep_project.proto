@@ -36,13 +36,13 @@ enum Script {
 	Sed = 6;
 }
 
-message Assignment {
-	string name = 1;
-	string solution_path = 2;
-	repeated string include_files = 3;
-	Script script_type = 4;
-	repeated string args = 5;
-}
+// message Assignment {
+// 	string name = 1;
+// 	string solution_path = 2;
+// 	repeated string include_files = 3;
+// 	Script script_type = 4;
+// 	repeated string args = 5;
+// }
 
 message AssignmentMsg {
 	string assignment_id = 1;

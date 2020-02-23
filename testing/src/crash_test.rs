@@ -4,14 +4,13 @@ use std::time;
 
 use async_trait::async_trait;
 use futures::pin_mut;
-use futures::{future, try_join, StreamExt};
+use futures::{future, StreamExt};
 use log::info;
 use tokio::fs;
 
 use crate::config::Assignment;
 use crate::fs_util;
 use crate::script;
-use crate::script::ScriptOutput;
 
 #[async_trait]
 pub trait Tester: Sync + Send {
@@ -112,32 +111,29 @@ pub async fn run(
     code: &str,
     docker: &bollard::Docker,
 ) -> Result<(), Error> {
-    let dir_to_test = tempfile::tempdir()?;
-    let dir_solution = tempfile::tempdir()?;
-    /*    dbg!(&dir_solution);
-    dbg!(&dir_to_test);*/
-    try_join!(
-        fs_util::cp_files(&assignment.include_files, &dir_solution),
-        fs_util::cp_files(&assignment.include_files, &dir_to_test),
-    )?;
-
+    let context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
     let script_test_path = fs_util::new_tmp_script_file(assignment.script_type, code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
+    let script_solution_path =
+        fs_util::new_tmp_script_file(assignment.script_type, &assignment.solution)
+            .map_err(Error::CantCreatTempFile)?
+            .into_temp_path();
     info!("running task: {}", &assignment.name);
-    let test_output = script::run_router(
+    let test_output = script::run_in_container(
         &docker,
         &assignment.script_type,
         &script_test_path,
-        &dir_to_test.path(),
+        &context_dir.path(),
         &assignment.args,
     )
     .await?;
-    let solution_output = script::run_router(
+    let solution_context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
+    let solution_output = script::run_in_container(
         &docker,
         &assignment.script_type,
-        &assignment.solution_path,
-        &dir_solution.path(),
+        &script_solution_path,
+        &solution_context_dir.path(),
         &assignment.args,
     )
     .await?;
@@ -145,10 +141,9 @@ pub async fn run(
 
     tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
     tests.push(Files::boxed(
-        dir_solution.path().to_path_buf(),
-        dir_to_test.path().to_path_buf(),
+        solution_context_dir.path().to_path_buf(),
+        context_dir.path().to_path_buf(),
     ));
-
     let _ = future::try_join_all(tests.iter().map(|item| async move { item.test().await })).await?;
     Ok(())
 }

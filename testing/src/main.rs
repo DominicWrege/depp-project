@@ -1,18 +1,13 @@
-use std::path::Path;
-
 mod config;
 mod crash_test;
 mod docker_api;
 mod fs_util;
 mod script;
-use config::{fix_win_ln, parse_config, AssignmentsMap};
-use futures::future;
+use config::{parse_config, AssignmentsMap};
 use grpc_api::test_server::{Test, TestServer};
 use grpc_api::{
-    AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, Script,
-    VecAssignmentsShort,
+    AssignmentIdRequest, AssignmentIdResponse, AssignmentMsg, AssignmentResult, VecAssignmentsShort,
 };
-use std::convert::TryFrom;
 use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
@@ -45,7 +40,7 @@ impl Test for Tester {
             let reply = match crash_test::run(assignment, &msg.source_code, &self.docker).await {
                 Err(crash_test::Error::CantCreatTempFile(e)) | Err(crash_test::Error::Copy(e)) => {
                     //wait_print_err(e).await;
-                    panic!(e);
+                    panic!("{:?}", e);
                 }
                 Err(crash_test::Error::Docker(e)) => panic!(e),
                 Err(e) => AssignmentResult {
@@ -87,21 +82,21 @@ impl Test for Tester {
     }
 }
 
-impl From<grpc_api::Assignment> for config::Assignment {
-    fn from(assignment: grpc_api::Assignment) -> Self {
-        config::Assignment {
-            name: assignment.name.clone(),
-            solution_path: Path::new(&assignment.solution_path).to_path_buf(),
-            include_files: assignment
-                .include_files
-                .iter()
-                .map(|p| Path::new(&p).to_path_buf())
-                .collect::<Vec<_>>(),
-            script_type: assignment.script_type.into(),
-            args: assignment.args.clone(),
-        }
-    }
-}
+// impl From<grpc_api::Assignment> for config::Assignment {
+//     fn from(assignment: grpc_api::Assignment) -> Self {
+//         config::Assignment {
+//             name: assignment.name.clone(),
+//             solution_path: Path::new(&assignment.solution).to_path_buf(),
+//             include_files: assignment
+//                 .include_files
+//                 .iter()
+//                 .map(|p| Path::new(&p).to_path_buf())
+//                 .collect::<Vec<_>>(),
+//             script_type: assignment.script_type.into(),
+//             args: assignment.args.clone(),
+//         }
+//     }
+// }
 
 fn assignments_to_msg(thing: AssignmentsMap) -> VecAssignmentsShort {
     let a = thing
@@ -139,12 +134,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
     let config = parse_config(&opt.config)?;
     if opt.dos_to_unix {
-        convert_dos_to_unix(&config).await?;
+        //convert_dos_to_unix(&config).await?;
         log::info!("Done converting")
     }
     log::info!("Exercise: {}", &config.name);
     let docker =
-        bollard::Docker::connect_with_local_defaults().expect("Cant connect to docker api.");
+        bollard::Docker::connect_with_local_defaults().expect("Can't connect to docker api.");
     let test = Tester::new(config.assignments, docker);
     let port = envy::from_env::<ServerConfig>()?.port;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
@@ -156,25 +151,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn convert_dos_to_unix(config: &config::Config) -> Result<(), std::io::Error> {
-    future::try_join_all(
-        config
-            .assignments
-            .iter()
-            .filter(|(_id, a)| {
-                a.script_type != Script::PowerShell || a.script_type != Script::Batch
-            })
-            .map(|(_id, a)| async move { fix_and_save(&a.solution_path).await }),
-    )
-    .await?;
-    Ok(())
-}
+// TODO write String fn
+// async fn convert_dos_to_unix(config: &config::Config) -> Result<(), std::io::Error> {
+//     future::try_join_all(
+//         config
+//             .assignments
+//             .iter()
+//             .filter(|(_id, a)| {
+//                 a.script_type != Script::PowerShell || a.script_type != Script::Batch
+//             })
+//             .map(|(_id, a)| async move { fix_and_save(&a.solution_path).await }),
+//     )
+//     .await?;
+//     Ok(())
+// }
 
-async fn fix_and_save(path: &Path) -> Result<(), std::io::Error> {
-    let code = tokio::fs::read_to_string(&path).await?;
-    if code.contains(r"\r\n") {
-        tokio::fs::write(&path, fix_win_ln(&code)).await?;
-        log::info!("Converted: {:#?}", &path);
-    }
-    Ok(())
-}
+// async fn fix_and_save(path: &Path) -> Result<(), std::io::Error> {
+//     let code = tokio::fs::read_to_string(&path).await?;
+//     if code.contains(r"\r\n") {
+//         tokio::fs::write(&path, fix_win_ln(&code)).await?;
+//         log::info!("Converted: {:#?}", &path);
+//     }
+//     Ok(())
+// }

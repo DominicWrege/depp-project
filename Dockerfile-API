@@ -1,28 +1,19 @@
 FROM rust:1.40 as builder
 USER root
 ENV USER=root
-RUN mkdir workspace && \
-    cd workspace && \
-    cargo new api --lib && \
-    cargo new grpc-api --lib && \
-    cargo new testing --lib
+RUN apt update && \
+    apt install musl musl-dev musl-tools
 WORKDIR /workspace
 
-RUN rustup component add rustfmt
+RUN rustup component add rustfmt && rustup target add x86_64-unknown-linux-musl
 
-COPY Cargo.toml .
-COPY grpc-api/Cargo.toml grpc-api
-COPY grpc-api/proto grpc-api/proto
-COPY grpc-api/build.rs grpc-api
-COPY api/Cargo.toml api
-RUN cd api && cargo build --release
 COPY . .
 
-RUN cd api && cargo build --release
+RUN cd api && cargo build --release --target x86_64-unknown-linux-musl
 
-FROM rust:1.40
+FROM alpine:latest
 
-COPY --from=builder /workspace/target/release/api .
+COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/release/api .
 EXPOSE 8080
 
 CMD ["./api"]

@@ -1,34 +1,20 @@
 # Description
 
 Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do **not move or delete this file**.
-The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the `assignments.yaml` file after start **once**. So a restart is necessary after change to take effect. I also includded some example scripts you can encode to base64 for testing.
-
-### Batch Files On Linux
-
-Currently all Batch files are running inside wine on Linux. This means each script takes around 4-15 seconds.
-Wine is very limited so not every Batch script will work.
+The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the `assignments.yaml` file after start **once**. So a restart is necessary after change to take effect. I also included some example scripts you can encode to base64 for testing.
+## How Scripts Are Tested
+Each Script will run inside a docker container for max duration of 120 seconds. 
+Also the memory is limited to 256MB. First the solution script will run. After that the provided script will run. At the end both stdouts and writing files are 1:1 compared
 
 # Getting Started
 
 ## Build And Run
 
+The testing and api server are booth prebuilt available on dockerhub.
+So now it should take a couple seconds.
+
 ```
 docker-compose up
-```
-
-## Build And Run As Deamon
-
-```
-docker-compose up -d
-```
-
-## Build Only
-
-First build ETA is 10min.
-Sometimes `docker-compose up` will no rebuild some containers. So you have to do this or even with `--force` option.
-
-```
-docker-compose build
 ```
 
 ## API Endpoint
@@ -50,7 +36,7 @@ Please use the openapi 3.0 docs via swagger ui for more information how to use t
 - Sed
 - Awk
 
-\*Inside Linux only core features are working.
+\*Windows only because I'm using windows containers for this.
 
 # Assignment In More Details
 
@@ -63,19 +49,16 @@ name = "Task 9 loops in shell"              # required
 type = "Shell"                              # required, set the script type
 args = ["rackrent"]                         # optional, a list arguments passed to the
 include-files = ["examples/akademisches_jahrbuch.txt"] # optional inlcude needed files
-solution-path  = "examples/pk7-Aufgabe1.sh" # required sample solution
+solution = '''#!/bin/bash echo HelloWorld''' # required sample solution
 ```
 
-# Discussion
-
-- Do you want pass each request an API key?
-- Do we need some auth (LTI)?
-
-# TODO For API
+# TODO
 
 - [x] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
-- [ ] Memory limit for script
-- [ ] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
+- [x] Memory limit for script
+- [x] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
 - [ ] remove pause keyword from bat scripts?!
-- [ ] auth using some token
-- [ ] update testing-server status `/version`
+- [x] auth using some token
+- [x] update testing-server status `/version`
+- [ ] store assignments in postgresql (tokio-postgres)
+- [ ] multiple rpc endpoints

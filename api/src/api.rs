@@ -10,7 +10,7 @@ use std::path::PathBuf;
 pub struct Assignment {
     pub name: String,
     #[serde(deserialize_with = "into_absolute_path")]
-    pub solution_path: PathBuf,
+    pub solution: PathBuf,
     #[serde(default)]
     pub include_files: Vec<PathBuf>,
     #[serde(default)]

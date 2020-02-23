@@ -8,6 +8,7 @@ use futures::StreamExt;
 use grpc_api::{Script, TargetOs};
 use std::fmt::Write;
 
+#[derive(Debug)]
 pub struct Mount<'a> {
     pub source_dir: &'a str,
     pub target_dir: &'a str,
@@ -31,7 +32,7 @@ impl From<MountPermission> for Option<bool> {
 pub fn docker_image(script: &Script) -> &'static str {
     match script.target_os() {
         TargetOs::Windows => "mcr.microsoft.com/powershell:latest",
-        TargetOs::Unix => "deep-ubuntu",
+        TargetOs::Unix => "dominicwrege/depp-project-ubuntu",
     }
 }
 
@@ -75,7 +76,7 @@ pub fn create_host_config<'a>(
     //dbg!(&output_mount_point);
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
-        memory: Some(256000000),
+        memory: Some(256000000), //256MB RAM for each container
         ..Default::default()
     })
 }

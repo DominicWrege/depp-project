@@ -13,47 +13,46 @@ use tokio::time::timeout;
 
 pub const TIMEOUT: u64 = 120;
 
-pub async fn run_router(
+// pub async fn run_router(
+//     docker: &bollard::Docker,
+//     script: &Script,
+//     script_path: &Path,
+//     out_dir: &Path,
+//     args_from_conf: &Vec<String>,
+// ) -> Result<ScriptOutput, Error> {
+//     //because windows
+//     #[cfg(target_family = "windows")]
+//     let script_dir = {
+//         script_path
+//             .parent()
+//             .unwrap()
+//             .to_string_lossy()
+//             .replace("\\\\?\\", "")
+//     };
+
+//     #[cfg(target_family = "unix")]
+//     let script_dir = { script_path.parent().unwrap() };
+
+//     run_in_container(
+//         docker,
+//         &script,
+//         script_path
+//             .to_path_buf()
+//             .file_name()
+//             .unwrap()
+//             .to_str()
+//             .unwrap(),
+//         script_dir.as_ref(),
+//         &out_dir,
+//         &args_from_conf,
+//     )
+//     .await
+// }
+
+pub async fn run_in_container(
     docker: &bollard::Docker,
     script: &Script,
     script_path: &Path,
-    out_dir: &Path,
-    args_from_conf: &Vec<String>,
-) -> Result<ScriptOutput, Error> {
-    //because windows
-    #[cfg(target_family = "windows")]
-    let script_dir = {
-        script_path
-            .parent()
-            .unwrap()
-            .to_string_lossy()
-            .replace("\\\\?\\", "")
-    };
-
-    #[cfg(target_family = "unix")]
-    let script_dir = { script_path.parent().unwrap() };
-
-    run_in_container(
-        docker,
-        &script,
-        script_path
-            .to_path_buf()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap(),
-        script_dir.as_ref(),
-        &out_dir,
-        &args_from_conf,
-    )
-    .await
-}
-
-async fn run_in_container(
-    docker: &bollard::Docker,
-    script: &Script,
-    script_name: &str,
-    script_dir: &Path,
     out_dir: &Path,
     args_from_conf: &Vec<String>,
 ) -> Result<ScriptOutput, Error> {
@@ -62,18 +61,16 @@ async fn run_in_container(
         source_dir: out_dir.to_str().unwrap(),
         target_dir: inner_working_dir,
     };
-
     let script_dir_mount = Mount {
-        source_dir: script_dir.to_str().unwrap(),
+        source_dir: script_path.parent().unwrap().to_str().unwrap(),
         target_dir: inner_script_dir,
     };
     let host_config = create_host_config(&out_dir_mount, &script_dir_mount);
-
+    let script_name = script_path.file_name().unwrap().to_str().unwrap();
     let mut cmd = script.command_line();
     let prog = format!("{}{}", inner_script_dir, script_name);
     cmd.push(prog.as_str());
-    let mut args: Vec<&str> = args_from_conf.iter().map(AsRef::as_ref).collect();
-    cmd.append(args.as_mut());
+    cmd.extend(args_from_conf.iter().map(|x| x.as_str()));
     let container = create_container(
         cmd,
         docker_image(&script),

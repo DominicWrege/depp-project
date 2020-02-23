@@ -108,14 +108,11 @@ pub async fn version(state: web::Data<State>) -> HttpResponse {
     ))
 }
 
-// TODO only for testing
 pub async fn auth(
     req: ServiceRequest,
     credentials: BasicAuth,
 ) -> Result<ServiceRequest, actix_web::Error> {
-    //dbg!(&credentials);
     let state: web::Data<State> = req.app_data().unwrap();
-
     match credentials.password() {
         Some(cred) => {
             let pwd = sha2::Sha256::digest(cred.as_bytes()).to_vec();

@@ -9,10 +9,26 @@ use std::path::{Path, PathBuf};
 use tempfile::{Builder, NamedTempFile, TempDir};
 use tokio::{fs, io};
 
+const TEMP_DIR: &str = "/tmp/scripts";
+
+pub fn new_tmp_dir() -> Result<TempDir, std::io::Error> {
+    Builder::new().tempdir_in(TEMP_DIR)
+}
+pub async fn copy_items_include(files: &[PathBuf]) -> Result<TempDir, Error> {
+    let dir = new_tmp_dir()?;
+    cp_files(&files, &dir).await?;
+    Ok(dir)
+}
+
 pub fn new_tmp_script_file(
     script_type: Script,
     content: &str,
 ) -> Result<NamedTempFile, std::io::Error> {
+    #[cfg(target_family = "unix")]
+    let mut file = Builder::new()
+        .suffix(script_type.file_extension())
+        .tempfile_in(TEMP_DIR)?;
+    #[cfg(target_family = "windows")]
     let mut file = Builder::new()
         .suffix(script_type.file_extension())
         .tempfile()?;
@@ -27,7 +43,7 @@ pub fn new_tmp_script_file(
     file.write(&bytes)?;
     Ok(file)
 }
-pub async fn cp_files(files: &Vec<PathBuf>, dir: &TempDir) -> Result<(), Error> {
+pub async fn cp_files(files: &[PathBuf], dir: &TempDir) -> Result<(), Error> {
     for path in files {
         // TODO fix unwrap
         let file_name = path.file_name().unwrap();

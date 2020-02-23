@@ -10,6 +10,8 @@ tests
 .dockerignore
 .gitignore
 examples
+testing/examples/
 docs
 *.md
 *.txt
+.env

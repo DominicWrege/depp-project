@@ -1,21 +1,21 @@
 version: "3"
 services:
   testing:
-    build:
-      context: .
-      dockerfile: Dockerfile-Testing
+    image: dominicwrege/depp-testing
     ports:
       - 50051:50051
     volumes:
       - ./testing/examples:/media/examples
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/scripts:/tmp/scripts
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile-API
+    image: dominicwrege/depp-project-api
     ports:
       - 8080:8080
     environment:
       - RPC_URL=http://testing:50051
+  testing-ubuntu:
+    image: dominicwrege/depp-project-ubuntu:latest
   docs:
     build: docs
     ports:
