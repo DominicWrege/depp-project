@@ -1,20 +1,21 @@
-# Description
 
-Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do **not move or delete this file**.
-The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the `assignments.yaml` file after start **once**. So a restart is necessary after change to take effect. I also included some example scripts you can encode to base64 for testing.
-## How Scripts Are Tested
-Each Script will run inside a docker container for max duration of 120 seconds. 
-Also the memory is limited to 256MB. First the solution script will run. After that the provided script will run. At the end both stdouts and writing files are 1:1 compared
+# Usage
 
-# Getting Started
+## Basic Auth 
 
-## Build And Run
+The REST API uses basic auth passed via environment variable. Docker-compose requires a ```.env``` file that contains all needed credentials
+
+```API_USERNAME``` for username and ```API_PASSWORD``` for the password.
+```
+$ echo "API_USERNAME=tester API_PASSWORD=password42 > .env"
+```
+## Run
 
 The testing and api server are booth prebuilt available on dockerhub.
 So now it should take a couple seconds.
 
 ```
-docker-compose up
+$ docker-compose up
 ```
 
 ## API Endpoint
@@ -25,6 +26,15 @@ Please use the openapi 3.0 docs via swagger ui for more information how to use t
 ## Swagger UI
 
 [http://127.0.0.1:4000](http://127.0.0.1:4000)
+
+# Description
+
+Please take a look inside the examples folder. Inside you will find the `exampels/assignments.yaml` file. Please do **not move or delete this file**.
+The examples folder and the `docs/api.openapi.yml` will be mounted to the container. **Note**: The server reads the `assignments.yaml` file after start **once**. So a restart is necessary after change to take effect. I also included some example scripts you can encode to base64 for testing.
+
+## How Scripts Are Tested
+Each Script will run inside a docker container for max duration of 120 secs and 
+the memory is limited to 256MB. First the solution script will run. After that the provided script will run. At the end both stdouts and writing files are 1:1 compared
 
 ## Currently Supported Script Types
 
