@@ -11,14 +11,15 @@ use tokio::fs;
 use crate::config::Assignment;
 use crate::fs_util;
 use crate::script;
+use crate::script::ScriptOutput;
 
 #[async_trait]
 pub trait Tester: Sync + Send {
     async fn test(&self) -> Result<(), Error>;
 }
 pub struct Stdout {
-    expected: String,
-    std_out: String,
+    expected: ScriptOutput,
+    testet: ScriptOutput,
 }
 pub struct Files {
     expected_dir: PathBuf,
@@ -26,16 +27,21 @@ pub struct Files {
 }
 
 impl Stdout {
-    fn boxed(expected: String, std_out: String) -> Box<dyn Tester> {
-        Box::new(Stdout { expected, std_out })
+    fn boxed(expected: ScriptOutput, testet: ScriptOutput) -> Box<dyn Tester> {
+        Box::new(Stdout { expected, testet })
     }
 }
 
 #[async_trait]
 impl Tester for Stdout {
     async fn test(&self) -> Result<(), Error> {
-        let stdout = trim_new_lines(&self.std_out);
-        let expected_output = trim_new_lines(&self.expected);
+        let stdout = trim_new_lines(&self.testet.stdout);
+
+        if !self.testet.stderr.is_empty() || self.testet.status_code > 0 {
+            //maybe bad syntax
+            return Err(Error::ExitCode(self.testet.stderr.clone()));
+        }
+        let expected_output = trim_new_lines(&self.expected.stdout); // check if solution is also no error
         log::info!("expected stdout: {:#?}", expected_output);
         log::info!("result stdout: {:#?}", stdout);
         if expected_output.contains(&stdout) {
@@ -139,7 +145,7 @@ pub async fn run(
     .await?;
     let mut tests: Vec<Box<dyn Tester>> = Vec::new();
 
-    tests.push(Stdout::boxed(solution_output.stdout, test_output.stdout));
+    tests.push(Stdout::boxed(solution_output, test_output));
     tests.push(Files::boxed(
         solution_context_dir.path().to_path_buf(),
         context_dir.path().to_path_buf(),
@@ -159,8 +165,8 @@ pub enum Error {
     WrongOutput(String),
     #[error(display = "Solution dir and tested dir have not the same content")]
     ExpectedDirNotSame,
-    /*    #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
-    ExitCode(String),*/
+    #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
+    ExitCode(String),
     #[error(display = "Wrong file content: expected({:#?}) result({:#?})", _0, _1)]
     ExpectedFileNotSame(String, String),
     #[error(display = "Can't create temp file. {}", _0)]
