@@ -35,7 +35,7 @@ pub async fn get_result(
         Method::GET => {
             let state = state.into_inner();
             if state.to_test_assignments.read().await.contains(&id) {
-                return Err(Error::Processing);
+                return Ok(HttpResponse::new(StatusCode::ACCEPTED));
             }
             if let Some(ret) = state
                 .pending_results
@@ -190,8 +190,6 @@ pub enum Error {
     BadRequest,
     #[fail(display = " Wrong credentials")]
     Unauthorized,
-    #[fail(display = "Assignment still processing")]
-    Processing,
 }
 impl<T> From<T> for Error
 where
@@ -215,7 +213,6 @@ impl ResponseError for Error {
             Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
             Error::Parameter(_, _) | Error::BadRequest => StatusCode::BAD_REQUEST,
             Error::Body(_err) => StatusCode::BAD_REQUEST,
-            Error::Processing => StatusCode::ACCEPTED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -228,8 +225,7 @@ impl ResponseError for Error {
             Error::DuplicateIliasId
             | Error::NotFoundIliasId(_)
             | Error::Parameter(_, _)
-            | Error::NotAssignment(_)
-            | Error::Processing => response.json(err),
+            | Error::NotAssignment(_) => response.json(err),
             Error::Body(err) => response.json(ErrSubmission {
                 msg: err.to_string(),
                 example: SubmissionExample::new(
