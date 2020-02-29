@@ -14,8 +14,6 @@ services:
       - 8080:8080
     environment:
       - RPC_URL=http://testing:50051
-  testing-ubuntu:
-    image: dominicwrege/depp-project-ubuntu:latest
   docs:
     build: docs
     ports:

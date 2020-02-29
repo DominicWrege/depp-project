@@ -3,6 +3,10 @@ mod crash_test;
 mod docker_api;
 mod fs_util;
 mod script;
+#[cfg(target_family = "unix")]
+use crate::docker_api::{pull_image, LINUX_IMAGE};
+#[cfg(target_family = "windows")]
+use crate::docker_api::{pull_image, LINUX_IMAGE, MS_IMAGE};
 use config::{parse_config, AssignmentsMap};
 use grpc_api::test_server::{Test, TestServer};
 use grpc_api::{
@@ -140,6 +144,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     log::info!("Exercise: {}", &config.name);
     let docker =
         bollard::Docker::connect_with_local_defaults().expect("Can't connect to docker api.");
+    log::info!("Pulling image. This takes some time...");
+
+    #[cfg(target_family = "windows")]
+    {
+        pull_image(LINUX_IMAGE, &docker).await;
+        pull_image(MS_IMAGE, &docker).await;
+    }
+    #[cfg(target_family = "unix")]
+    {
+        pull_image(LINUX_IMAGE, &docker).await;
+    }
+
+    log::info!("Pulling image done.");
     let test = Tester::new(config.assignments, docker);
     let port = envy::from_env::<ServerConfig>()?.port;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));

@@ -73,7 +73,7 @@ pub async fn run_in_container(
     cmd.extend(args_from_conf.iter().map(|x| x.as_str()));
     let container = create_container(
         cmd,
-        docker_image(&script),
+        docker_image(&script).0,
         host_config,
         inner_working_dir,
         &docker,

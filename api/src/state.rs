@@ -3,9 +3,11 @@ use failure::_core::convert::TryFrom;
 use grpc_api::test_client::TestClient;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
+use std::collections::HashSet;
 use std::convert::TryInto;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use url::Url;
 
 #[derive(Clone)]
@@ -74,6 +76,13 @@ pub fn get_credentials() -> Credentials {
     }
 }
 
+pub struct InnerState {
+    pub pending_results: dashmap::DashMap<IliasId, grpc_api::AssignmentResult>,
+    pub rpc_url: Url,
+    pub credentials: Credentials,
+    pub to_test_assignments: RwLock<HashSet<IliasId>>,
+}
+
 impl State {
     pub fn new(rpc_conf: RpcConfig, credentials: Credentials) -> State {
         State {
@@ -81,6 +90,7 @@ impl State {
                 pending_results: dashmap::DashMap::new(),
                 rpc_url: rpc_conf.rpc_url,
                 credentials,
+                to_test_assignments: RwLock::new(HashSet::new()),
             }),
         }
     }
@@ -113,14 +123,10 @@ pub enum EndPointStatus {
     // Maintenance,
     Offline,
 }
-pub struct InnerState {
-    pub pending_results: dashmap::DashMap<IliasId, grpc_api::AssignmentResult>,
-    pub rpc_url: Url,
-    pub credentials: Credentials,
-}
 
 impl Deref for State {
     type Target = Arc<InnerState>;
+
     fn deref(&self) -> &Self::Target {
         &self.inner
     }

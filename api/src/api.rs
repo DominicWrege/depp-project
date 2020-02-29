@@ -53,6 +53,12 @@ pub struct AssignmentShort<'a> {
 #[display(fmt = "{}", _0)]
 pub struct IliasId(u64);
 
+impl IliasId {
+    pub fn cp_inner(&self) -> IliasId {
+        IliasId { 0: self.0 }
+    }
+}
+
 /*#[derive(
     Debug,
     Clone,

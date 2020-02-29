@@ -33,8 +33,16 @@ pub async fn get_result(
             }
         }
         Method::GET => {
-            if let Some(ret) = state.inner.pending_results.get(&id) {
-                Ok(HttpResponse::Ok().json(&ret.value()))
+            let state = state.into_inner();
+            if state.to_test_assignments.read().await.contains(&id) {
+                return Err(Error::Processing);
+            }
+            if let Some(ret) = state
+                .pending_results
+                .get(&id)
+                .map(|ret| ret.value().clone())
+            {
+                Ok(HttpResponse::Ok().json(ret))
             } else {
                 Err(Error::NotFoundIliasId(id))
             }
@@ -52,7 +60,13 @@ pub async fn add_submission(
     let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
         .await
         .map_err(|_| Error::RpcOffline)?;
-    if state.pending_results.contains_key(&para.ilias_id) {
+    if state.pending_results.contains_key(&para.ilias_id)
+        || state
+            .to_test_assignments
+            .read()
+            .await
+            .contains(&para.ilias_id)
+    {
         return Err(Error::DuplicateIliasId);
     }
 
@@ -64,6 +78,12 @@ pub async fn add_submission(
         .await
         .map_err(|_| Error::NotAssignment(para.assignment_id))?;
     tokio::task::spawn(async move {
+        let state = state.into_inner();
+        state
+            .to_test_assignments
+            .write()
+            .await
+            .insert(para.ilias_id.cp_inner());
         let request = tonic::Request::new(AssignmentMsg {
             assignment_id: para.assignment_id.to_string(),
             source_code: para.source_code.0,
@@ -73,6 +93,11 @@ pub async fn add_submission(
                 state
                     .pending_results
                     .insert(para.ilias_id, response.into_inner());
+                state
+                    .to_test_assignments
+                    .write()
+                    .await
+                    .remove(&para.ilias_id);
             }
             Err(e) => {
                 log::error!("error from rpc {:?}", e);
@@ -165,6 +190,8 @@ pub enum Error {
     BadRequest,
     #[fail(display = " Wrong credentials")]
     Unauthorized,
+    #[fail(display = "Assignment still processing")]
+    Processing,
 }
 impl<T> From<T> for Error
 where
@@ -188,6 +215,7 @@ impl ResponseError for Error {
             Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
             Error::Parameter(_, _) | Error::BadRequest => StatusCode::BAD_REQUEST,
             Error::Body(_err) => StatusCode::BAD_REQUEST,
+            Error::Processing => StatusCode::ACCEPTED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -200,7 +228,8 @@ impl ResponseError for Error {
             Error::DuplicateIliasId
             | Error::NotFoundIliasId(_)
             | Error::Parameter(_, _)
-            | Error::NotAssignment(_) => response.json(err),
+            | Error::NotAssignment(_)
+            | Error::Processing => response.json(err),
             Error::Body(err) => response.json(ErrSubmission {
                 msg: err.to_string(),
                 example: SubmissionExample::new(

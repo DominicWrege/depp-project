@@ -18,7 +18,7 @@ paths:
             operationId: "getAssignments"
             responses:
                 200:
-                    description: "All assignments as an array."
+                    description: "All assignments as an array"
                     content:
                         application/json:
                             schema:
@@ -39,9 +39,9 @@ paths:
                             $ref: "#/components/schemas/Submission"
             responses:
                 201:
-                    description: "Submission created."
+                    description: "Submission created"
                 400:
-                    description: "Request body error."
+                    description: "Request body error"
                     content:
                         application/json:
                                 schema:
@@ -78,6 +78,8 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/Result"
+                202:
+                    description: "Assignment still processing"
                 400:
                     description: "Parameter error invalid digit found in string. An interger64 is required"
                     content:

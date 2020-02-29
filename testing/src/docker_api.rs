@@ -29,10 +29,15 @@ impl From<MountPermission> for Option<bool> {
     }
 }
 
-pub fn docker_image(script: &Script) -> &'static str {
+pub const LINUX_IMAGE: (&'static str, &'static str) =
+    ("dominicwrege/depp-project-ubuntu:latest", "linux");
+pub const MS_IMAGE: (&'static str, &'static str) =
+    ("mcr.microsoft.com/powershell:latest", "windows");
+
+pub fn docker_image(script: &Script) -> (&'static str, &'static str) {
     match script.target_os() {
-        TargetOs::Windows => "mcr.microsoft.com/powershell:latest",
-        TargetOs::Unix => "dominicwrege/depp-project-ubuntu",
+        TargetOs::Windows => MS_IMAGE,
+        TargetOs::Unix => LINUX_IMAGE,
     }
 }
 
@@ -56,6 +61,20 @@ fn create_mount_point<'a>(
         consistency: "default",
         ..Default::default()
     }
+}
+
+pub async fn pull_image(image_opt: (&'static str, &'static str), docker: &bollard::Docker) {
+    use bollard::image::CreateImageOptions;
+
+    let options = Some(CreateImageOptions {
+        from_image: image_opt.0,
+        platform: image_opt.1,
+        ..Default::default()
+    });
+
+    let mut stream = docker.create_image(options, None);
+    log::info!("pulling {}", &image_opt.0);
+    while let Some(_s) = stream.next().await {}
 }
 
 pub fn create_host_config<'a>(
