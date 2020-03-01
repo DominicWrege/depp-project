@@ -1,5 +1,6 @@
 testing/target/
 api/target/
+api/api.env
 grpc-api/target/
 target
 **/*.rs.bk
@@ -14,4 +15,4 @@ testing/examples/
 docs
 *.md
 *.txt
-.env
+*.env

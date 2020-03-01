@@ -6,48 +6,10 @@ use crate::docker_api::{
 use bollard::container::RemoveContainerOptions;
 use grpc_api::Script;
 use std::path::Path;
-//use std::process::Output;
 use std::time::Duration;
-//use tokio::process::Command;
 use tokio::time::timeout;
 
 pub const TIMEOUT: u64 = 120;
-
-// pub async fn run_router(
-//     docker: &bollard::Docker,
-//     script: &Script,
-//     script_path: &Path,
-//     out_dir: &Path,
-//     args_from_conf: &Vec<String>,
-// ) -> Result<ScriptOutput, Error> {
-//     //because windows
-//     #[cfg(target_family = "windows")]
-//     let script_dir = {
-//         script_path
-//             .parent()
-//             .unwrap()
-//             .to_string_lossy()
-//             .replace("\\\\?\\", "")
-//     };
-
-//     #[cfg(target_family = "unix")]
-//     let script_dir = { script_path.parent().unwrap() };
-
-//     run_in_container(
-//         docker,
-//         &script,
-//         script_path
-//             .to_path_buf()
-//             .file_name()
-//             .unwrap()
-//             .to_str()
-//             .unwrap(),
-//         script_dir.as_ref(),
-//         &out_dir,
-//         &args_from_conf,
-//     )
-//     .await
-// }
 
 pub async fn run_in_container(
     docker: &bollard::Docker,
@@ -73,7 +35,7 @@ pub async fn run_in_container(
     cmd.extend(args_from_conf.iter().map(|x| x.as_str()));
     let container = create_container(
         cmd,
-        docker_image(&script).0,
+        docker_image(&script).name,
         host_config,
         inner_working_dir,
         &docker,

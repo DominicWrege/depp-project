@@ -29,12 +29,22 @@ impl From<MountPermission> for Option<bool> {
     }
 }
 
-pub const LINUX_IMAGE: (&'static str, &'static str) =
-    ("dominicwrege/depp-project-ubuntu:latest", "linux");
-pub const MS_IMAGE: (&'static str, &'static str) =
-    ("mcr.microsoft.com/powershell:latest", "windows");
+pub const LINUX_IMAGE: ImageOpt = ImageOpt {
+    name: "dominicwrege/depp-project-ubuntu:latest",
+    platform: "linux",
+};
 
-pub fn docker_image(script: &Script) -> (&'static str, &'static str) {
+pub const MS_IMAGE: ImageOpt = ImageOpt {
+    name: "mcr.microsoft.com/powershell:latest",
+    platform: "windows",
+};
+#[derive(Copy, Clone, Debug)]
+pub struct ImageOpt {
+    pub name: &'static str,
+    pub platform: &'static str,
+}
+
+pub fn docker_image(script: &Script) -> ImageOpt {
     match script.target_os() {
         TargetOs::Windows => MS_IMAGE,
         TargetOs::Unix => LINUX_IMAGE,
@@ -63,17 +73,17 @@ fn create_mount_point<'a>(
     }
 }
 
-pub async fn pull_image(image_opt: (&'static str, &'static str), docker: &bollard::Docker) {
+pub async fn pull_image(image_opt: ImageOpt, docker: &bollard::Docker) {
     use bollard::image::CreateImageOptions;
 
     let options = Some(CreateImageOptions {
-        from_image: image_opt.0,
-        platform: image_opt.1,
+        from_image: image_opt.name,
+        platform: image_opt.platform,
         ..Default::default()
     });
 
     let mut stream = docker.create_image(options, None);
-    log::info!("pulling {}", &image_opt.0);
+    log::info!("pulling {}", &image_opt.name);
     while let Some(_s) = stream.next().await {}
 }
 

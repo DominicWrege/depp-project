@@ -167,27 +167,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     Ok(())
 }
-
-// TODO write String fn
-// async fn convert_dos_to_unix(config: &config::Config) -> Result<(), std::io::Error> {
-//     future::try_join_all(
-//         config
-//             .assignments
-//             .iter()
-//             .filter(|(_id, a)| {
-//                 a.script_type != Script::PowerShell || a.script_type != Script::Batch
-//             })
-//             .map(|(_id, a)| async move { fix_and_save(&a.solution_path).await }),
-//     )
-//     .await?;
-//     Ok(())
-// }
-
-// async fn fix_and_save(path: &Path) -> Result<(), std::io::Error> {
-//     let code = tokio::fs::read_to_string(&path).await?;
-//     if code.contains(r"\r\n") {
-//         tokio::fs::write(&path, fix_win_ln(&code)).await?;
-//         log::info!("Converted: {:#?}", &path);
-//     }
-//     Ok(())
-// }

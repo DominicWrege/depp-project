@@ -8,7 +8,7 @@ edition = "2018"
 tonic = "0.1.0"
 bytes = "0.5.3"
 prost = "0.6.0"
-tokio = { version = "0.2.9", features = ["full"] }
+tokio = { version = "0.2.13", features = ["full"] }
 err-derive = "0.2.1"
 failure = "0.1.6"
 log = "0.4.8"
