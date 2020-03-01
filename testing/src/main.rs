@@ -43,10 +43,15 @@ impl Test for Tester {
         if let Some(assignment) = self.assignments.get(&id) {
             let reply = match crash_test::run(assignment, &msg.source_code, &self.docker).await {
                 Err(crash_test::Error::CantCreatTempFile(e)) | Err(crash_test::Error::Copy(e)) => {
-                    //wait_print_err(e).await;
-                    panic!("{:?}", e);
+                    log::error!(
+                        "Error while creating a tempfile or copying files. The server has to stop."
+                    );
+                    panic!("{}", e);
                 }
-                Err(crash_test::Error::Docker(e)) => panic!(e),
+                Err(crash_test::Error::Docker(e)) => {
+                    log::error!("Some error with the docker API.The server has to stop.");
+                    panic!("{}", e);
+                }
                 Err(e) => AssignmentResult {
                     passed: false,
                     message: Some(e.to_string()),
@@ -85,22 +90,6 @@ impl Test for Tester {
         Ok(Response::new(AssignmentIdResponse { found: ret }))
     }
 }
-
-// impl From<grpc_api::Assignment> for config::Assignment {
-//     fn from(assignment: grpc_api::Assignment) -> Self {
-//         config::Assignment {
-//             name: assignment.name.clone(),
-//             solution_path: Path::new(&assignment.solution).to_path_buf(),
-//             include_files: assignment
-//                 .include_files
-//                 .iter()
-//                 .map(|p| Path::new(&p).to_path_buf())
-//                 .collect::<Vec<_>>(),
-//             script_type: assignment.script_type.into(),
-//             args: assignment.args.clone(),
-//         }
-//     }
-// }
 
 fn assignments_to_msg(thing: AssignmentsMap) -> VecAssignmentsShort {
     let a = thing

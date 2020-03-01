@@ -29,15 +29,6 @@ impl From<MountPermission> for Option<bool> {
     }
 }
 
-pub const LINUX_IMAGE: ImageOpt = ImageOpt {
-    name: "dominicwrege/depp-project-ubuntu:latest",
-    platform: "linux",
-};
-
-pub const MS_IMAGE: ImageOpt = ImageOpt {
-    name: "mcr.microsoft.com/powershell:latest",
-    platform: "windows",
-};
 #[derive(Copy, Clone, Debug)]
 pub struct ImageOpt {
     pub name: &'static str,
@@ -73,6 +64,16 @@ fn create_mount_point<'a>(
     }
 }
 
+pub const LINUX_IMAGE: ImageOpt = ImageOpt {
+    name: "dominicwrege/depp-project-ubuntu:latest",
+    platform: "linux",
+};
+
+pub const MS_IMAGE: ImageOpt = ImageOpt {
+    name: "mcr.microsoft.com/powershell:latest",
+    platform: "windows",
+};
+
 pub async fn pull_image(image_opt: ImageOpt, docker: &bollard::Docker) {
     use bollard::image::CreateImageOptions;
 
@@ -84,7 +85,15 @@ pub async fn pull_image(image_opt: ImageOpt, docker: &bollard::Docker) {
 
     let mut stream = docker.create_image(options, None);
     log::info!("pulling {}", &image_opt.name);
-    while let Some(_s) = stream.next().await {}
+    while let Some(s) = stream.next().await {
+        if let Err(err) = s {
+            log::error!(
+                "Could pull image: {}. Maybe because it was not found.",
+                &image_opt.name
+            );
+            panic!("{}", err);
+        }
+    }
 }
 
 pub fn create_host_config<'a>(
