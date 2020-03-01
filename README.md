@@ -4,7 +4,7 @@
 ## Basic Auth 
 
 The REST API uses basic auth passed via environment variable. Docker-compose requires a ```./api/api.env``` file that contains all needed credentials.
-username: ```API_USERNAME``` password: ```API_PASSWORD```
+username: ```API_USERNAME``` password: ```API_PASSWORD```. Default("user", "wasd4221")
 ```
 $ echo "API_USERNAME=tester API_PASSWORD=password42 > ./api/api.env"
 ```
