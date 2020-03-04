@@ -45,17 +45,18 @@ pub struct AssignmentShort<'a> {
     PartialEq,
     Deserialize,
     Serialize,
-    Copy,
     derive_more::Display,
     derive_more::From,
 )]
 #[serde(rename_all = "camelCase")]
 #[display(fmt = "{}", _0)]
-pub struct IliasId(u64);
+pub struct IliasId(String);
 
-impl IliasId {
-    pub fn cp_inner(&self) -> IliasId {
-        IliasId { 0: self.0 }
+impl Default for IliasId {
+    fn default() -> Self {
+        Self {
+            0: "abcdefid".to_string(),
+        }
     }
 }
 

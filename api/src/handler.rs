@@ -18,11 +18,7 @@ pub async fn get_result(
     state: web::Data<State>,
     para: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let id = para
-        .into_inner()
-        .parse::<u64>()
-        .map_err(|e| Error::Parameter(e.to_string(), "An integer64 is required"))?
-        .into();
+    let id = para.into_inner().into();
 
     match req.method().to_owned() {
         Method::POST => {
@@ -79,11 +75,12 @@ pub async fn add_submission(
         .map_err(|_| Error::NotAssignment(para.assignment_id))?;
     tokio::task::spawn(async move {
         let state = state.into_inner();
+        let ilias_id = para.ilias_id;
         state
             .to_test_assignments
             .write()
             .await
-            .insert(para.ilias_id.cp_inner());
+            .insert(ilias_id.clone());
         let request = tonic::Request::new(AssignmentMsg {
             assignment_id: para.assignment_id.to_string(),
             source_code: para.source_code.0,
@@ -92,12 +89,8 @@ pub async fn add_submission(
             Ok(response) => {
                 state
                     .pending_results
-                    .insert(para.ilias_id, response.into_inner());
-                state
-                    .to_test_assignments
-                    .write()
-                    .await
-                    .remove(&para.ilias_id);
+                    .insert(ilias_id.clone(), response.into_inner());
+                state.to_test_assignments.write().await.remove(&ilias_id);
             }
             Err(e) => {
                 log::error!("error from rpc {:?}", e);
@@ -106,11 +99,6 @@ pub async fn add_submission(
     });
     Ok(HttpResponse::Created().body(""))
 }
-
-// async fn wait_print_err<E: Debug>(e: E) {
-//     tokio::time::delay_for(std::time::Duration::from_secs(3)).await;
-//     log::info!("System Error. Waiting for 3 secs. {:?}", e);
-// }
 
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
     let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
@@ -180,8 +168,6 @@ pub enum Error {
     NotFoundIliasId(IliasId),
     #[fail(display = "No Results not found for given AssignmentID: {}", _0)]
     NotAssignment(AssignmentId),
-    #[fail(display = "Parameter error {} {}", _0, _1)]
-    Parameter(String, &'static str),
     #[fail(display = "Request body error. {:?}", _0)]
     Body(JsonPayloadError),
     #[fail(display = "The testing server is offline")]
@@ -211,7 +197,7 @@ impl ResponseError for Error {
         match self {
             Error::DuplicateIliasId => StatusCode::CONFLICT,
             Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
-            Error::Parameter(_, _) | Error::BadRequest => StatusCode::BAD_REQUEST,
+            Error::BadRequest => StatusCode::BAD_REQUEST,
             Error::Body(_err) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -222,14 +208,13 @@ impl ResponseError for Error {
         let code = self.status_code();
         let mut response = HttpResponse::build(code);
         match self {
-            Error::DuplicateIliasId
-            | Error::NotFoundIliasId(_)
-            | Error::Parameter(_, _)
-            | Error::NotAssignment(_) => response.json(err),
+            Error::DuplicateIliasId | Error::NotFoundIliasId(_) | Error::NotAssignment(_) => {
+                response.json(err)
+            }
             Error::Body(err) => response.json(ErrSubmission {
                 msg: err.to_string(),
                 example: SubmissionExample::new(
-                    2009.into(),
+                    IliasId::default(),
                     "ZWNobyAiSGFsbG8iID4+IGhhbGxvLnR4dAo=",
                     Uuid::parse_str("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
                 ),

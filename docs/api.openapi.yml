@@ -80,13 +80,6 @@ paths:
                                 $ref: "#/components/schemas/Result"
                 202:
                     description: "Assignment still processing"
-                400:
-                    description: "Parameter error invalid digit found in string. An interger64 is required"
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/ApiError"
-
                 404:
                     description: "No Results not found for given Ilias ID: {id}"
                     content:
