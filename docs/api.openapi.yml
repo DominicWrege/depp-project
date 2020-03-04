@@ -13,8 +13,8 @@ servers:
 paths:
     /assignments:
         get:
-            summary: "Lists of all existings assignments"
-            description: "The Endpoint stores all assignments provied by the docent."
+            summary: "Lists of all existing assignments"
+            description: "The Endpoint stores all assignments provided by the docent."
             operationId: "getAssignments"
             responses:
                 200:
@@ -30,7 +30,7 @@ paths:
             summary: "Takes the source code to test"
             operationId: "addSubmission"
             description: "Will evaluate the given source and will store the test result. Each
-            iliasId should be unique and will be **cached** unil ```get:  /result/{iliasId}``` is called."
+            iliasId should be unique and will be **cached** until ```get:  /result/{iliasId}``` is called."
             requestBody:
                   required: true
                   content:
@@ -53,7 +53,7 @@ paths:
                                 schema:
                                     $ref: "#/components/schemas/SubmissionError"
                 409:
-                    description: "Duplicate iliasID. I excpet to that every iliasId should be unique and you submitted the same iliasId 
+                    description: "Duplicate iliasID. I except to that every iliasId should be unique and you submitted the same iliasId 
                     without calling ```get:  /result/{iliasId}``` twice"
                     content:
                         application/json:
@@ -61,7 +61,7 @@ paths:
                                 $ref: "#/components/schemas/ApiError"
     /result/{iliasId}:
         get:
-            summary: "Returns the result and keps until the post method is invoked for the submission by given iliasID"
+            summary: "Returns the result and keeps until the post method is invoked for the submission by given iliasID"
             operationId: "getResults"
             parameters:
                 - name: iliasId
@@ -106,13 +106,6 @@ paths:
             responses:
                 200:
                     description: "Returns the result for the submission"
-                400:
-                    description: "Parameter error invalid digit found in string. An interger64 is required"
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/ApiError"
-
                 404:
                     description: "No Results not found for given Ilias ID: {id}"
                     content:
@@ -143,8 +136,7 @@ components:
             type: object
             properties:
                 iliasId:
-                    type: integer
-                    format: int64
+                    type: string
                 sourceCode:
                     type: string
                     format: base64
