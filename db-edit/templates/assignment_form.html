@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    {% include 'head.html' %}
+    <body>
+        {% include 'top_bar.html' %}
+        <div class="container-sm">
+            <form action="/new_assignment" method="POST" target="_self" enctype="multipart/form-data">
+<!--
+            <form action="http://jkorpela.fi/cgi-bin/echo.cgi" method="POST" enctype="multipart/form-data">
+-->
+                <div class="form-group">
+                    <label for="NameInput">Name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="NameInput"
+                        aria-describedby="name help"
+                        name="name"
+                        required
+                    />
+                </div>
+                <!--                    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>-->
+                <div class="form-group">
+                    <label class="form-check-label" for="SolutionInput"
+                        >Musterlösung</label
+                    >
+                    <textarea
+                        class="form-control"
+                        rows="6"
+                        name="solution"
+                        id="SolutionInput"
+                        required
+                    ></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ScriptArgs">Skript Argumente</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="ScriptArgs"
+                        aria-describedby="Args"
+                        name="args"
+                        pattern="(^-{0,2}\w+$|^-{0,2}\w+,)(\w+,|-{1,2}\w+)*(\w+$)*"
+                    />
+                    <small id="ArgsHelp" class="form-text text-muted"
+                        >Kommasperierte Liste. Beispiel:
+                        -l,10,file.txt,--name bob</small
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Praktikum</label>
+                    <select
+                        class="form-control"
+                        id="exampleFormControlSelect1"
+                        name="exercise_id"
+                        required
+                    >
+                        {% for exercise in exercises %}
+                        <option value="{{exercise.id}}"
+                            >{{exercise.description}}</option
+                        >
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="exampleFormControlSelect2"
+                        >Script Type</label
+                    >
+                    <select
+                        class="form-control"
+                        id="exampleFormControlSelect2"
+                        name="script_type"
+                        required
+                    >
+                        {% for script in scripts %}
+                        <option value="{{script}}">{{script}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="FileInput">Dateien als Zip</label>
+                    <input
+                            type="file"
+                            accept=".zip"
+                            id="FileInput"
+                            name="included_files"
+                            aria-describedby="inputGroupFileAddon01"
+                    />
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </body>
+</html>

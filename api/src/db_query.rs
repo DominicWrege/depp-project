@@ -8,7 +8,11 @@ use uuid::Uuid;
 
 pub async fn get_assignments(pool: &Pool) -> Result<Vec<AssignmentShort>, DbError> {
     let client = pool.get().await?;
-    let query = "select uuid, assignment_name from assignment";
+    let query = r#"
+        SELECT format('%s/%s', exercise.description, assignment_name) as name, uuid
+        FROM assignment JOIN exercise
+        ON assignment.exercise_id = exercise.id;
+    "#;
     let rows = client.query(query, &[]).await?;
 
     Ok(rows
@@ -21,7 +25,7 @@ impl From<Row> for AssignmentShort {
     fn from(r: Row) -> Self {
         Self {
             id: r.get("uuid"),
-            name: r.get("assignment_name"),
+            name: r.get("name"),
         }
     }
 }
@@ -30,9 +34,11 @@ pub async fn get_assignment(pool: &Pool, uuid: &Uuid) -> Result<Assignment, DbEr
     let client = pool.get().await?;
     let stmt = client
         .prepare(
-            r#"select assignment_name, script_type, include_files, solution, args 
-                                                                    from assignment 
-                                                                    where assignment.uuid = $1"#,
+            r#"
+                    SELCET assignment_name, script_type, include_files, solution, args 
+                    FROM assignment 
+                    WHERE assignment.uuid = $1
+                    "#,
         )
         .await?;
     let rows = client.query(&stmt, &[uuid]).await?;

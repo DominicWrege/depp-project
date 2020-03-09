@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+{% include 'head.html' %}
+    <body>
+        {% include 'top_bar.html' %}
+        <div class="container-sm">
+            <div class="list-group">
+                {% for exercise in exercises %}
+                <a href="/exercise/{{exercise.id}}" class="list-group-item list-group-item-action">
+                    <span>&#x1f4c1; </span>
+                   {{exercise.description}}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </body>
+</html>

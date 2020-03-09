@@ -1,11 +1,8 @@
-use grpc_api::{AssignmentId, Script};
+use grpc_api::Script;
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::fs;
-use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
+/*pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -44,7 +41,7 @@ pub fn parse_config(path: &Path) -> Result<Config, Error> {
     let conf = toml::from_str::<Config>(&file_content)?;
     //check_config(&conf)?;
     Ok(conf)
-}
+}*/
 
 // // can panic
 // fn check_config(conf: &Config) -> Result<(), std::io::Error> {

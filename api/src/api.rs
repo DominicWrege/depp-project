@@ -1,9 +1,6 @@
 use crate::base64::Base64;
 use grpc_api::{AssignmentId, Script};
 use serde::{Deserialize, Serialize};
-//TODO fix me
-use serde::{de, Deserializer};
-use std::path::PathBuf;
 
 /*
 #[derive(Debug, Deserialize, Clone)]
@@ -21,15 +18,6 @@ pub struct Assignment {
     pub args: Vec<String>,
 }
 */
-
-fn into_absolute_path<'de, D>(deserial: D) -> Result<PathBuf, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let relative_path = PathBuf::deserialize(deserial)?;
-
-    std::fs::canonicalize(relative_path).map_err(de::Error::custom)
-}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,21 +50,6 @@ impl Default for IliasId {
     }
 }
 
-/*#[derive(
-    Debug,
-    Clone,
-    Hash,
-    Eq,
-    PartialEq,
-    Deserialize,
-    serde::Serialize,
-    Copy,
-    derive_more::From,
-    derive_more::Display,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct AssignmentId(pub Uuid);*/
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Submission {
@@ -84,16 +57,6 @@ pub struct Submission {
     pub source_code: Base64,
     pub assignment_id: AssignmentId,
 }
-
-// #[derive(Debug, Deserialize, Serialize)]
-// #[serde(rename_all = "camelCase")]
-// pub struct AssignmentResult {
-//     pub passed: bool,
-//     #[serde(default)]
-//     pub message: Option<String>,
-//     #[serde(default)]
-//     pub mark: Option<Mark>,
-// }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

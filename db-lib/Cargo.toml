@@ -1,0 +1,15 @@
+[package]
+name = "db-lib"
+version = "0.1.0"
+authors = ["DomincWrege <dominic.wrege001@stud.fh-dortmund.de>"]
+edition = "2018"
+
+[dependencies]
+refinery = { version = "0.2.0", features=["tokio-postgres"]}
+deadpool-postgres = "0.5.5"
+tokio-postgres = "0.5.2"
+anyhow = "1.0.26"
+tokio = "0.2.13"
+derive_more = "0.99.3"
+err-derive = "0.2.3"
+tokio-pg-mapper = "0.1.5"

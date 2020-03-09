@@ -1,0 +1,30 @@
+[package]
+name = "db-edit"
+version = "0.1.0"
+authors = ["DomincWrege <dominic.wrege001@stud.fh-dortmund.de>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "0.2.11", features=["full"]}
+tokio-postgres = "0.5.2"
+deadpool-postgres = "0.5.5"
+dotenv = "0.15.0"
+tokio-pg-mapper = "0.1.5"
+tokio-pg-mapper-derive = "0.1.5"
+actix-web = "2.0.0"
+actix-rt = "1.0.0"
+anyhow = "1.0.26"
+tera = "1.0.2"
+serde = "1.0.104"
+postgres-types =  { version="0.1.0", features=["derive"] }
+quote = "=1.0.2"
+actix-multipart = "0.2.0"
+futures = "0.3.4"
+mime = "0.3.16"
+zip = "0.5.5"
+actix-files = "0.2.1"
+derive_more = "0.99.3"
+err-derive = "0.2.3"
+db-lib = {path = "../db-lib"}

@@ -8,10 +8,10 @@ use futures::{future, StreamExt};
 use log::info;
 use tokio::fs;
 
-use crate::config::Assignment;
 use crate::fs_util;
 use crate::script;
 use crate::script::ScriptOutput;
+use grpc_api::Assignment;
 
 #[async_trait]
 pub trait Tester: Sync + Send {
@@ -118,17 +118,17 @@ pub async fn run(
     docker: &bollard::Docker,
 ) -> Result<(), Error> {
     let context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
-    let script_test_path = fs_util::new_tmp_script_file(assignment.script_type, code)
+    let script_test_path = fs_util::new_tmp_script_file(assignment.script_type.into(), code)
         .map_err(Error::CantCreatTempFile)?
         .into_temp_path();
     let script_solution_path =
-        fs_util::new_tmp_script_file(assignment.script_type, &assignment.solution)
+        fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
             .map_err(Error::CantCreatTempFile)?
             .into_temp_path();
     info!("running task: {}", &assignment.name);
     let test_output = script::run_in_container(
         &docker,
-        &assignment.script_type,
+        &assignment.script_type.into(),
         &script_test_path,
         &context_dir.path(),
         &assignment.args,
@@ -137,7 +137,7 @@ pub async fn run(
     let solution_context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
     let solution_output = script::run_in_container(
         &docker,
-        &assignment.script_type,
+        &assignment.script_type.into(),
         &script_solution_path,
         &solution_context_dir.path(),
         &assignment.args,
