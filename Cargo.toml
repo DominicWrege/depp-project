@@ -1,2 +1,2 @@
 [workspace]
-members = ["api", "testing", "grpc-api"]
+members = ["api", "testing", "grpc-api", "db-lib", "db-edit"]

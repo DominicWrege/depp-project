@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde::{de, Deserializer};
 use std::path::PathBuf;
 
+/*
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Assignment {
@@ -19,6 +20,7 @@ pub struct Assignment {
     #[serde(default)]
     pub args: Vec<String>,
 }
+*/
 
 fn into_absolute_path<'de, D>(deserial: D) -> Result<PathBuf, D::Error>
 where
@@ -31,10 +33,10 @@ where
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AssignmentShort<'a> {
+pub struct AssignmentShort {
     #[serde(rename = "assignmentId")]
     pub id: AssignmentId,
-    pub name: &'a str,
+    pub name: String,
 }
 
 #[derive(

@@ -6,18 +6,6 @@ import "google/protobuf/wrappers.proto";
 
 service Test {
 	rpc RunTest(AssignmentMsg) returns (AssignmentResult);
-	rpc GetAssignments(google.protobuf.Empty) returns (VecAssignmentsShort);
-	rpc AssignmentExists(AssignmentIdRequest) returns (AssignmentIdResponse);
-}
-
-message AssignmentIdRequest { string assignment_id = 1; } // change to id or tuple
-message AssignmentIdResponse { bool found = 1; }
-
-message VecAssignmentsShort { repeated AssignmentShort assignments = 1; }
-
-message AssignmentShort {
-	string name = 1;
-	string assignment_id = 2;
 }
 
 message AssignmentResult {
@@ -36,15 +24,16 @@ enum Script {
 	Sed = 6;
 }
 
-// message Assignment {
-// 	string name = 1;
-// 	string solution_path = 2;
-// 	repeated string include_files = 3;
-// 	Script script_type = 4;
-// 	repeated string args = 5;
-// }
+message Assignment {
+    string name = 1;
+    string solution = 2;
+	bytes include_files = 3;
+	Script script_type = 4;
+    repeated string args = 5;
+}
+
 
 message AssignmentMsg {
-	string assignment_id = 1;
-	string source_code = 2;
+	Assignment assignment = 1;
+	string code_to_test = 2;
 }

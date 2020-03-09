@@ -10,8 +10,10 @@ use crate::api::{IliasId, Submission};
 use crate::state::{get_rpc_status, Meta, State};
 
 use grpc_api::test_client::TestClient;
-use grpc_api::{AssignmentId, AssignmentIdRequest, AssignmentMsg};
+use grpc_api::{AssignmentId, AssignmentMsg};
 use sha2::Digest;
+
+use crate::db_query;
 
 pub async fn get_result(
     req: HttpRequest,
@@ -52,10 +54,17 @@ pub async fn add_submission(
 ) -> Result<HttpResponse, Error> {
     let para = para.into_inner();
     //let config = state.config.clone();
-    // TODO only one test client
+
+    let assignment = db_query::get_assignment(&state.db_pool, &para.assignment_id)
+        .await
+        .map_err(|_| Error::NotAssignment(para.assignment_id))?;
+    dbg!(&assignment);
     let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
         .await
         .map_err(|_| Error::RpcOffline)?;
+
+    // TODO only one test client
+
     if state.pending_results.contains_key(&para.ilias_id)
         || state
             .to_test_assignments
@@ -66,13 +75,6 @@ pub async fn add_submission(
         return Err(Error::DuplicateIliasId);
     }
 
-    let a_req = tonic::Request::new(AssignmentIdRequest {
-        assignment_id: para.assignment_id.to_string(),
-    });
-    client
-        .assignment_exists(a_req)
-        .await
-        .map_err(|_| Error::NotAssignment(para.assignment_id))?;
     tokio::task::spawn(async move {
         let state = state.into_inner();
         let ilias_id = para.ilias_id;
@@ -82,8 +84,8 @@ pub async fn add_submission(
             .await
             .insert(ilias_id.clone());
         let request = tonic::Request::new(AssignmentMsg {
-            assignment_id: para.assignment_id.to_string(),
-            source_code: para.source_code.0,
+            assignment: Some(assignment),
+            code_to_test: para.source_code.0,
         });
         match client.run_test(request).await {
             Ok(response) => {
@@ -101,13 +103,9 @@ pub async fn add_submission(
 }
 
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
-    let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
-        .await
-        .map_err(|_| Error::RpcOffline)?;
-    let request = tonic::Request::new(());
-
-    let response = client.get_assignments(request).await.unwrap();
-    Ok(HttpResponse::Ok().json(response.into_inner().assignments))
+    let pool = &state.db_pool;
+    let assignments = db_query::get_assignments(&pool).await?;
+    Ok(HttpResponse::Ok().json(assignments))
 }
 
 pub async fn index() -> HttpResponse {

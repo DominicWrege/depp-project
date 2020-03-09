@@ -1,4 +1,5 @@
 use crate::api::IliasId;
+use deadpool_postgres::Pool;
 use failure::_core::convert::TryFrom;
 use grpc_api::test_client::TestClient;
 use serde::{Deserialize, Serialize};
@@ -81,16 +82,18 @@ pub struct InnerState {
     pub rpc_url: Url,
     pub credentials: Credentials,
     pub to_test_assignments: RwLock<HashSet<IliasId>>,
+    pub db_pool: Pool,
 }
 
 impl State {
-    pub fn new(rpc_conf: RpcConfig, credentials: Credentials) -> State {
+    pub fn new(rpc_conf: RpcConfig, credentials: Credentials, db_pool: Pool) -> State {
         State {
             inner: Arc::new(InnerState {
                 pending_results: dashmap::DashMap::new(),
                 rpc_url: rpc_conf.rpc_url,
                 credentials,
                 to_test_assignments: RwLock::new(HashSet::new()),
+                db_pool,
             }),
         }
     }

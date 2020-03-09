@@ -1,3 +1,4 @@
+use tokio_postgres::Row;
 tonic::include_proto!("deep_project");
 
 pub type AssignmentId = uuid::Uuid;
@@ -67,4 +68,17 @@ impl Script {
 pub enum TargetOs {
     Windows,
     Unix,
+}
+
+impl From<&tokio_postgres::row::Row> for Assignment {
+    fn from(r: &Row) -> Self {
+        let s: Script = r.get("script_type");
+        Assignment {
+            name: r.get("assignment_name"),
+            solution: r.get("solution"),
+            include_files: r.get("include_files"),
+            script_type: s.into(),
+            args: r.get("args"),
+        }
+    }
 }

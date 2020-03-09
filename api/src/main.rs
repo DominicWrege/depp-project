@@ -1,5 +1,6 @@
 mod api;
 mod base64;
+mod db_query;
 mod handler;
 mod state;
 use actix_cors::Cors;
@@ -13,7 +14,10 @@ use state::{get_credentials, RpcConfig, State};
 
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
-    let state = State::new(envy::from_env::<RpcConfig>()?, get_credentials());
+    let db_pool = db_lib::connect_migrate(db_lib::DB_URL)
+        .await
+        .expect("db connection err");
+    let state = State::new(envy::from_env::<RpcConfig>()?, get_credentials(), db_pool);
     let c_state = state.clone();
     tokio::task::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60 * 10));
