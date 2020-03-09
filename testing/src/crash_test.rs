@@ -114,13 +114,14 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
 
 pub async fn run(
     assignment: &Assignment,
-    code: &str,
+    code_to_test: &str,
     docker: &bollard::Docker,
 ) -> Result<(), Error> {
     let context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
-    let script_test_path = fs_util::new_tmp_script_file(assignment.script_type.into(), code)
-        .map_err(Error::CantCreatTempFile)?
-        .into_temp_path();
+    let script_test_path =
+        fs_util::new_tmp_script_file(assignment.script_type.into(), code_to_test)
+            .map_err(Error::CantCreatTempFile)?
+            .into_temp_path();
     let script_solution_path =
         fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
             .map_err(Error::CantCreatTempFile)?

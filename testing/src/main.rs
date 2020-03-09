@@ -79,7 +79,6 @@ pub struct ServerConfig {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    let opt = Opt::from_args();
     log::info!("Recker instance");
     let docker =
         bollard::Docker::connect_with_local_defaults().expect("Can't connect to docker api.");
