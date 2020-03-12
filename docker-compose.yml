@@ -13,7 +13,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      - RPC_URL=http://testing:50051
+      - LINUX_RPC_URL=http://testing:50051
     env_file:
       - ./api/api.env
   docs:
