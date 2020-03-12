@@ -1,6 +1,6 @@
 mod api;
+mod assignment;
 mod base64;
-mod db_query;
 mod handler;
 mod state;
 use actix_cors::Cors;

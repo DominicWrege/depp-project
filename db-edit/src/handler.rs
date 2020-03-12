@@ -14,10 +14,10 @@ type HttpResult = Result<HttpResponse, HttpError>;
 #[derive(serde::Deserialize, Debug)]
 pub struct AssignmentForm<'a> {
     pub name: &'a str,
-    pub solution: &'a str,
+    pub solution: String,
     pub script_type: ScriptType,
     #[serde(borrow)]
-    pub args: Vec<&'a str>,
+    pub args: Option<Vec<&'a str>>,
     pub exercise_id: i32,
     pub include_files: &'a [u8],
 }
@@ -46,8 +46,8 @@ pub async fn new_assignment(data: web::Data<State>, mut payload: Multipart) -> H
             }
         }
     }
+
     let assign = into_assignment_form(&mut text_fields, &zip_file);
-    dbg!(&assign);
     db::insert_assignment(&data.db_pool, &assign).await?;
     Ok(HttpResponse::Found()
         .header(
@@ -57,15 +57,21 @@ pub async fn new_assignment(data: web::Data<State>, mut payload: Multipart) -> H
         .finish())
 }
 
+fn fix_newlines(s: &str) -> String {
+    s.replace("\r\n", "\n")
+}
+
 fn into_assignment_form<'a>(
     h: &'a mut HashMap<String, String>,
     zip: &'a [u8],
 ) -> AssignmentForm<'a> {
     AssignmentForm {
         name: h.get("name").unwrap(),
-        solution: h.get("solution").unwrap(),
+        solution: fix_newlines(h.get("solution").unwrap()),
         script_type: ScriptType::from_str(h.get("script_type").unwrap()).unwrap(),
-        args: h.get("args").unwrap().split(',').collect::<Vec<_>>(),
+        args: h
+            .get("args")
+            .and_then(|a| Some(a.split(',').collect::<Vec<_>>())),
         exercise_id: h.get("exercise_id").unwrap().parse::<i32>().unwrap(),
         include_files: zip,
     }
@@ -107,7 +113,6 @@ pub async fn get_assignments_for_exercise(
         .parse::<i32>()
         .map_err(|_| HttpError::CourseParameter(path))?;
     let assignments = db::get_assignments_for_exercise(&data.db_pool, id).await?;
-    //dbg!(&assignments);
     read_zip(assignments.get(0).unwrap().include_files.as_ref());
     let mut context = tera::Context::new();
     context.insert("assignments", &assignments);

@@ -117,7 +117,7 @@ pub async fn run(
     code_to_test: &str,
     docker: &bollard::Docker,
 ) -> Result<(), Error> {
-    let context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
+    let context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
     let script_test_path =
         fs_util::new_tmp_script_file(assignment.script_type.into(), code_to_test)
             .map_err(Error::CantCreatTempFile)?
@@ -135,7 +135,7 @@ pub async fn run(
         &assignment.args,
     )
     .await?;
-    let solution_context_dir = fs_util::copy_items_include(&assignment.include_files).await?;
+    let solution_context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
     let solution_output = script::run_in_container(
         &docker,
         &assignment.script_type.into(),

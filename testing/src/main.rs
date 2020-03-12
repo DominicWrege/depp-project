@@ -9,7 +9,6 @@ use crate::docker_api::{pull_image, LINUX_IMAGE};
 use crate::docker_api::{pull_image, LINUX_IMAGE, MS_IMAGE};
 use grpc_api::test_server::{Test, TestServer};
 use grpc_api::{AssignmentMsg, AssignmentResult};
-use structopt::StructOpt;
 use tonic::{transport::Server, Request, Response, Status};
 
 #[derive(Debug)]
@@ -29,7 +28,6 @@ impl Test for Tester {
         &self,
         request: Request<AssignmentMsg>,
     ) -> Result<Response<AssignmentResult>, Status> {
-        let msg = request.into_inner();
         // Eror handling when no valid uuid
         let req = request.into_inner();
         if let Some(assignment) = req.assignment {

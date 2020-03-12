@@ -13,7 +13,7 @@ use grpc_api::test_client::TestClient;
 use grpc_api::{AssignmentId, AssignmentMsg};
 use sha2::Digest;
 
-use crate::db_query;
+use crate::assignment;
 
 pub async fn get_result(
     req: HttpRequest,
@@ -55,10 +55,10 @@ pub async fn add_submission(
     let para = para.into_inner();
     //let config = state.config.clone();
 
-    let assignment = db_query::get_assignment(&state.db_pool, &para.assignment_id)
+    let assignment = assignment::get_assignment(&state.db_pool, &para.assignment_id)
         .await
         .map_err(|_| Error::NotAssignment(para.assignment_id))?;
-    dbg!(&assignment);
+    //dbg!(&assignment);
     let mut client = TestClient::connect(state.rpc_url.as_str().to_owned())
         .await
         .map_err(|_| Error::RpcOffline)?;
@@ -104,7 +104,7 @@ pub async fn add_submission(
 
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
     let pool = &state.db_pool;
-    let assignments = db_query::get_assignments(&pool).await?;
+    let assignments = assignment::get_assignments(&pool).await?;
     Ok(HttpResponse::Ok().json(assignments))
 }
 
