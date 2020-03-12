@@ -1,23 +1,7 @@
 use crate::base64::Base64;
-use grpc_api::{AssignmentId, Script};
+use grpc_api::AssignmentId;
 use serde::{Deserialize, Serialize};
-
-/*
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "kebab-case")]
-pub struct Assignment {
-    pub name: String,
-    #[serde(deserialize_with = "into_absolute_path")]
-    pub solution: PathBuf,
-    #[serde(default)]
-    pub include_files: Vec<PathBuf>,
-    #[serde(default)]
-    #[serde(rename = "type")]
-    pub script_type: Script,
-    #[serde(default)]
-    pub args: Vec<String>,
-}
-*/
+use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,4 +48,25 @@ pub enum Mark {
     VeryGood,
     Ok,
     Bad,
+}
+#[derive(Debug, serde::Serialize, derive_more::Constructor)]
+#[serde(rename_all = "camelCase")]
+pub struct SubmissionExample {
+    pub ilias_id: IliasId,
+    pub source_code: &'static str,
+    pub assignment_id: Uuid,
+}
+#[derive(Serialize, Debug, Clone, derive_more::Constructor)]
+#[serde(rename_all = "camelCase")]
+pub struct Meta {
+    pub version: &'static str,
+    pub status: EndPointStatus,
+}
+
+#[derive(serde::Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum EndPointStatus {
+    Online,
+    // Maintenance,
+    Offline,
 }

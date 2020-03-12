@@ -17,7 +17,7 @@ pub struct AssignmentForm<'a> {
     pub solution: String,
     pub script_type: ScriptType,
     #[serde(borrow)]
-    pub args: Option<Vec<&'a str>>,
+    pub args: Vec<&'a str>,
     pub exercise_id: i32,
     pub include_files: &'a [u8],
 }
@@ -69,9 +69,11 @@ fn into_assignment_form<'a>(
         name: h.get("name").unwrap(),
         solution: fix_newlines(h.get("solution").unwrap()),
         script_type: ScriptType::from_str(h.get("script_type").unwrap()).unwrap(),
-        args: h
-            .get("args")
-            .and_then(|a| Some(a.split(',').collect::<Vec<_>>())),
+        args: if let Some(a) = h.get("args") {
+            a.split(',').collect::<Vec<_>>()
+        } else {
+            vec![]
+        },
         exercise_id: h.get("exercise_id").unwrap().parse::<i32>().unwrap(),
         include_files: zip,
     }

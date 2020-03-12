@@ -4,8 +4,8 @@ CREATE TYPE script_type AS ENUM(
     'PowerShell',
 	'Batch',
 	'Python3',
-	'Shell',
 	'Bash',
+	'Shell',
 	'Awk',
 	'Sed'
 );
@@ -19,14 +19,14 @@ CREATE TABLE exercise(
 CREATE TABLE assignment (
     id SERIAL PRIMARY KEY,
     uuid uuid not null default gen_random_uuid(),
-    assignment_name text not null,
+    assignment_name text not null default '',
     script_type script_type not null,
     active boolean not null default true,
     include_files bytea, -- zip of files
     solution text not null,
     args text[] not null default '{}',
-    notes text not null default '',
-    exercise_id INTEGER REFERENCES exercise(id) NOT NULL
+    exercise_id INTEGER REFERENCES exercise(id) NOT NULL,
+    notes text not null default ''
 );
 
 CREATE OR REPLACE FUNCTION init_exercise() RETURNS VOID AS $$

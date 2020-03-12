@@ -21,7 +21,6 @@ pub enum DbError {
 pub const DB_URL: &'static str = "postgres://john:12345@127.0.0.1:5432/assignments";
 
 pub async fn connect_migrate(db_url: &str) -> Result<Pool, anyhow::Error> {
-    println!();
     let postgres_url = String::from(db_url);
     let postgres_config: tokio_postgres::config::Config = postgres_url.parse().unwrap();
     let (mut client, pg) = postgres_config

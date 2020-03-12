@@ -2,7 +2,7 @@
 name = "api"
 authors = ["Dominic <email@domi-me.de>"]
 edition = "2018"
-version = "0.3.0"
+version = "0.4.0"
 
 
 [dependencies]

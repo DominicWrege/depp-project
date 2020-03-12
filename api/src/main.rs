@@ -1,7 +1,6 @@
 mod api;
-mod assignment;
 mod base64;
-mod handler;
+mod handlers;
 mod state;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
@@ -9,8 +8,12 @@ use actix_web::{middleware, web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use failure::_core::time::Duration;
 use futures::prelude::*;
-use handler::{add_submission, auth, get_assignments, get_result, index, version};
-use state::{get_credentials, RpcConfig, State};
+
+use handlers::{
+    auth::get_credentials, auth::my_basic_auth, get::get_assignments, get::get_result, get::index,
+    get::version, post::add_submission,
+};
+use state::{RpcConfig, State};
 
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
@@ -30,7 +33,7 @@ async fn run() -> Result<(), failure::Error> {
         App::new()
             .wrap(middleware::Compress::default())
             .wrap(Logger::default())
-            .wrap(HttpAuthentication::basic(auth))
+            .wrap(HttpAuthentication::basic(my_basic_auth))
             .route("/", web::get().to(index))
             .route("/version", web::get().to(version))
             .route("/assignments", web::get().to(get_assignments))
@@ -38,7 +41,7 @@ async fn run() -> Result<(), failure::Error> {
                 web::resource("/submission")
                     .data(
                         web::JsonConfig::default()
-                            .error_handler(|err, _req| handler::Error::Body(err).into()),
+                            .error_handler(|err, _req| handlers::error::Error::Body(err).into()),
                     )
                     .route(web::post().to(add_submission)),
             )

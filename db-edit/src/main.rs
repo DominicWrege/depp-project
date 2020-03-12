@@ -17,11 +17,14 @@ pub struct State {
 
 #[actix_rt::main]
 async fn main() -> Result<(), anyhow::Error> {
+    println!();
+    println!();
+    println!();
+    println!();
     let state = State {
         db_pool: db_lib::connect_migrate(db_lib::DB_URL).await?,
         temp: parse_template("templates/*.html"),
     };
-
     HttpServer::new(move || {
         App::new()
             .service(actix_files::Files::new("/templates", "./static").show_files_listing())
