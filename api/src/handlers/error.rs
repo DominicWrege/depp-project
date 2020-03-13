@@ -1,9 +1,11 @@
 use crate::api::{IliasId, SubmissionExample};
+use crate::rpc_conf::RpcMeta;
 use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use grpc_api::AssignmentId;
 use uuid::Uuid;
+
 #[derive(serde::Serialize)]
 pub struct ErrJson {
     msg: String,
@@ -65,8 +67,8 @@ pub enum Error {
     NotAssignment(AssignmentId),
     #[fail(display = "Request body error. {:?}", _0)]
     Body(JsonPayloadError),
-    #[fail(display = "Testing Server {} seems to be not reachable", url)]
-    RpcOffline { url: String },
+    #[fail(display = "{}", reason)]
+    RpcOffline { reason: RpcMeta },
     #[fail(display = "Bad request")]
     BadRequest,
     #[fail(display = " Wrong credentials")]

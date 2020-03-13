@@ -1,10 +1,9 @@
-use crate::config::fix_win_ln;
 use crate::crash_test::Error;
 use async_stream::try_stream;
 use futures::stream::Stream;
-use grpc_api::Script;
+use grpc_api::{Script, TargetOs};
 use std::io;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::{Builder, NamedTempFile, TempDir};
 use tokio::fs;
@@ -24,7 +23,8 @@ pub fn new_tmp_dir() -> Result<TempDir, std::io::Error> {
 }
 pub async fn extract_files_include(zip: &[u8]) -> Result<TempDir, Error> {
     let dir = new_tmp_dir()?;
-    unzip_into_dir(dir.path(), &zip)?;
+    let c_dir = dir.path().clone();
+    tokio::task::block_in_place(move || unzip_into_dir(c_dir, &zip))?;
     Ok(dir)
 }
 
@@ -43,25 +43,15 @@ pub fn new_tmp_script_file(
             .tempfile()?
     };
 
-    let bytes = if script_type != Script::PowerShell
-        && script_type != Script::Batch
-        && content.contains(r"\r\n")
-    {
-        fix_win_ln(&content).as_bytes().to_owned()
+    let bytes = if script_type.target_os() == TargetOs::Unix && content.contains(r"\r\n") {
+        content.replace("\r\n", "\n").into_bytes()
     } else {
-        content.as_bytes().to_owned()
+        content.as_bytes().to_vec()
     };
+
     file.write(&bytes)?;
     Ok(file)
 }
-//pub async fn cp_files(files: &[PathBuf], dir: &TempDir) -> Result<(), Error> {
-//    for path in files {
-//        let file_name = path.file_name().unwrap();
-//        let dest_path = dir.path().join(&file_name);
-//        let _ = fs::copy(&path, &dest_path).await?;
-//    }
-//    Ok(())
-//}
 
 pub fn ls_dir_content(root: PathBuf) -> impl Stream<Item = Result<PathBuf, Error>> {
     try_stream! {

@@ -5,7 +5,7 @@ use actix_web::{web, HttpResponse};
 use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
 use grpc_api::Assignment;
-use grpc_api::{AssignmentId, AssignmentMsg};
+use grpc_api::AssignmentMsg;
 use uuid::Uuid;
 
 pub async fn add_submission(
@@ -16,13 +16,6 @@ pub async fn add_submission(
     let assignment = db_assignment(&state.db_pool, &para.assignment_id)
         .await
         .map_err(|_| Error::NotAssignment(para.assignment_id))?;
-    //dbg!(&assignment);
-
-    let rpc_url = state.rpc_conf.url(&assignment.script_type.into());
-    dbg!(&rpc_url);
-    let mut client = TestClient::connect(rpc_url.clone())
-        .await
-        .map_err(|_| Error::RpcOffline { url: rpc_url })?;
 
     if state.pending_results.contains_key(&para.ilias_id)
         || state
@@ -33,7 +26,12 @@ pub async fn add_submission(
     {
         return Err(Error::DuplicateIliasId);
     }
-
+    let rpc = state.rpc_conf.meta(&assignment.script_type.into());
+    let mut client = TestClient::connect(rpc.rpc_url.to_string())
+        .await
+        .map_err(|_| Error::RpcOffline {
+            reason: rpc.clone(),
+        })?;
     tokio::task::spawn(async move {
         let state = state.into_inner();
         let ilias_id = para.ilias_id;
@@ -46,6 +44,7 @@ pub async fn add_submission(
             assignment: Some(assignment),
             code_to_test: para.source_code.0,
         });
+
         match client.run_test(request).await {
             Ok(response) => {
                 state
@@ -54,7 +53,7 @@ pub async fn add_submission(
                 state.to_test_assignments.write().await.remove(&ilias_id);
             }
             Err(e) => {
-                log::error!("from RPC {:?}", e);
+                log::error!("from RPC {:#?}", e);
             }
         }
     });

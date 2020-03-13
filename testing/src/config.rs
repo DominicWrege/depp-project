@@ -1,6 +1,8 @@
+/*
 use grpc_api::Script;
 use serde::Deserialize;
 use uuid::Uuid;
+*/
 
 /*pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
 
@@ -64,6 +66,3 @@ pub fn parse_config(path: &Path) -> Result<Config, Error> {
 // }
 
 // delete stupid windows newlines
-pub fn fix_win_ln(s: &str) -> String {
-    s.chars().filter(|&c| c != '\r').collect::<_>()
-}

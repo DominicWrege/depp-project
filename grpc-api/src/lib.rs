@@ -64,7 +64,7 @@ impl Script {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TargetOs {
     Windows,
     Unix,

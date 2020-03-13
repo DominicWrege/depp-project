@@ -4,36 +4,46 @@ use std::time;
 
 use async_trait::async_trait;
 use futures::pin_mut;
-use futures::{future, StreamExt};
+use futures::StreamExt;
 use log::info;
 use tokio::fs;
 
+use crate::docker_api::ScriptOutput;
 use crate::fs_util;
-use crate::script;
-use crate::script::ScriptOutput;
-use grpc_api::Assignment;
 
 #[async_trait]
-pub trait Tester: Sync + Send {
+pub trait CrashTester: Sync + Send {
     async fn test(&self) -> Result<(), Error>;
 }
 pub struct Stdout {
     expected: ScriptOutput,
     testet: ScriptOutput,
 }
-pub struct Files {
-    expected_dir: PathBuf,
-    given_dir: PathBuf,
-}
 
 impl Stdout {
-    fn boxed(expected: ScriptOutput, testet: ScriptOutput) -> Box<dyn Tester> {
+    pub fn boxed(expected: ScriptOutput, testet: ScriptOutput) -> Box<dyn CrashTester> {
         Box::new(Stdout { expected, testet })
     }
 }
 
+pub struct Files {
+    expected_dir: PathBuf,
+    given_dir: PathBuf,
+}
+impl Files {
+    pub fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn CrashTester> {
+        Box::new(Files {
+            expected_dir: a,
+            given_dir: b,
+        })
+    }
+    fn cmp_file_type(&self, a: &Path, b: &Path) -> bool {
+        (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
+    }
+}
+
 #[async_trait]
-impl Tester for Stdout {
+impl CrashTester for Stdout {
     async fn test(&self) -> Result<(), Error> {
         let stdout = trim_new_lines(&self.testet.stdout);
 
@@ -55,20 +65,8 @@ impl Tester for Stdout {
     }
 }
 
-impl Files {
-    fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn Tester> {
-        Box::new(Files {
-            expected_dir: a,
-            given_dir: b,
-        })
-    }
-    fn cmp_file_type(&self, a: &Path, b: &Path) -> bool {
-        (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
-    }
-}
-
 #[async_trait]
-impl Tester for Files {
+impl CrashTester for Files {
     async fn test(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir).await?;
         print_dir_content("dir after test:", &self.given_dir).await?;
@@ -109,49 +107,6 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
             info!("    file content: {:#?}", &content);
         }
     }
-    Ok(())
-}
-
-pub async fn run(
-    assignment: &Assignment,
-    code_to_test: &str,
-    docker: &bollard::Docker,
-) -> Result<(), Error> {
-    let context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
-    let script_test_path =
-        fs_util::new_tmp_script_file(assignment.script_type.into(), code_to_test)
-            .map_err(Error::CantCreatTempFile)?
-            .into_temp_path();
-    let script_solution_path =
-        fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
-            .map_err(Error::CantCreatTempFile)?
-            .into_temp_path();
-    info!("running task: {}", &assignment.name);
-    let test_output = script::run_in_container(
-        &docker,
-        &assignment.script_type.into(),
-        &script_test_path,
-        &context_dir.path(),
-        &assignment.args,
-    )
-    .await?;
-    let solution_context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
-    let solution_output = script::run_in_container(
-        &docker,
-        &assignment.script_type.into(),
-        &script_solution_path,
-        &solution_context_dir.path(),
-        &assignment.args,
-    )
-    .await?;
-    let mut tests: Vec<Box<dyn Tester>> = Vec::new();
-
-    tests.push(Stdout::boxed(solution_output, test_output));
-    tests.push(Files::boxed(
-        solution_context_dir.path().to_path_buf(),
-        context_dir.path().to_path_buf(),
-    ));
-    let _ = future::try_join_all(tests.iter().map(|item| async move { item.test().await })).await?;
     Ok(())
 }
 

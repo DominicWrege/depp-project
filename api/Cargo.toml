@@ -37,6 +37,7 @@ deadpool-postgres = "0.5.5"
 tokio-postgres = { version="0.5.2" , features=["with-uuid-0_8"] }
 tokio-pg-mapper = "0.1.5"
 tokio-pg-mapper-derive = "0.1.5"
+async-trait = "0.1.24"
 [dependencies.url]
 version = "2.1.1"
 features = ["serde"]
