@@ -4,7 +4,6 @@ fn default_port() -> u16 {
     50051
 }
 
-#[cfg(target_family = "unix")]
 fn default_max_curr_test() -> usize {
     if cfg!(target_family = "unix") {
         8
