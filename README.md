@@ -50,24 +50,19 @@ the memory is limited to 256MB. First the solution script will run. After that t
 # Assignment In More Details
 
 Currently this a list of all assignment `exampels/assignments.yaml` are stored.
-Here I go into more details how the assignment is structured.
+Here I go into more details how the assignment is structured. use db-edit crate. TODO
 
-```
-[[assignment]]
-name = "Task 9 loops in shell"              # required
-type = "Shell"                              # required, set the script type
-args = ["rackrent"]                         # optional, a list arguments passed to the
-include-files = ["examples/akademisches_jahrbuch.txt"] # optional inlcude needed files
-solution = '''#!/bin/bash echo HelloWorld''' # required sample solution
-```
 
 # TODO
 
 - [x] async Tokio Command for Timeout (https://github.com/fussybeaver/bollard/pull/40)
 - [x] Memory limit for script
 - [x] Run each script iniside Docker (https://github.com/fussybeaver/bollard unter 4.1)
-- [ ] remove pause keyword from bat scripts?!
 - [x] auth using some token
 - [x] update testing-server status `/version`
-- [ ] store assignments in postgresql (tokio-postgres)
-- [ ] multiple rpc endpoints
+- [x] store assignments in postgresql (tokio-postgres)
+- [x] multiple rpc endpoints
+- [ ] TLS for grpc
+- [ ] test ruslt cache
+- [ ] edit assignments
+- [ ] db-edit auth

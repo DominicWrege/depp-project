@@ -1,68 +1,45 @@
-/*
-use grpc_api::Script;
-use serde::Deserialize;
-use uuid::Uuid;
-*/
+use std::path::PathBuf;
 
-/*pub type AssignmentsMap = HashMap<AssignmentId, Assignment>;
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct Config {
-    pub name: String,
-    pub assignments: HashMap<Uuid, Assignment>,
+fn default_port() -> u16 {
+    50051
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "kebab-case")]
-pub struct Assignment {
-    pub name: String,
-    //#[serde(deserialize_with = "into_absolute_path")]
-    pub solution: String,
-    #[serde(default)]
-    pub include_files: Vec<PathBuf>,
-    #[serde(default)]
-    #[serde(rename = "type")]
-    pub script_type: Script,
-    #[serde(default)]
-    pub args: Vec<String>,
+#[cfg(target_family = "unix")]
+fn default_max_curr_test() -> usize {
+    if cfg!(target_family = "unix") {
+        8
+    } else {
+        4
+    }
 }
 
-#[derive(Debug, err_derive::Error, derive_more::From)]
-pub enum Error {
-    #[from]
-    #[error(display = "can`t find config file, {}", _0)]
-    ConfigFile(std::io::Error),
-    #[from]
-    #[error(display = "wrong toml format, {}", _0)]
-    Toml(toml::de::Error),
+fn default_key_path() -> PathBuf {
+    PathBuf::from("./localhost-key.pem")
 }
 
-pub fn parse_config(path: &Path) -> Result<Config, Error> {
-    let file_content = fs::read_to_string(path)?;
-    let conf = toml::from_str::<Config>(&file_content)?;
-    //check_config(&conf)?;
-    Ok(conf)
-}*/
+fn default_cert_path() -> PathBuf {
+    PathBuf::from("./localhost.pem")
+}
 
-// // can panic
-// fn check_config(conf: &Config) -> Result<(), std::io::Error> {
-//     for assignment in conf.assignments.values() {
-//         for path in &assignment.include_files {
-//             path_exists_and_is_file(&path);
-//         }
-//         path_exists_and_is_file(&assignment.solution_path);
-//     }
-//     Ok(())
-// }
+fn default_image_name() -> String {
+    let name = if cfg!(target_family = "unix") {
+        "dominicwrege/depp-project-ubuntu:latest"
+    } else {
+        "mcr.microsoft.com/powershell:latest"
+    };
+    String::from(name)
+}
 
-// fn path_exists_and_is_file(p: &Path) {
-//     if !p.exists() || p.is_dir() {
-//         panic!(
-//             "Config error: path to {:#?} does not exists or is not a file.",
-//             p
-//         )
-//     }
-// }
-
-// delete stupid windows newlines
+#[derive(serde::Deserialize, Debug)]
+pub struct ServerConfig {
+    #[serde(default = "default_port")]
+    pub port: u16,
+    #[serde(default = "default_max_curr_test")]
+    pub max_curr_test: usize,
+    #[serde(default = "default_cert_path")]
+    pub cert_path: PathBuf,
+    #[serde(default = "default_key_path")]
+    pub key_path: PathBuf,
+    #[serde(default = "default_image_name")]
+    pub docker_image: String,
+}

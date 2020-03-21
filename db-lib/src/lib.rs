@@ -1,5 +1,6 @@
-use anyhow::Context;
 use deadpool_postgres::{Manager, Pool};
+use failure::ResultExt;
+use std::net::Ipv4Addr;
 
 mod embedded {
     use refinery::embed_migrations;
@@ -12,18 +13,60 @@ pub enum DbError {
     Pool(deadpool_postgres::PoolError),
     #[error(display = "could not map db type {:?}", _0)]
     TypeMap(tokio_pg_mapper::Error),
-    #[error(display = "Sql error{}", _0)]
+    #[error(display = "Sql error {:?}", _0)]
     Sql(tokio_postgres::error::Error),
     #[error(display = "DB returned empty rows")]
     EmptyRows,
 }
 
-pub const DB_URL: &'static str = "postgres://john:12345@127.0.0.1:5432/assignments";
+// user for testing
+//pub const DB_URL: &'static str = "postgres://john:12345@127.0.0.1:5432/assignments";
 
-pub async fn connect_migrate(db_url: &str) -> Result<Pool, anyhow::Error> {
-    let postgres_url = String::from(db_url);
-    let postgres_config: tokio_postgres::config::Config = postgres_url.parse().unwrap();
-    let (mut client, pg) = postgres_config
+#[derive(serde::Deserialize, Debug)]
+pub(crate) struct DbConfig {
+    user: String,
+    password: String,
+    name: String,
+    port: u16,
+    #[serde(default = "default_max_connection")]
+    max_connection: usize,
+    host: Ipv4Addr,
+}
+
+fn default_max_connection() -> usize {
+    16
+}
+impl Default for DbConfig {
+    fn default() -> Self {
+        DbConfig {
+            user: "john".into(),
+            password: "12345".into(),
+            name: "assignments".into(),
+            port: 5432,
+            max_connection: 16,
+            host: Ipv4Addr::new(127, 0, 0, 1),
+        }
+    }
+}
+
+pub(crate) fn get_db_config() -> DbConfig {
+    match envy::prefixed("DEPP_DB_").from_env::<DbConfig>() {
+        Ok(config) => config,
+        Err(_) => DbConfig::default(),
+    }
+}
+
+pub async fn connect_migrate() -> Result<Pool, failure::Error> {
+    let env_conf = get_db_config();
+    let mut pg_config = tokio_postgres::Config::default();
+    pg_config
+        .user(&env_conf.user)
+        .password(&env_conf.password)
+        .dbname(&env_conf.name)
+        .host(&env_conf.host.to_string())
+        .port(env_conf.port);
+
+    let (mut client, pg) = pg_config
         .connect(tokio_postgres::NoTls)
         .await
         .context("DB config error")?;
@@ -32,7 +75,6 @@ pub async fn connect_migrate(db_url: &str) -> Result<Pool, anyhow::Error> {
         .run_async(&mut client)
         .await
         .context("DB migration failed")?;
-    let mngr = Manager::new(postgres_config.clone(), tokio_postgres::NoTls);
-
-    Ok(Pool::new(mngr, 16))
+    let mngr = Manager::new(pg_config.clone(), tokio_postgres::NoTls);
+    Ok(Pool::new(mngr, env_conf.max_connection))
 }

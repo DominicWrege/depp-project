@@ -1,17 +1,31 @@
 <!DOCTYPE html>
 <html>
-{% include 'head.html' %}
+
+    {% set title = "AufgabenManager" %}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="/static/bootstrap.min.css" >
+        <style>
+            body{
+                padding-top: 5rem;
+                padding-bottom: 3rem;
+            }
+        </style>
+        <title>{{title}}</title>
+    </head>
     <body>
-        {% include 'top_bar.html' %}
-        <div class="container-sm">
-            <div class="list-group">
-                {% for exercise in exercises %}
-                <a href="/exercise/{{exercise.id}}" class="list-group-item list-group-item-action">
-                    <span>&#x1f4c1; </span>
-                   {{exercise.description}}
-                </a>
-                {% endfor %}
-            </div>
+        <nav class="navbar navbar-dark bg-light down_space justify-content-start fixed-top">
+            <a class="navbar-brand mr-5 text-dark" href="/manage/">{{title}}</a>
+            {% if hide_top_btns is not defined %}
+            <a class="mr-5 ml-1" href="/manage/" class="mr-3">Praktika Übersicht</a>
+            <a class="mr-5 ml-1" href="/manage/exercise_form" class="mr-3">Praktikum +</a>
+            <a class="mr-5 ml-1" href="/manage/assignment_form">Aufgabe +</button></a>
+            <a class="mr-2 ml-1" href="/manage/logout">Logout</a>
+            {% endif %}
+        </nav>
+        <div class="container">
+            {% block content %}{% endblock content %}
         </div>
     </body>
 </html>

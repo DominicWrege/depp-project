@@ -69,8 +69,7 @@ paths:
                   required: true
                   description: "Needs and existing iliasID to find the result. After that I will remove this iliasId from the cache."
                   schema:
-                        type: integer
-                        format: int64
+                    $ref: "#/components/schemas/IliasId"
             responses:
                 200:
                     description: "Returns the result for the submission"
@@ -101,8 +100,7 @@ paths:
                   required: true
                   description: "Needs and existing iliasId to find the result. After that I will remove this iliasId from the cache."
                   schema:
-                    type: integer
-                    format: int64
+                    $ref: "#/components/schemas/IliasId"
             responses:
                 200:
                     description: "Returns the result for the submission"
@@ -136,7 +134,7 @@ components:
             type: object
             properties:
                 iliasId:
-                    type: string
+                    $ref: "#/components/schemas/IliasId"
                 sourceCode:
                     type: string
                     format: base64
@@ -144,8 +142,7 @@ components:
     aXIgQWx0DQpta2RpciBOZXUNCm1rZGlyIC5cQWx0XExhdGV4DQpta2RpciAuXE5ldVxMYXRleA0K
     Zm9yIC9SICUlYSBpbiAoLikgZG8gZWNobyAiJSV+ZmEiPiUlfmZhXHRlc3QudGV4DQpjZCAuLg=="
                 assignmentId:
-                    type: string
-                    format: uuid
+                    $ref: "#/components/schemas/AssignmentId"
             required:
                 - iliasId
                 - sourceCode
@@ -154,8 +151,7 @@ components:
             type: object
             properties:
                 iliasId:
-                    type: integer
-                    format: int64
+                    $ref: "#/components/schemas/IliasId"
                 passed:
                     type: boolean
                 message:
@@ -171,8 +167,7 @@ components:
             type: object
             properties: 
                 assignmentId: 
-                    type: string
-                    format: uuid  
+                    $ref: "#/components/schemas/AssignmentId"
                 name:
                     type: string
                     example: "Aufgabe 7 Powershell Dateien auslesen"
@@ -182,12 +177,17 @@ components:
                 version:
                     type: number
                     format: double
-                status:
-                    type: string
-                    enum: [online, maintenance]
+                LinuxRpcStatus:
+                    $ref: "#/components/schemas/Status"
+                WindowsRpcStatus:
+                    $ref: "#/components/schemas/Status"
             required:
                 - version
-                - status
+                - LinuxRpcStatus
+                - WindowsRpcStatus
+        Status:
+            type: string
+            enum: [online, offline, maintenance]
         ApiError:
             type: "object"
             properties:
@@ -204,6 +204,11 @@ components:
                     $ref: "#/components/schemas/Submission"
             required:
                 - msg
+        AssignmentId:
+            type: string
+            format: uuid
+        IliasId:
+            type: string
 
 externalDocs:
     description: "Find out more about Swagger"

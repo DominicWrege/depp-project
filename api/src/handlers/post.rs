@@ -6,6 +6,7 @@ use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
 use grpc_api::Assignment;
 use grpc_api::AssignmentMsg;
+use tonic::transport::Channel;
 use uuid::Uuid;
 
 pub async fn add_submission(
@@ -26,12 +27,21 @@ pub async fn add_submission(
     {
         return Err(Error::DuplicateIliasId);
     }
-    let rpc = state.rpc_conf.meta(&assignment.script_type.into());
+    let rpc = state.rpc_conf.meta(&assignment.script_type.into()).clone();
+
+    /*    let channel = Channel::from_shared(rpc.rpc_url.as_str().to_owned())
+        .unwrap()
+        .tls_config(state.rpc_conf.tls_config.clone())
+        .connect()
+        .await?;
+    let mut client = TestClient::new(channel);*/
+
     let mut client = TestClient::connect(rpc.rpc_url.to_string())
         .await
         .map_err(|_| Error::RpcOffline {
             reason: rpc.clone(),
         })?;
+
     tokio::task::spawn(async move {
         let state = state.into_inner();
         let ilias_id = para.ilias_id;

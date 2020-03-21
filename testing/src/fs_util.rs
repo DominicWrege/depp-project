@@ -43,13 +43,12 @@ pub fn new_tmp_script_file(
             .tempfile()?
     };
 
-    let bytes = if script_type.target_os() == TargetOs::Unix && content.contains(r"\r\n") {
-        content.replace("\r\n", "\n").into_bytes()
+    let content = if script_type.target_os() == TargetOs::Unix && content.contains(r"\r\n") {
+        content.replace("\r\n", "\n")
     } else {
-        content.as_bytes().to_vec()
+        content.to_string()
     };
-
-    file.write(&bytes)?;
+    file.write(content.as_bytes())?;
     Ok(file)
 }
 

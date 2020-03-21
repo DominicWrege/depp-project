@@ -29,7 +29,7 @@ pub struct IliasId(String);
 impl Default for IliasId {
     fn default() -> Self {
         Self {
-            0: "abcdefid".to_string(),
+            0: "default_ilias_id".to_string(),
         }
     }
 }
@@ -54,7 +54,7 @@ pub enum Mark {
 pub struct SubmissionExample {
     pub ilias_id: IliasId,
     pub source_code: &'static str,
-    pub assignment_id: Uuid,
+    pub assignment_id: AssignmentId,
 }
 
 // TODO update swagger

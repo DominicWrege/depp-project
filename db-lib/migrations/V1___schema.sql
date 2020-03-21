@@ -25,8 +25,8 @@ CREATE TABLE assignment (
     include_files bytea, -- zip of files
     solution text not null,
     args text[] not null default '{}',
-    exercise_id INTEGER REFERENCES exercise(id) NOT NULL,
-    notes text not null default ''
+    exercise_id INTEGER REFERENCES exercise(id) ON DELETE CASCADE NOT NULL,
+    description text not null default ''
 );
 
 CREATE OR REPLACE FUNCTION init_exercise() RETURNS VOID AS $$

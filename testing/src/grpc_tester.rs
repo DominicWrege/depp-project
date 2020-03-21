@@ -1,18 +1,20 @@
 use crate::crash_test::{CrashTester, Error, Files, Stdout};
-use crate::{crash_test, docker_api, fs_util, sema_wrap};
+use crate::{crash_test, fs_util, sema_wrap};
 use futures::future;
 use grpc_api::test_server::Test;
 use grpc_api::{Assignment, AssignmentMsg, AssignmentResult};
 use tonic::{Request, Response, Status};
-type Docker = sema_wrap::SemWrap<bollard::Docker>;
+type Docker = sema_wrap::SemWrap<DockerWrap>;
+use crate::docker_api::DockerWrap;
 use log::info;
+
 #[derive(Debug, Clone)]
 pub struct Tester {
     docker: Docker,
 }
 
 impl Tester {
-    pub fn new(docker: bollard::Docker, max_sema: usize) -> Self {
+    pub fn new(docker: DockerWrap, max_sema: usize) -> Self {
         Tester {
             docker: sema_wrap::SemWrap::new(docker, max_sema),
         }
@@ -75,25 +77,26 @@ impl Tester {
                 .map_err(Error::CantCreatTempFile)?
                 .into_temp_path();
         info!("running task: {}", &assignment.name);
-        let docker = self.docker.acquire().await;
-        let test_output = docker_api::run_in_container(
-            &docker,
-            &assignment.script_type.into(),
-            &script_test_path,
-            &context_dir.path(),
-            &assignment.args,
-        )
-        .await?;
+
+        let docker_api = self.docker.acquire().await;
+        let test_output = docker_api
+            .test_in_container(
+                &assignment.script_type.into(),
+                &script_test_path,
+                &context_dir.path(),
+                &assignment.args,
+            )
+            .await?;
         let solution_context_dir =
             fs_util::extract_files_include(&assignment.include_files).await?;
-        let solution_output = docker_api::run_in_container(
-            &docker,
-            &assignment.script_type.into(),
-            &script_solution_path,
-            &solution_context_dir.path(),
-            &assignment.args,
-        )
-        .await?;
+        let solution_output = docker_api
+            .test_in_container(
+                &assignment.script_type.into(),
+                &script_solution_path,
+                &solution_context_dir.path(),
+                &assignment.args,
+            )
+            .await?;
         let mut tests: Vec<Box<dyn CrashTester>> = Vec::new();
 
         tests.push(Stdout::boxed(solution_output, test_output));

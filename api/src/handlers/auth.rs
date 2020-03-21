@@ -62,7 +62,7 @@ impl Credentials {
 }
 
 pub fn get_credentials() -> Credentials {
-    match envy::prefixed("API_").from_env::<CredentialsEnv>() {
+    match envy::prefixed("DEPP_API_").from_env::<CredentialsEnv>() {
         Ok(cred) => Credentials {
             username: cred.username,
             password: cred.password.try_into().unwrap(),

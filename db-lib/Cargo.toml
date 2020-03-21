@@ -7,9 +7,12 @@ edition = "2018"
 [dependencies]
 refinery = { version = "0.2.0", features=["tokio-postgres"]}
 deadpool-postgres = "0.5.5"
-tokio-postgres = "0.5.2"
-anyhow = "1.0.26"
+tokio-postgres = { version="0.5.2" , features=["with-uuid-0_8"] }
+failure = "0.1.6"
 tokio = "0.2.13"
 derive_more = "0.99.3"
 err-derive = "0.2.3"
 tokio-pg-mapper = "0.1.5"
+postgres-types =  { version="0.1.0", features=["derive"] }
+envy = "0.4.1"
+serde = "1.0.104"

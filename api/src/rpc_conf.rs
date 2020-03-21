@@ -4,6 +4,8 @@ use serde::Deserialize;
 use std::fmt::Formatter;
 use url::Url;
 
+use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
+
 fn default_addr() -> Url {
     Url::parse("http://127.0.0.1:50051").unwrap()
 }
@@ -21,20 +23,28 @@ pub struct AllEndpointStatus {
 #[derive(Clone, Debug)]
 pub struct RpcMeta {
     pub rpc_url: Url,
-    pub plattform: &'static str,
+    pub platform: &'static str,
 }
 
 impl RpcMeta {
     fn new(rpc_url: Url, plattform: &'static str) -> Self {
-        RpcMeta { rpc_url, plattform }
+        RpcMeta {
+            rpc_url,
+            platform: plattform,
+        }
     }
 }
 
 impl From<RpcEnvConfig> for RpcConfig {
     fn from(rpc_config: RpcEnvConfig) -> Self {
+        //let cert = std::fs::read_to_string("./rootCA.pem").unwrap();
+
         Self {
             windows: RpcMeta::new(rpc_config.ms_rpc_url, "windows"),
             linux: RpcMeta::new(rpc_config.linux_rpc_url, "linux"),
+            /*            tls_config: ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(&cert))
+            .domain_name("localhost".to_string()),*/
         }
     }
 }
@@ -44,14 +54,14 @@ impl std::fmt::Display for RpcMeta {
         write!(
             f,
             "The {} testing server: {} seems to be not reachable",
-            self.plattform, self.rpc_url
+            self.platform, self.rpc_url
         )
     }
 }
-
 pub struct RpcConfig {
     windows: RpcMeta,
     linux: RpcMeta,
+    //pub tls_config: ClientTlsConfig,
 }
 
 impl RpcConfig {
@@ -63,7 +73,6 @@ impl RpcConfig {
     }
     pub async fn status(&self) -> AllEndpointStatus {
         use grpc_api::test_client::TestClient;
-
         let (l, w) = futures::join!(
             TestClient::connect(self.linux.rpc_url.to_string()),
             TestClient::connect(self.windows.rpc_url.to_string())
@@ -81,7 +90,7 @@ fn endpoint_status<T, E>(r: Result<T, E>, context: &RpcMeta) -> EndPointStatus {
     } else {
         log::warn!(
             "grpc {} {} seems to be offline",
-            &context.plattform,
+            &context.platform,
             &context.rpc_url
         );
         EndPointStatus::Offline
