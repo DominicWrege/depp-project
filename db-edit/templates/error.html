@@ -1,0 +1,7 @@
+{% extends "index.html" %}
+{% block content %}
+    <h3>{{error_title}}</h3>
+    {% if error_msg %}
+        <p>{{error_msg}}</p>
+    {% endif %}
+{% endblock content %}

@@ -1,0 +1,39 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+<script src="/static/exercise.js"></script>
+
+<div class="d-flex flex-column justify-content-center">
+    <h4 class="mb-4">Praktika Übersicht</h4>
+    <div class="list-group">
+        {% for exercise in exercises %}
+        <div class="list-group-item list-group-item-action w-75 m-auto d-flex justify-content-between">
+                <a href="/manage/exercise/{{exercise.id}}">&#x1f4c1;  {{exercise.description}}</a>
+                <form hidden method="POST" class="w-100" traget="/" action="/manage/exercise/rename/{{exercise.id}}">
+                    <input
+                            type="text"
+                            class="form-control w-50 p-3 mb-4"
+                            id="DescriptionInput"
+                            aria-describedby="description"
+                            name="description"
+                            value="{{exercise.description}}"
+                            required
+                    />
+                    <button type="submit" class="btn btn-primary btn-sm mr-3">speichern</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="toggle_edit(this, '{{exercise.id}}')">abbrechen</button>
+                </form>
+                <div class="btns_bar">
+                    <span class="badge badge-primary badge-pill">{{exercise.count}}</span>
+                    <button type="button" onclick="toggle_edit(this, '{{exercise.id}}')" class="btn btn-outline-secondary btn-sm ml-3">umbenennen</button>
+                    <button type="button" onclick="confirm_delete('{{exercise.id}}')" class="btn btn-outline-warning btn-sm ml-3">löschen</button>
+                </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+
+{% endblock content %}

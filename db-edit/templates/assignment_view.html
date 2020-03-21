@@ -1,0 +1,150 @@
+{% extends "index.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="/static/editor.css">
+
+
+{% set file_url = "/manage/assignment/file/" ~assignment.uuid  %}
+{% set file_name = assignment.name ~"_files.zip" %}
+
+<form class="d-flex justify-content-center" id="AssignmentForm"  action="/manage/assignment/{{assignment.uuid}}" method="POST" target="_self">
+<!--
+<form class="d-flex justify-content-center" id="AssignmentForm"  action="http://jkorpela.fi/cgi-bin/echo.cgi" method="POST" target="_self">
+-->
+    <div class="card w-75">
+        <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
+            <h5>Aufgabe ansehen/bearbeiten</h5>
+            <button type="submit" class="btn btn-primary justify-content-end" form="AssignmentForm">speichern</button>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-2">
+                <div class="form-group col-7">
+                    <label for="NameInput">Name</label>
+                    <input
+                            type="text"
+                            class="form-control p-3"
+                            id="NameInput"
+                            aria-describedby="name help"
+                            name="name"
+                            required
+                            value="{{assignment.name}}"
+                    />
+                </div>
+                <div class="col-2 my-4">
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input type="checkbox" id="StatusLabel" class="custom-control-input" name="active" {%if assignment.active%} checked="check" {% endif %}  aria-describedby="status">
+                        <label class="custom-control-label" for="StatusLabel">Aktiv</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="Description">Beschreibung</label
+                >
+                <textarea
+                        class="form-control p-2"
+                        rows="3"
+                        name="description"
+                        id="Description"
+                        required
+                >{{assignment.description}}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="SolutionInput">Musterlösung</label>
+                <textarea
+                        class="form-control p-3 code-editor mono-font"
+                        rows="8"
+                        name="solution"
+                        id="SolutionInput"
+                        required
+                >{{assignment.solution}}</textarea>
+            </div>
+
+            <div class="form-group ">
+                <label for="ArgsInput">Argumente</label>
+                <input
+                        type="text"
+                        class="form-control mono-font"
+                        id="ArgsInput"
+                        aria-describedby="Argumente help"
+                        name="args"
+                        value="{{ assignment.args | join(sep=',') }}"
+
+                />
+                <small id="ArgsHelp" class="form-text text-muted"
+                >Komma-Sperierte Liste ohne Leerzeichen. Beispiel:
+                -l,10,file.txt,--name bob</small>
+            </div>
+
+            <div class="row">
+                <div class="form-group col-6">
+                    <label for="SkriptType"
+                    >Skript</label
+                    >
+                    <select
+                            class="form-control"
+                            id="SkriptType"
+                            name="script_type"
+                            required
+                    >
+                        {% for script in scripts %}
+                        {% if script == assignment.script_type %}
+                        <option selected value="{{script}}">{{script}}</option>
+                        {% else %}
+                        <option value="{{script}}">{{script}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group col-6">
+                    <label for="PraktikumSelect">Praktikum</label>
+                    <select
+                            class="form-control"
+                            id="PraktikumSelect"
+                            name="exercise_id"
+                            required
+                    >
+                        {% for exercise in exercises %}
+                            {% if exercise.id == assignment.exercise_id %}
+                            <option selected value="{{exercise.id}}">{{exercise.description}}</option>
+                            {% else %}
+                            <option value="{{exercise.id}}">{{exercise.description}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+
+<form class="my-5 d-flex justify-content-center" id="FileForm" action="{{file_url}}" target="_parent" method="POST" enctype="multipart/form-data">
+    <div class="card w-75" >
+        <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
+            <h5>Benötige Dateien</h5>
+            <button type="submit" class="btn btn-primary justify-content-end" form="FileForm">hochladen</button>
+        </div>
+
+        <div class="card-body">
+            {% include 'file_upload.html' %}
+            <section class="mb-4">
+                <p>Inhalt der Zip Datei <a href="{{file_url}}" download="{{file_name}}">herunterladen</a>:</p>
+
+                {% if files | length > 0 %}
+                    {% for file in files %}
+                    <ul>
+                        <li class="bg-light">{{file}}</li>
+                    </ul>
+                    {% endfor %}
+                {% else %}
+                    <p>Keine Dateien vorhanden.</p>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</form>
+{% endblock content %}

@@ -1,0 +1,22 @@
+{% extends "index.html" %}
+{% block content %}
+
+    <form method="POST" action="/manage/exercise_form">
+        <div class="form-group">
+            <label for="DescriptionInput">Bezeichung</label>
+
+
+            <input
+                    type="text"
+                    class="form-control w-50 p-3"
+                    id="DescriptionInput"
+                    aria-describedby="description"
+                    name="description"
+                    required
+            />
+        </div>
+        <button type="submit" class="btn btn-primary">anlegen</button>
+
+    </form>
+
+{% endblock content %}
