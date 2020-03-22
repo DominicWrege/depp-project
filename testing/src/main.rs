@@ -13,7 +13,7 @@ use tonic::transport::Server;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-
+    // TODO Prefix
     let config = envy::from_env::<config::ServerConfig>()?;
     log::info!("Pulling image, this may takes some time...");
     let docker_api = DockerWrap::new(config.docker_image);

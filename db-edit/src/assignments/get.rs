@@ -35,11 +35,11 @@ pub async fn all_assignments_for_exercise(
             r#"
             SELECT a.assignment_name as name, script_type, e.description as exercise_name, a.description, a.uuid
             FROM assignment a INNER JOIN exercise e ON a.exercise_id = e.id
-            WHERE e.id = $1"#,
+            WHERE e.id = $1
+            ORDER BY name"#,
         )
         .await?;
     let rows = client.query(&stmt, &[&id]).await?;
-    // TODO into.,...
     let assignments: Vec<AssignmentExercise> = rows_into(rows);
     let mut context = tera::Context::new();
     context.insert("assignments", &assignments);

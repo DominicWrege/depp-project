@@ -21,6 +21,7 @@ where
     Ok(hash(s))
 }
 
+// prefix DEPP_WEB_
 #[derive(serde::Deserialize, Debug)]
 pub struct ConfigEnv {
     #[serde(deserialize_with = "has_password", default = "default_pwd")]

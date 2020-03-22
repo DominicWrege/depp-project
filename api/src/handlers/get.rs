@@ -39,11 +39,13 @@ pub async fn get_result(
     }
 }
 
+// TODO show exercise as title
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
     let client = &state.db_pool.get().await?;
     let query = r#"SELECT format('%s/%s', exercise.description, assignment_name) as name, uuid
                         FROM assignment JOIN exercise
-                        ON assignment.exercise_id = exercise.id;"#;
+                        ON assignment.exercise_id = exercise.id
+                        WHERE assignment.active is true"#;
     let rows = client.query(query, &[]).await?;
     Ok(HttpResponse::Ok().json(
         rows.into_iter()

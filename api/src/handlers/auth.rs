@@ -41,6 +41,7 @@ pub struct Credentials {
     password: Sha256,
 }
 
+// prefix DEPP_API_
 #[derive(Debug, serde::Deserialize)]
 pub struct CredentialsEnv {
     #[serde(default = "default_user")]

@@ -4,8 +4,11 @@ use serde::Deserialize;
 use std::fmt::Formatter;
 use url::Url;
 
+/*
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
+*/
 
+// DEPP_API_ as prefix
 fn default_addr() -> Url {
     Url::parse("http://127.0.0.1:50051").unwrap()
 }

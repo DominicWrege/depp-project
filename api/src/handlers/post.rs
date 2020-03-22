@@ -6,7 +6,9 @@ use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
 use grpc_api::Assignment;
 use grpc_api::AssignmentMsg;
+/*
 use tonic::transport::Channel;
+*/
 use uuid::Uuid;
 
 pub async fn add_submission(

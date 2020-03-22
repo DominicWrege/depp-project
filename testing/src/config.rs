@@ -15,7 +15,6 @@ fn default_max_curr_test() -> usize {
 fn default_key_path() -> PathBuf {
     PathBuf::from("./localhost-key.pem")
 }
-
 fn default_cert_path() -> PathBuf {
     PathBuf::from("./localhost.pem")
 }

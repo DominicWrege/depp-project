@@ -11,11 +11,11 @@ services:
   api:
     image: dominicwrege/depp-project-api
     ports:
-      - 8080:8080
-    environment:
-      - LINUX_RPC_URL=http://testing:50051
+      - 80:8080
     env_file:
-      - ./api/api.env
+      - ./example.env
+    links:
+      - "db:database"
   docs:
     build: docs
     ports:
@@ -30,3 +30,19 @@ services:
       - API_URL=http://127.0.0.1:4001/api.openapi.yml
     ports:
       - 4000:8080
+  db:
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    environment:
+      ./example.env
+    volumes:
+      - ../db-data:/var/lib/postgresql/data
+  web:
+    image: dominicwrege/depp-project-web:latest
+    port
+    - 5000:5000
+    env_file:
+      - ./example.env
+    links:
+      - "db:database"

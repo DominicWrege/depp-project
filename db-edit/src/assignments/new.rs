@@ -52,7 +52,7 @@ pub async fn insert(data: web::Data<State>, mut payload: Multipart) -> HttpResul
     let assign = into_assignment_form(&mut text_fields, &zip_file);
     db::insert_assignment(&data.db_pool, &assign).await?;
 
-    Ok(redirect(format!("exercise/{}", &assign.exercise_id)))
+    Ok(redirect(format!("/exercise/{}", &assign.exercise_id)))
 }
 
 fn remove_whitespace(s: &str) -> String {

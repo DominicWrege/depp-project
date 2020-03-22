@@ -1,6 +1,5 @@
 use deadpool_postgres::{Manager, Pool};
 use failure::ResultExt;
-use std::net::Ipv4Addr;
 
 mod embedded {
     use refinery::embed_migrations;
@@ -26,31 +25,46 @@ pub enum DbError {
 pub(crate) struct DbConfig {
     user: String,
     password: String,
+    #[serde(default = "default_db_name")]
     name: String,
+    #[serde(default = "default_port")]
     port: u16,
     #[serde(default = "default_max_connection")]
     max_connection: usize,
-    host: Ipv4Addr,
+    #[serde(default = "default_host")]
+    db_host: String,
 }
 
 fn default_max_connection() -> usize {
     16
+}
+
+// TODO maybe use URL
+fn default_host() -> String {
+    String::from("localhost")
+}
+
+fn default_port() -> u16 {
+    5432
+}
+fn default_db_name() -> String {
+    String::from("assignments")
 }
 impl Default for DbConfig {
     fn default() -> Self {
         DbConfig {
             user: "john".into(),
             password: "12345".into(),
-            name: "assignments".into(),
-            port: 5432,
-            max_connection: 16,
-            host: Ipv4Addr::new(127, 0, 0, 1),
+            name: default_db_name(),
+            port: default_port(),
+            max_connection: default_max_connection(),
+            db_host: default_host(),
         }
     }
 }
 
 pub(crate) fn get_db_config() -> DbConfig {
-    match envy::prefixed("DEPP_DB_").from_env::<DbConfig>() {
+    match envy::from_env::<DbConfig>() {
         Ok(config) => config,
         Err(_) => DbConfig::default(),
     }
@@ -63,7 +77,7 @@ pub async fn connect_migrate() -> Result<Pool, failure::Error> {
         .user(&env_conf.user)
         .password(&env_conf.password)
         .dbname(&env_conf.name)
-        .host(&env_conf.host.to_string())
+        .host(&env_conf.db_host)
         .port(env_conf.port);
 
     let (mut client, pg) = pg_config
