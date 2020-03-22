@@ -1,0 +1,14 @@
+FROM ubuntu:latest
+
+RUN apt update &&\
+    apt upgrade -y &&\
+    apt install -y python3 curl iputils-ping net-tools locales&&\
+    sed -i -e 's/# de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen
+
+ENV LANG de_DE.UTF-8  
+ENV LANGUAGE de_DE:de  
+ENV LC_ALL de_DE.UTF-8     
+
+
+CMD ["bash"]
