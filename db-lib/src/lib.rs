@@ -83,12 +83,14 @@ pub async fn connect_migrate() -> Result<Pool, failure::Error> {
     let (mut client, pg) = pg_config
         .connect(tokio_postgres::NoTls)
         .await
-        .context("DB config error")?;
+        .context(format!(
+            "DB config error. Tried to connect to host: {}." & env_conf.db_host
+        ))?;
     tokio::task::spawn(pg);
     let _ = embedded::migrations::runner()
         .run_async(&mut client)
         .await
-        .context("DB migration failed")?;
+        .context("DB migration failed.")?;
     let mngr = Manager::new(pg_config.clone(), tokio_postgres::NoTls);
     Ok(Pool::new(mngr, env_conf.max_connection))
 }

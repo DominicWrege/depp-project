@@ -211,7 +211,7 @@ impl DockerWrap {
             status_code,
         })
     }
-
+    // TODO FIX ME error EOF
     pub async fn pull_image(&self) {
         use bollard::image::CreateImageOptions;
         let options = Some(CreateImageOptions {

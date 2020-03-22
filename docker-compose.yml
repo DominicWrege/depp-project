@@ -16,6 +16,8 @@ services:
       - ./example.env
     links:
       - "db:database"
+    depends_on:
+      - db
   docs:
     build: docs
     ports:
@@ -34,15 +36,7 @@ services:
     image: postgres:latest
     ports:
       - 5432:5432
-    environment:
-      ./example.env
-    volumes:
-      - ../db-data:/var/lib/postgresql/data
-  web:
-    image: dominicwrege/depp-project-web:latest
-    port
-    - 5000:5000
     env_file:
       - ./example.env
-    links:
-      - "db:database"
+    volumes:
+      - ../db-data:/var/lib/postgresql/data
