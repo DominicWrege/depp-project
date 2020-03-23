@@ -9,11 +9,11 @@ RUN rustup component add rustfmt && rustup target add x86_64-unknown-linux-musl
 
 COPY . .
 
-RUN cd db-edit && cargo build --target x86_64-unknown-linux-musl
+RUN cd db-edit && cargo build --release --target x86_64-unknown-linux-musl
 
 FROM alpine:latest
 
-COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/debug/db-edit .
+COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/release/db-edit .
 COPY ./db-edit/static ./static
 COPY ./db-edit/templates ./templates
 
