@@ -12,6 +12,5 @@ db-edit/db
 db-data
 docs
 **/*.md
-**/*.txt
 **/*.env
 **/*.idea

@@ -54,13 +54,13 @@ async fn main() -> Result<(), failure::Error> {
             ))
             .service(
                 web::scope(PATH_PREFIX)
+                    .service(web::resource("").route(web::get().to(exercises::get_all_with_count))) // index
                     .service(
                         web::resource("/login")
                             .route(web::post().to(login))
                             .route(web::get().to(login_page)),
                     )
                     .service(web::resource("/logout").route(web::get().to(logout)))
-                    .service(web::resource("/").route(web::get().to(exercises::get_all_with_count)))
                     .service(
                         web::resource("/assignment_form")
                             .route(web::get().to(assignments::new::get_form)),

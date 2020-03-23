@@ -14,6 +14,9 @@ RUN cd db-edit && cargo build --target x86_64-unknown-linux-musl
 FROM alpine:latest
 
 COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/debug/db-edit .
+COPY ./db-edit/static ./static
+COPY ./db-edit/templates ./templates
+
 EXPOSE 5000
 
 CMD ["./db-edit"]

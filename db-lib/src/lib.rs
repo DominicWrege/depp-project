@@ -13,7 +13,7 @@ pub enum DbError {
     TypeMap(tokio_pg_mapper::Error),
     #[error(display = "Sql error {:?}", _0)]
     Sql(tokio_postgres::error::Error),
-    #[error(display = "Config error {}", _0)]
+    #[error(display = "Config error: {}", _0)]
     Config(ConfigError),
 }
 #[derive(Debug, err_derive::Error)]
@@ -27,6 +27,7 @@ pub enum ConfigError {
 // user for testing
 //pub const DB_URL: &'static str = "postgres://john:12345@127.0.0.1:5432/assignments";
 
+// prefix POSTGRES_
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct DbConfig {
     user: String,
@@ -72,7 +73,10 @@ impl Default for DbConfig {
 pub(crate) fn get_db_config() -> DbConfig {
     match envy::prefixed("POSTGRES_").from_env::<DbConfig>() {
         Ok(config) => config,
-        Err(_) => DbConfig::default(),
+        Err(_) => {
+            log::info!("Using default config for the db connection.");
+            DbConfig::default()
+        }
     }
 }
 
