@@ -25,3 +25,7 @@ where
         .header(http::header::LOCATION, format!("{}{}", PATH_PREFIX, path))
         .finish()
 }
+
+pub fn redirect_home() -> HttpResponse {
+    redirect("")
+}

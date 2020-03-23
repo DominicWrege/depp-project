@@ -1,7 +1,7 @@
 use crate::assignments::get::parse_path;
 use crate::db::rows_into;
 use crate::error::HttpError;
-use crate::handler::{redirect, render_template, HttpResult};
+use crate::handler::{redirect_home, render_template, HttpResult};
 use crate::template::TEMPLATES;
 use crate::State;
 use actix_web::{web, HttpResponse};
@@ -18,7 +18,7 @@ pub async fn insert(form: web::Form<ExerciseForm>, data: web::Data<State>) -> Ht
         .prepare("INSERT INTO exercise(description) VALUES($1)")
         .await?;
     client.execute(&stmt, &[&form.description]).await?;
-    Ok(redirect("/"))
+    Ok(redirect_home())
 }
 
 pub async fn page() -> HttpResult {
@@ -39,7 +39,7 @@ pub async fn rename(
         .execute(&stmt, &[&form.description, &exercise_id])
         .await
         .map_err(|_e| HttpError::NotFound(format!("Exercise {}", exercise_id)))?;
-    Ok(redirect("/"))
+    Ok(redirect_home())
 }
 
 pub async fn get_all_with_count(data: web::Data<State>) -> HttpResult {

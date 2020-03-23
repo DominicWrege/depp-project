@@ -1,6 +1,6 @@
 use crate::config::hash;
 use crate::error::HttpError;
-use crate::handler::{redirect, render_template, HttpResult};
+use crate::handler::{redirect, redirect_home, render_template, HttpResult};
 use crate::template::TEMPLATES;
 use crate::State;
 use actix_identity::Identity;
@@ -25,7 +25,7 @@ pub(crate) async fn login(
     let pwd = form.into_inner().pwd;
     if data.pwd == hash(pwd) {
         id.remember("auth".to_string());
-        Ok(redirect("/"))
+        Ok(redirect_home())
     } else {
         Err(HttpError::WrongPassword)
     }

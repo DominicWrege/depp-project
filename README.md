@@ -3,11 +3,33 @@
 
 ## Basic Auth 
 
-The REST API uses basic auth passed via environment variable. Docker-compose requires a ```./api/api.env``` file that contains all needed credentials.
-username: ```API_USERNAME``` password: ```API_PASSWORD```. Default("user", "wasd4221")
-```
-$ echo "API_USERNAME=tester API_PASSWORD=password42 > ./api/api.env"
-```
+The REST API uses basic auth passed via environment variable. Docker-compose requires a ```./example.env``` file that contains all needed credentials.  
+#TODO update
+
+Defualt config ```./example.env```:
+
+ ```
+ # db
+POSTGRES_USER=johncena
+POSTGRES_PASSWORD=supersecret
+POSTGRES_DB=assignments
+POSTGRES_HOST=db
+
+# basic auth
+DEPP_API_USERNAME=tester
+DEPP_API_PASSWORD=whatever
+# RPC config
+DEPP_API_LINUX_RPC_URL=http://testing:50051
+
+# web ui manage thing
+DEPP_WEB_PASSWORD=mypassword
+DEPP_WEB_PORT=5000
+ 
+ ```
+Default: API_USERNAME=user, API_PASSWORD=wasd4221
+
+#TODO update
+
 ## Run
 
 The testing and api server are booth prebuilt available on dockerhub.
@@ -18,13 +40,21 @@ $ docker-compose up
 ```
 
 ## API Endpoint
+Local
+[http://localhost:6000](http://localhost:6000) (See Swagger UI for more information.)  
+Remote
+[https://auth.inf.fh-dortmund.de:2443/api](https://auth.inf.fh-dortmund.de:2443/api)
 
-[http://127.0.0.1:8080](http://127.0.0.1:8080)  
-Please use the openapi 3.0 docs via swagger ui for more information how to use this api.
+
+## Assignments Manager
+Local
+[http://localhost:5000](http://localhost:4000)  
+Remote
+[https://auth.inf.fh-dortmund.de:2443/manage](https://auth.inf.fh-dortmund.de:2443/manage)
 
 ## Swagger UI
-
-[http://127.0.0.1:4000](http://127.0.0.1:4000)
+Local
+[http://localhost:4000](http://localhost:4000)
 
 # Description
 

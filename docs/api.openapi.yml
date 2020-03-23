@@ -4,16 +4,21 @@ info:
     This Rest API uses `JSON only`. Everytime an error occurs, I send and ApiError json object. 
     For more information see the README file at git.
     "
-    version: "0.3"
+    version: "0.4"
     title: "DEPP Project API"
     contact:
         email: "dominic.wrege001@stud.fh-dortmud.de"
 servers:
-  - url: http://127.0.0.1:8080
+  - url: http://localhost:6000/api
+    description: Local testing
+  - url: https://auth.inf.fh-dortmund.de:2443/api
+    description: Prodcuction testing
 paths:
     /assignments:
         get:
             summary: "Lists of all existing assignments"
+            tags:
+              - /api
             description: "The Endpoint stores all assignments provided by the docent."
             operationId: "getAssignments"
             responses:
@@ -28,6 +33,8 @@ paths:
     /submission:
         post:
             summary: "Takes the source code to test"
+            tags:
+              - /api
             operationId: "addSubmission"
             description: "Will evaluate the given source and will store the test result. Each
             iliasId should be unique and will be **cached** until ```get:  /result/{iliasId}``` is called."
@@ -62,6 +69,8 @@ paths:
     /result/{iliasId}:
         get:
             summary: "Returns the result and keeps until the post method is invoked for the submission by given iliasID"
+            tags:
+              - /api
             operationId: "getResults"
             parameters:
                 - name: iliasId
@@ -93,6 +102,8 @@ paths:
                                 $ref: "#/components/schemas/ApiError"
         post:
             summary: "Drops the result for the given iliasID"
+            tags:
+              - /api
             operationId: "rmResults"
             parameters:
                 - name: iliasId
@@ -119,6 +130,8 @@ paths:
     /version:
         get:
             summary: "The current version and status of the endpoint."
+            tags:
+              - /api
             operationId: "version"
             responses:
                 200:
