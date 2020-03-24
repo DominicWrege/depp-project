@@ -18,7 +18,7 @@ pub fn new_tmp_dir() -> Result<TempDir, std::io::Error> {
         }
         Builder::new().tempdir_in(TEMP_DIR)
     } else {
-        Builder::new().tempdir_in(TEMP_DIR)
+        tempfile::tempdir()
     }
 }
 pub async fn extract_files_include(zip: &[u8]) -> Result<TempDir, Error> {

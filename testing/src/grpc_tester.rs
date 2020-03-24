@@ -67,6 +67,10 @@ impl Tester {
         assignment: &Assignment,
         code_to_test: &str,
     ) -> Result<(), Error> {
+        info!(
+            "running task: {}, type: {}",
+            &assignment.name, &assignment.script_type
+        );
         let context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
         let script_test_path =
             fs_util::new_tmp_script_file(assignment.script_type.into(), code_to_test)
@@ -76,8 +80,6 @@ impl Tester {
             fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
                 .map_err(Error::CantCreatTempFile)?
                 .into_temp_path();
-        info!("running task: {}", &assignment.name);
-
         let docker_api = self.docker.acquire().await;
         let test_output = docker_api
             .test_in_container(
