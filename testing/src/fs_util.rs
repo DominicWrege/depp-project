@@ -32,7 +32,6 @@ pub fn new_tmp_script_file(
     script_type: Script,
     content: &str,
 ) -> Result<NamedTempFile, std::io::Error> {
-    dbg!(&content);
     let mut file = if cfg!(target_family = "unix") {
         Builder::new()
             .suffix(script_type.file_extension())

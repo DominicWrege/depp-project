@@ -69,7 +69,8 @@ impl Tester {
     ) -> Result<(), Error> {
         info!(
             "running task: {}, type: {}",
-            &assignment.name, &assignment.script_type
+            &assignment.name,
+            &assignment.script_type.to_string()
         );
         let context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
         let script_test_path =
