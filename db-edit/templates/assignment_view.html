@@ -3,11 +3,12 @@
 
 <link rel="stylesheet" href="/static/editor.css">
 
-
-{% set file_url = "/manage/assignment/file/" ~assignment.uuid  %}
+{% set site_path = base_url  ~"/assignment" %}
+{% set file_url =  site_path ~"/file/" ~assignment.uuid  %}
 {% set file_name = assignment.name ~"_files.zip" %}
 
-<form class="d-flex justify-content-center" id="AssignmentForm" action="/manage/assignment/{{assignment.uuid}}"
+
+<form class="d-flex justify-content-center" id="AssignmentForm" action="{{site_path}}/{{assignment.uuid}}"
       method="POST" target="_self">
     <!--
     <form class="d-flex justify-content-center" id="AssignmentForm"  action="http://jkorpela.fi/cgi-bin/echo.cgi" method="POST" target="_self">

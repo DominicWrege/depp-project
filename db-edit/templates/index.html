@@ -2,7 +2,7 @@
 <html>
 
     {% set title = "AufgabenManager" %}
-    {% set base_url = "manage" %}
+    {% set base_url = "/manage" %}
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -17,12 +17,12 @@
     </head>
     <body>
         <nav class="navbar navbar-dark bg-light down_space justify-content-start fixed-top">
-            <a class="navbar-brand mr-5 text-dark" href="/{{base_url}}">{{title}}</a>
+            <a class="navbar-brand mr-5 text-dark" href="{{base_url}}">{{title}}</a>
             {% if hide_top_btns is not defined %}
-            <a class="mr-5 ml-1" href="/{{base_url}}" class="mr-3">Praktika Übersicht</a>
-            <a class="mr-5 ml-1" href="/{{base_url}}/exercise_form" class="mr-3">Praktikum +</a>
-            <a class="mr-5 ml-1" href="/{{base_url}}/assignment_form">Aufgabe +</button></a>
-            <a class="mr-2 ml-1" href="/{{base_url}}/logout">Logout</a>
+            <a class="mr-5 ml-1" href="{{base_url}}" class="mr-3">Praktika Übersicht</a>
+            <a class="mr-5 ml-1" href="{{base_url}}/exercise_form" class="mr-3">Praktikum +</a>
+            <a class="mr-5 ml-1" href="{{base_url}}/assignment_form">Aufgabe +</button></a>
+            <a class="mr-2 ml-1" href="{{base_url}}/logout">Logout</a>
             {% endif %}
         </nav>
         <div class="container">

@@ -41,14 +41,14 @@ $ docker-compose up
 
 ## API Endpoint
 Local
-[http://localhost:6000](http://localhost:6000) (See Swagger UI for more information.)  
+[http://localhost:6000/api](http://localhost:6000) (See Swagger UI for more information.)  
 Remote
 [https://auth.inf.fh-dortmund.de:2443/api](https://auth.inf.fh-dortmund.de:2443/api)
 
 
 ## Assignments Manager
 Local
-[http://localhost:5000](http://localhost:4000)  
+[http://localhost:5000/manage](http://localhost:4000)  
 Remote
 [https://auth.inf.fh-dortmund.de:2443/manage](https://auth.inf.fh-dortmund.de:2443/manage)
 

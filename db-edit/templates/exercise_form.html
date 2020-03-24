@@ -1,22 +1,27 @@
 {% extends "index.html" %}
 {% block content %}
 
-    <form method="POST" action="/manage/exercise_form">
-        <div class="form-group">
-            <label for="DescriptionInput">Bezeichung</label>
 
+<div class="d-flex justify-content-center">
 
-            <input
-                    type="text"
-                    class="form-control w-50 p-3"
-                    id="DescriptionInput"
-                    aria-describedby="description"
-                    name="description"
-                    required
-            />
+    <form method="POST" action="{{base_url}}/exercise_form" class="card w-75">
+            <div class="align-baseline card-header d-flex align-items-center justify-content-between">
+                <h5>Praktium erstellen</h5>
+                <button type="submit" class="btn btn-primary">Neu anlegen</button>
+            </div>
+            <div class="form-group card-body">
+                <label for="DescriptionInput">Bezeichung</label>
+
+                <input
+                        type="text"
+                        class="form-control w-75 p-3"
+                        id="DescriptionInput"
+                        aria-describedby="description"
+                        name="description"
+                        required
+                />
         </div>
-        <button type="submit" class="btn btn-primary">anlegen</button>
-
     </form>
+</div>
 
 {% endblock content %}

@@ -12,7 +12,7 @@
     {% if assignments | length > 0 %}
         <h4>Aufgaben Übersicht</h4>
         {% for assignment in assignments %}
-        <a href="/manage/assignment/{{assignment.uuid}}" class="list-group-item list-group-item-action">
+        <a href="{{base_url}}/assignment/{{assignment.uuid}}" class="list-group-item list-group-item-action">
             <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1">{{assignment.name}}</h5>
                 <small>{{assignment.script_type}}</small>

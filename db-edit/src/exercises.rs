@@ -59,7 +59,6 @@ pub async fn get_all_with_count(data: web::Data<State>) -> HttpResult {
 
 pub async fn delete(data: web::Data<State>, path: web::Path<String>) -> HttpResult {
     let exercise_id = parse_path(&path.into_inner())?;
-    dbg!(&exercise_id);
     let client = data.db_pool.get().await?;
     let stmt = client.prepare("DELETE FROM exercise where id = $1").await?;
     client

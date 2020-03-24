@@ -1,7 +1,7 @@
-use crate::handler::HttpResult;
+use crate::handler::{redirect, HttpResult};
 use crate::State;
 use actix_multipart::{Field, Multipart};
-use actix_web::{http, web, HttpResponse};
+use actix_web::{web, HttpResponse};
 use futures::StreamExt;
 use std::path::PathBuf;
 
@@ -56,7 +56,6 @@ pub async fn update_files(
         .prepare("UPDATE assignment SET include_files = $1 WHERE uuid = $2")
         .await?;
     client.execute(&stmt, &[&zip_file, &uuid]).await?;
-    Ok(HttpResponse::Found()
-        .header(http::header::LOCATION, format!("/assignment/{}", &uuid))
-        .finish())
+
+    Ok(redirect(format!("/assignment/{}", &uuid)))
 }
