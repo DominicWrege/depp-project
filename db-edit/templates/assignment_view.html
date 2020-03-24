@@ -7,10 +7,11 @@
 {% set file_url = "/manage/assignment/file/" ~assignment.uuid  %}
 {% set file_name = assignment.name ~"_files.zip" %}
 
-<form class="d-flex justify-content-center" id="AssignmentForm"  action="/manage/assignment/{{assignment.uuid}}" method="POST" target="_self">
-<!--
-<form class="d-flex justify-content-center" id="AssignmentForm"  action="http://jkorpela.fi/cgi-bin/echo.cgi" method="POST" target="_self">
--->
+<form class="d-flex justify-content-center" id="AssignmentForm" action="/manage/assignment/{{assignment.uuid}}"
+      method="POST" target="_self">
+    <!--
+    <form class="d-flex justify-content-center" id="AssignmentForm"  action="http://jkorpela.fi/cgi-bin/echo.cgi" method="POST" target="_self">
+    -->
     <div class="card w-75">
         <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
             <h5>Aufgabe ansehen/bearbeiten</h5>
@@ -32,15 +33,15 @@
                 </div>
                 <div class="col-2 my-4">
                     <div class="custom-control custom-checkbox mr-sm-2">
-                        <input type="checkbox" id="StatusLabel" class="custom-control-input" name="active" {%if assignment.active%} checked="check" {% endif %}  aria-describedby="status">
+                        <input type="checkbox" id="StatusLabel" class="custom-control-input" name="active" {%if
+                               assignment.active%} checked="check" {% endif %} aria-describedby="status">
                         <label class="custom-control-label" for="StatusLabel">Aktiv</label>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="Description">Beschreibung</label
-                >
+                <label for="Description">Beschreibung</label>
                 <textarea
                         class="form-control p-2"
                         rows="3"
@@ -74,14 +75,12 @@
                 />
                 <small id="ArgsHelp" class="form-text text-muted"
                 >Komma-Sperierte Liste ohne Leerzeichen. Beispiel:
-                -l,10,file.txt,--name bob</small>
+                    -l,10,file.txt,--name bob</small>
             </div>
 
             <div class="row">
                 <div class="form-group col-6">
-                    <label for="SkriptType"
-                    >Skript</label
-                    >
+                    <label for="SkriptType">Skript</label>
                     <select
                             class="form-control"
                             id="SkriptType"
@@ -107,11 +106,11 @@
                             required
                     >
                         {% for exercise in exercises %}
-                            {% if exercise.id == assignment.exercise_id %}
-                            <option selected value="{{exercise.id}}">{{exercise.description}}</option>
-                            {% else %}
-                            <option value="{{exercise.id}}">{{exercise.description}}</option>
-                            {% endif %}
+                        {% if exercise.id == assignment.exercise_id %}
+                        <option selected value="{{exercise.id}}">{{exercise.description}}</option>
+                        {% else %}
+                        <option value="{{exercise.id}}">{{exercise.description}}</option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
@@ -122,8 +121,9 @@
 </form>
 
 
-<form class="my-5 d-flex justify-content-center" id="FileForm" action="{{file_url}}" target="_parent" method="POST" enctype="multipart/form-data">
-    <div class="card w-75" >
+<form class="my-5 d-flex justify-content-center" id="FileForm" action="{{file_url}}" target="_parent" method="POST"
+      enctype="multipart/form-data">
+    <div class="card w-75">
         <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
             <h5>Benötige Dateien</h5>
             <button type="submit" class="btn btn-primary justify-content-end" form="FileForm">hochladen</button>
@@ -135,13 +135,13 @@
                 <p>Inhalt der Zip Datei <a href="{{file_url}}" download="{{file_name}}">herunterladen</a>:</p>
 
                 {% if files | length > 0 %}
-                    {% for file in files %}
-                    <ul>
-                        <li class="bg-light">{{file}}</li>
-                    </ul>
-                    {% endfor %}
+                {% for file in files %}
+                <ul>
+                    <li class="bg-light">{{file}}</li>
+                </ul>
+                {% endfor %}
                 {% else %}
-                    <p>Keine Dateien vorhanden.</p>
+                <p>Keine Dateien vorhanden.</p>
                 {% endif %}
             </section>
         </div>

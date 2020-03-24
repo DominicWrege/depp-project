@@ -2,7 +2,7 @@ use crate::crash_test::{CrashTester, Error, Files, Stdout};
 use crate::{crash_test, fs_util, sema_wrap};
 use futures::future;
 use grpc_api::test_server::Test;
-use grpc_api::{Assignment, AssignmentMsg, AssignmentResult};
+use grpc_api::{Assignment, AssignmentMsg, AssignmentResult, Script};
 use tonic::{Request, Response, Status};
 type Docker = sema_wrap::SemWrap<DockerWrap>;
 use crate::docker_api::DockerWrap;
@@ -67,10 +67,11 @@ impl Tester {
         assignment: &Assignment,
         code_to_test: &str,
     ) -> Result<(), Error> {
+        // TODO Fix always into thank you tonic
+        let script_type: &Script = &assignment.script_type.into();
         info!(
-            "running task: {}, type: {}",
-            &assignment.name,
-            &assignment.script_type.to_string()
+            "running task: {}, type: {:#?}",
+            &assignment.name, &script_type
         );
         let context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
         let script_test_path =
