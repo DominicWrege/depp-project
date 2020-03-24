@@ -81,9 +81,9 @@ pub fn create_host_config<'a>(
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
         #[cfg(target_family = "unix")]
-        memory: Some(200000000), //200MB RAM for each container
+        memory: Some(to_mb(200)), //200MB RAM for each container
         #[cfg(target_family = "windows")]
-        memory: Some(320000000), //320MB RAM for each container
+        memory: Some(to_mb(356)), //320MB RAM for each container
         ..Default::default()
     })
 }
@@ -92,6 +92,10 @@ impl From<bollard::errors::Error> for Error {
     fn from(err: bollard::errors::Error) -> Self {
         Error::Docker(err.to_string())
     }
+}
+
+const fn to_mb(n: u64) -> u64 {
+    n * 1000000
 }
 
 // time in seconds
