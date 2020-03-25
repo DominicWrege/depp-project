@@ -6,7 +6,7 @@ Dockerfile
 tests
 .dockerignore
 .gitignore
-db-edit/db
+assign-mngr/db
 **/docker-compose.yml
 **/examples
 db-data

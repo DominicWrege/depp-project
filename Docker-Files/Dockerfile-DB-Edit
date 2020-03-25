@@ -9,14 +9,14 @@ RUN rustup component add rustfmt && rustup target add x86_64-unknown-linux-musl
 
 COPY . .
 
-RUN cd db-edit && cargo build --release --target x86_64-unknown-linux-musl
+RUN cd assign-mngr && cargo build --release --target x86_64-unknown-linux-musl
 
 FROM alpine:latest
 
-COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/release/db-edit .
-COPY ./db-edit/static ./static
-COPY ./db-edit/templates ./templates
+COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/release/assign-mngr .
+COPY ./assign-mngr/static ./static
+COPY ./assign-mngr/templates ./templates
 
 EXPOSE 5000
 
-CMD ["./db-edit"]
+CMD ["./assign-mngr"]

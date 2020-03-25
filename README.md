@@ -80,7 +80,7 @@ the memory is limited to 256MB. First the solution script will run. After that t
 # Assignment In More Details
 
 Currently this a list of all assignment `exampels/assignments.yaml` are stored.
-Here I go into more details how the assignment is structured. use db-edit crate. TODO
+Here I go into more details how the assignment is structured. use assign-mngr crate. TODO
 
 
 # TODO
@@ -95,4 +95,4 @@ Here I go into more details how the assignment is structured. use db-edit crate.
 - [ ] TLS for grpc
 - [ ] test ruslt cache
 - [ ] edit assignments
-- [ ] db-edit auth
+- [x] assign-mngr auth
