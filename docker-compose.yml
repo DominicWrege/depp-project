@@ -8,6 +8,11 @@ services:
       - ./testing/examples:/media/examples
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/scripts:/tmp/scripts
+    depends_on:
+      - api
+      - db
+      - docs
+      - web
   api:
     image: dominicwrege/depp-project-api
     ports:

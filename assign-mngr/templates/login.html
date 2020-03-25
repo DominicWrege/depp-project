@@ -1,0 +1,21 @@
+{% extends "index.html" %}
+{% block content %}
+<h2>Login</h2>
+{% if error_msg %}
+    <div class="alert alert-warning" role="alert">
+        {{error_msg}}
+    </div>
+{% endif %}
+<form action="{{base_url}}/login" method="POST">
+    <div class="form-group">
+        <label for="PasswordField">Password</label>
+        <input
+                type="password"
+                class="form-control w-50 p-3"
+                id="PasswordField"
+                name="password"
+        />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+{% endblock content %}
