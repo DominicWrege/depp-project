@@ -4,12 +4,23 @@
 
 <script src="/static/exercise.js"></script>
 
+<style>
+    .item-link{
+        flex-grow: 2;
+    }
+    .item-link:hover{
+        cursor: pointer;
+    }
+</style>
+
 <div class="d-flex flex-column justify-content-center">
     <h4 class="mb-4">Praktika Übersicht</h4>
+
+    {% if exercises | length > 0 %}
     <div class="list-group">
         {% for exercise in exercises %}
         <div class="list-group-item list-group-item-action w-75 m-auto d-flex justify-content-between">
-                <a href="/manage/exercise/{{exercise.id}}">&#x1f4c1;  {{exercise.description}}</a>
+                <a class="item-link" href="/manage/exercise/{{exercise.id}}">&#x1f4c1;  {{exercise.description}}</a>
                 <form hidden method="POST" class="w-100" traget="/" action="/manage/exercise/rename/{{exercise.id}}">
                     <input
                             type="text"
@@ -31,6 +42,9 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <h5>Keine Pratika vorhanden?! Hier neu <a href="/manage/exercise_form">anlegen.</a></h5>
+    {% endif %}
 </div>
 
 

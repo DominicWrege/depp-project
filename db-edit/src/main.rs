@@ -29,8 +29,7 @@ pub struct State {
 
 pub const PATH_PREFIX: &'static str = "/manage";
 
-#[actix_rt::main]
-async fn main() -> Result<(), failure::Error> {
+async fn run() -> Result<(), failure::Error> {
     let config = config::get();
     let state = State {
         db_pool: db_lib::connect_migrate().await?,
@@ -101,6 +100,13 @@ async fn main() -> Result<(), failure::Error> {
     .run()
     .await?;
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = actix_rt::System::new("web-main").block_on(run()) {
+        log::error!("{}", e);
+        std::process::exit(1);
+    }
 }
 
 fn init_logging() {

@@ -47,8 +47,8 @@ async fn run() -> Result<(), failure::Error> {
     Ok(())
 }
 fn main() {
-    if let Err(e) = actix_rt::System::new("test").block_on(run()) {
-        eprintln!("{}", e);
+    if let Err(e) = actix_rt::System::new("api-main").block_on(run()) {
+        log::error!("{}", e);
         std::process::exit(1);
     }
 }

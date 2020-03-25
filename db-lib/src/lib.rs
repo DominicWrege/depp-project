@@ -60,8 +60,8 @@ fn default_db_name() -> String {
 impl Default for DbConfig {
     fn default() -> Self {
         DbConfig {
-            user: "john".into(),
-            password: "12345".into(),
+            user: "johncena".into(),
+            password: "supersecret".into(),
             db: default_db_name(),
             port: default_port(),
             max_connection: default_max_connection(),
