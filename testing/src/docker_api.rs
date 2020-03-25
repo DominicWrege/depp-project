@@ -244,7 +244,7 @@ impl DockerWrap {
         });
         let mut stream = self.docker.create_image(options, None, None);
 
-        let sp = Spinner::new(Spinners::Line, format!("Pulling {}", self.image_name));
+        let sp = Spinner::new(Spinners::Line, format!("pulling {}", self.image_name));
 
         while let Some(resp) = stream.next().await {
             match resp {

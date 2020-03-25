@@ -21,7 +21,7 @@ async fn run() -> Result<(), failure::Error> {
     env_logger::init();
     // TODO Prefix
     let config = envy::from_env::<config::ServerConfig>()?;
-    log::info!("Pulling image, this may takes some time...");
+    log::info!("Pulling docker the required image. This may take some time...");
     let docker_api = DockerWrap::new(config.docker_image);
     docker_api.pull_image().await?;
     log::info!("Pulling image done.");
