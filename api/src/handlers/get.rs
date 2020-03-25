@@ -1,4 +1,4 @@
-use crate::api::{AssignmentShort, Meta};
+use crate::api::{AssignmentShort, Status, Version};
 use crate::handlers::error::Error;
 use crate::state::State;
 use actix_web::http::{Method, StatusCode};
@@ -39,7 +39,6 @@ pub async fn get_result(
     }
 }
 
-// TODO show exercise as title
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
     let client = &state.db_pool.get().await?;
     let query = r#"SELECT format('%s/%s', exercise.description, assignment_name) as name, uuid
@@ -68,11 +67,16 @@ pub async fn index() -> HttpResponse {
 }
 
 // TODO not reade better response for each rpc conn
-pub async fn version(state: web::Data<State>) -> HttpResponse {
+pub async fn version() -> HttpResponse {
+    HttpResponse::Ok().json(Version {
+        version: env!("CARGO_PKG_VERSION"),
+    })
+}
+
+pub async fn status(state: web::Data<State>) -> HttpResponse {
     let rpc = &state.rpc_conf;
     let status = rpc.status().await;
-    HttpResponse::Ok().json(Meta {
-        version: env!("CARGO_PKG_VERSION"),
+    HttpResponse::Ok().json(Status {
         linux_rpc_status: status.linux,
         windows_rpc_status: status.windows,
     })

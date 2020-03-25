@@ -3,12 +3,24 @@ use bollard::container::{
     CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
     RemoveContainerOptions, StartContainerOptions, WaitContainerOptions,
 };
+
+use bollard::errors::ErrorKind;
+
 use futures::StreamExt;
 use grpc_api::{Script, TargetOs};
+use spinners::{Spinner, Spinners};
 use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
 use tokio::time::timeout;
+#[derive(Debug, failure::Fail)]
+pub enum DockerError {
+    #[fail(display = "Could not pull image: '{}' because it was not found.", _0)]
+    ImageNotFound(String),
+    #[fail(display = "error while pulling image: {} ", _0)]
+    Other(bollard::errors::Error),
+}
+
 #[derive(Debug)]
 pub struct Mount<'a> {
     pub source_dir: &'a str,
@@ -224,27 +236,36 @@ impl DockerWrap {
             status_code,
         })
     }
-    // TODO FIX ME error EOF
-    pub async fn pull_image(&self) {
+    pub async fn pull_image(&self) -> Result<(), DockerError> {
         use bollard::image::CreateImageOptions;
         let options = Some(CreateImageOptions {
             from_image: self.image_name.as_str(),
             ..Default::default()
         });
-        let mut stream = self.docker.create_image(options, None);
-        log::info!("pulling {}", self.image_name);
-        while let Some(s) = stream.next().await {
-            if let Err(err) = s {
-                log::error!(
-                    "Could pull image: {}. Maybe because it was not found.",
-                    &self.image_name
-                );
-                panic!(
-                    "Could not pull docker image: {}, err: {}",
-                    self.image_name, err
-                );
+        let mut stream = self.docker.create_image(options, None, None);
+
+        let sp = Spinner::new(Spinners::Line, format!("Pulling {}", self.image_name));
+
+        while let Some(resp) = stream.next().await {
+            match resp {
+                Err(err) => match err.kind() {
+                    ErrorKind::DockerResponseNotFoundError { .. } => {
+                        sp.stop();
+                        return Err(DockerError::ImageNotFound(self.image_name.to_string()));
+                    }
+                    ErrorKind::JsonDataError { .. }
+                    | ErrorKind::JsonDeserializeError { .. }
+                    | ErrorKind::JsonSerializeError { .. } => {}
+                    _ => {
+                        sp.stop();
+                        return Err(DockerError::Other(err));
+                    }
+                },
+                _ => {}
             }
         }
+        sp.stop();
+        Ok(())
     }
 }
 

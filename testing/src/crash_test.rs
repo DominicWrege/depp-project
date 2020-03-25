@@ -110,29 +110,29 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug, err_derive::Error, derive_more::From)]
+#[derive(Debug, failure::Fail, derive_more::From)]
 pub enum Error {
-    #[error(display = "Time out reached! Script took more than {}.", _1)]
+    #[fail(display = "Time out reached! Script took more than {}.", _1)]
     Timeout(tokio::time::Elapsed, DurationDisplay),
     #[from]
-    #[error(display = "Script produced invalid UFT8.")]
+    #[fail(display = "Script produced invalid UFT8.")]
     NoUTF8(std::string::FromUtf8Error),
-    #[error(display = "Does not contains expected output. {}", _0)]
+    #[fail(display = "Does not contains expected output. {}", _0)]
     WrongOutput(String),
-    #[error(display = "Solution dir and tested dir have not the same content")]
+    #[fail(display = "Solution dir and tested dir have not the same content")]
     ExpectedDirNotSame,
-    #[error(display = "Script finished with exit code 1 stderr: {}", _0)]
+    #[fail(display = "Script finished with exit code 1 stderr: {}", _0)]
     ExitCode(String),
-    #[error(display = "Wrong file content: expected({:#?}) result({:#?})", _0, _1)]
+    #[fail(display = "Wrong file content: expected({:#?}) result({:#?})", _0, _1)]
     ExpectedFileNotSame(String, String),
-    #[error(display = "Can't create temp file. {}", _0)]
+    #[fail(display = "Can't create temp file. {}", _0)]
     CantCreatTempFile(std::io::Error),
     #[from]
-    #[error(display = "Could not copy included files for testing {}", _0)]
+    #[fail(display = "Could not copy included files for testing {}", _0)]
     Copy(std::io::Error),
-    #[error(display = "IO error while reading the dir {:?}", _0)]
+    #[fail(display = "IO error while reading the dir {:?}", _0)]
     ListDir(PathBuf),
-    #[error(display = "Docker error {}", _0)]
+    #[fail(display = "Docker error {}", _0)]
     Docker(String),
 }
 #[derive(Debug, derive_more::From)]

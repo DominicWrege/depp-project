@@ -2,8 +2,7 @@ openapi: "3.0.0"
 info:
     description: "Please read the [Ilias Feature Wiki](https://docu.ilias.de/goto_docu_wiki_wpage_5930_1357.html) for more information.
     This Rest API uses `JSON only`. Everytime an error occurs, I send and ApiError json object. 
-    For more information see the README file at git.
-    "
+    For more information see the README file at git."
     version: "0.4"
     title: "DEPP Project API"
     contact:
@@ -12,7 +11,7 @@ servers:
   - url: http://localhost:6000/api
     description: Local testing
   - url: https://auth.inf.fh-dortmund.de:2443/api
-    description: Prodcuction testing
+    description: Testing-Server
 paths:
     /assignments:
         get:
@@ -129,7 +128,7 @@ paths:
                                 $ref: "#/components/schemas/ApiError"
     /version:
         get:
-            summary: "The current version and status of the endpoint."
+            summary: "The current version."
             tags:
               - /api
             operationId: "version"
@@ -139,8 +138,24 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/Meta"
-
+                                type: object
+                                properties:
+                                    version:
+                                        type: string
+                                        example: "0.4"                    
+    /status:
+        get:
+            summary: "The current status of the booth RPC endpoints."
+            tags:
+                - /api
+            operationId: "status"
+            responses:
+                200:
+                    description: ""
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Status"
 components:
     schemas:
         Submission:
@@ -184,21 +199,17 @@ components:
                 name:
                     type: string
                     example: "Aufgabe 7 Powershell Dateien auslesen"
-        Meta:
+        Status:
             type: "object"
             properties:
-                version:
-                    type: number
-                    format: double
                 LinuxRpcStatus:
-                    $ref: "#/components/schemas/Status"
+                    $ref: "#/components/schemas/RPCStatus"
                 WindowsRpcStatus:
-                    $ref: "#/components/schemas/Status"
+                    $ref: "#/components/schemas/RPCStatus"
             required:
-                - version
                 - LinuxRpcStatus
                 - WindowsRpcStatus
-        Status:
+        RPCStatus:
             type: string
             enum: [online, offline, maintenance]
         ApiError:

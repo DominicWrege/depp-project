@@ -9,15 +9,21 @@ use grpc_api::test_server::TestServer;
 //use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tonic::transport::Server;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
+    if let Err(e) = tokio::runtime::Runtime::new().unwrap().block_on(run()) {
+        log::error!("{}", e);
+        std::process::exit(1);
+    }
+}
+
+async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     // TODO Prefix
     let config = envy::from_env::<config::ServerConfig>()?;
     log::info!("Pulling image, this may takes some time...");
     let docker_api = DockerWrap::new(config.docker_image);
-    docker_api.pull_image().await;
+    docker_api.pull_image().await?;
     log::info!("Pulling image done.");
     log::info!(
         "Limiting test to {} at the same  time.",

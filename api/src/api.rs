@@ -62,11 +62,16 @@ pub struct SubmissionExample {
 // TODO update swagger
 #[derive(Serialize, Debug, Clone, derive_more::Constructor)]
 #[serde(rename_all = "camelCase")]
-pub struct Meta {
-    pub version: &'static str,
+pub struct Status {
     pub linux_rpc_status: EndPointStatus,
     pub windows_rpc_status: EndPointStatus,
 }
+#[derive(Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Version {
+    pub version: &'static str,
+}
+
 // TODO update swagger
 
 #[derive(serde::Serialize, Debug, Clone)]
