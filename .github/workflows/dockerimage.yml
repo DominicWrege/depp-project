@@ -17,7 +17,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_KEY }}
           repository: dominicwrege/depp-project-api
           tags: latest
-          dockerfile: ./Docker-Files/Dockerfile-API   
+          dockerfile: {path}/Docker-Files/Dockerfile-API   
       - name: build web
         uses: docker/build-push-action@v1
         with:
@@ -25,7 +25,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_KEY }}
           repository: dominicwrege/depp-project-web
           tags: latest
-          dockerfile: ./Docker-Files/Dockerfile-Assign-mngr
+          dockerfile: {path}/Docker-Files/Dockerfile-Assign-mngr
       - name: build testing
         uses: docker/build-push-action@v1
         with:
@@ -33,4 +33,4 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_KEY }}
           repository: dominicwrege/dominicwrege/depp-testing
           tags: latest
-          dockerfile: ./Docker-Files/Dockerfile-Testing
+          dockerfile: {path}/Docker-Files/Dockerfile-Testing
