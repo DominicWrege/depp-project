@@ -14,7 +14,7 @@ jobs:
       - name: build images
         env:
           DOCKER_HUB: ${{ secrets.DOCKER_HUB }}
-          DOCKER_HUB_KEY: ${{ secrets.DOCKER_HUB_KEY }
+          DOCKER_HUB_KEY: ${{ secrets.DOCKER_HUB_KEY }}
         run: |
          echo "login docker"
          docker login -u $DOCKER_HUB -p  DOCKER_HUB_KEY
