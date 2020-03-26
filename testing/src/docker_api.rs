@@ -55,12 +55,6 @@ pub fn docker_mount_points(script: &Script) -> (&'static str, &'static str) {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct DockerWrap {
-    docker: bollard::Docker,
-    image_name: String,
-}
-
 fn create_mount_point<'a>(
     source: &'a str,
     target: &'a str,
@@ -92,6 +86,7 @@ pub fn create_host_config<'a>(
     );
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
+        extra_hosts: Some(vec!["localhost:127.0.0.1"]),
         #[cfg(target_family = "unix")]
         memory: Some(to_mb(200)), //200MB RAM for each container
         #[cfg(target_family = "windows")]
@@ -111,18 +106,21 @@ const fn to_mb(n: u64) -> u64 {
 }
 
 // time in seconds
-#[cfg(target_family = "unix")]
-pub const TIMEOUT: u64 = 120;
 
-#[cfg(target_family = "windows")]
-pub const TIMEOUT: u64 = 300;
+#[derive(Clone, Debug)]
+pub struct DockerWrap {
+    docker: bollard::Docker,
+    image_name: String,
+    timeout: Duration,
+}
 
 impl DockerWrap {
-    pub fn new(image_name: String) -> Self {
-        Self {
+    pub fn new(image_name: String, timout: u64) -> DockerWrap {
+        DockerWrap {
             docker: bollard::Docker::connect_with_local_defaults()
                 .expect("Can't connect to docker api. Is the docker daemon running?"),
             image_name,
+            timeout: Duration::from_secs(timout),
         }
     }
     pub async fn test_in_container(
@@ -151,11 +149,10 @@ impl DockerWrap {
             .create_container(cmd, host_config, inner_working_dir)
             .await?;
         log::info!("Container created");
-        let dur = Duration::from_secs(TIMEOUT);
-        let out = timeout(dur, self.start_and_log_container(&container.id))
+        let out = timeout(self.timeout, self.start_and_log_container(&container.id))
             .await
             .map_err(|e| {
-                let err = Error::Timeout(e, dur.into());
+                let err = Error::Timeout(e, self.timeout.into());
                 log::info!("{}", &err);
                 err
             })?;
@@ -174,6 +171,7 @@ impl DockerWrap {
         out
     }
 
+    // TODO set MacAddress, args_escaped on windows?!
     pub async fn create_container(
         &self,
         cmd: Vec<&str>,
@@ -181,6 +179,7 @@ impl DockerWrap {
         working_dir: &str,
     ) -> Result<CreateContainerResults, bollard::errors::Error> {
         let container_config = bollard::container::Config {
+            hostname: Some("computer"),
             attach_stdout: Some(true),
             attach_stderr: Some(true),
             args_escaped: None,
@@ -188,7 +187,7 @@ impl DockerWrap {
             working_dir: Some(working_dir),
             cmd: Some(cmd),
             env: None,
-            stop_timeout: Some(TIMEOUT as isize),
+            stop_timeout: Some(self.timeout.as_secs() as isize),
             host_config,
             ..Default::default()
         };

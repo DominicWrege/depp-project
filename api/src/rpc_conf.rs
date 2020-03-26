@@ -12,6 +12,11 @@ use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 fn default_addr() -> Url {
     Url::parse("http://127.0.0.1:50051").unwrap()
 }
+
+pub fn get_config() -> Result<RpcEnvConfig, envy::Error> {
+    envy::prefixed("DEPP_API_").from_env::<RpcEnvConfig>()
+}
+
 #[derive(Deserialize, Debug)]
 pub struct RpcEnvConfig {
     #[serde(default = "default_addr")]

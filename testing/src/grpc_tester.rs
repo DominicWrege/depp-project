@@ -1,16 +1,15 @@
 use crate::crash_test::{CrashTester, Error, Files, Stdout};
+use crate::docker_api::DockerWrap;
 use crate::{crash_test, fs_util, sema_wrap};
 use futures::future;
 use grpc_api::test_server::Test;
 use grpc_api::{Assignment, AssignmentMsg, AssignmentResult, Script};
-use tonic::{Request, Response, Status};
-type Docker = sema_wrap::SemWrap<DockerWrap>;
-use crate::docker_api::DockerWrap;
 use log::info;
+use tonic::{Request, Response, Status};
 
 #[derive(Debug, Clone)]
 pub struct Tester {
-    docker: Docker,
+    docker: sema_wrap::SemWrap<DockerWrap>,
 }
 
 impl Tester {
@@ -101,6 +100,7 @@ impl Tester {
                 &assignment.args,
             )
             .await?;
+        // TODO without Vec<Box<dyn CrashTester>>, try!..
         let mut tests: Vec<Box<dyn CrashTester>> = Vec::new();
 
         tests.push(Stdout::boxed(solution_output, test_output));

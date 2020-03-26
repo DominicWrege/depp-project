@@ -20,9 +20,9 @@ async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     // TODO Prefix
-    let config = envy::from_env::<config::ServerConfig>()?;
+    let config = config::get_config()?;
     log::info!("Pulling docker the required image. This may take some time...");
-    let docker_api = DockerWrap::new(config.docker_image);
+    let docker_api = DockerWrap::new(config.docker_image, config.timeout);
     docker_api.pull_image().await?;
     log::info!("Pulling image done.");
     log::info!(

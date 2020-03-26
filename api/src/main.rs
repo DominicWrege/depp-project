@@ -17,7 +17,7 @@ use state::State;
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     let db_pool = db_lib::connect_migrate().await.expect("db connection err");
-    let env_conf = envy::prefixed("DEPP_API_").from_env::<RpcEnvConfig>()?;
+    let env_conf = rpc_conf::get_config()?;
     let state = State::new(env_conf, get_credentials(), db_pool);
     let c_state = state.clone();
     tokio::task::spawn(async move {

@@ -57,6 +57,7 @@ fn default_port() -> u16 {
 fn default_db_name() -> String {
     String::from("assignments")
 }
+
 impl Default for DbConfig {
     fn default() -> Self {
         DbConfig {
