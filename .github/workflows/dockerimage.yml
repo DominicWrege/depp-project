@@ -10,21 +10,27 @@ jobs:
   build:
     runs-on: ubuntu-latest    
     steps:
-      - uses: actions/checkout@v2
-      - name: Login to github registry
-        uses: actions-hub/docker/login@master
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_KEY }}
-      - name: build images
-        run: |
-         echo "building api"
-         docker build . -t api -f ./Docker-Files/Dockerfile-API --tag dominicwrege/depp-project-api:latest
-         docker push dominicwrege/depp-project-api:latest 
-         echo "building web"
-         docker build . -t web -f Docker-Files/Dockerfile-Assign-mngr --tag dominicwrege/depp-project-web:latest
-         docker push dominicwrege/depp-project-web:latest
-         echo "building testing"
-         docker build . -t testing -f Docker-Files/Dockerfile-Testing --tag dominicwrege/depp-testing:latest
-         docker push dominicwrege/depp-testing:latest
-         echo "done"
+      - name: build api
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_KEY }}
+          repository: dominicwrege/depp-project-api
+          tags: latest
+          dockerfile: ./Docker-Files/Dockerfile-API   
+      - name: build web
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_KEY }}
+          repository: dominicwrege/depp-project-web
+          tags: latest
+          dockerfile: ./Docker-Files/Dockerfile-Assign-mngr
+      - name: build testing
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_KEY }}
+          repository: dominicwrege/dominicwrege/depp-testing
+          tags: latest
+          dockerfile: ./Docker-Files/Dockerfile-Testing
