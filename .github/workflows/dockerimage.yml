@@ -1,0 +1,33 @@
+name: build Docker Image
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest    
+    steps:
+      - uses: actions/checkout@v1
+      - name: build images
+        env:
+          DOCKER_HUB: ${{ secrets.DOCKER_HUB }}
+          DOCKER_HUB_KEY: ${{ secrets.DOCKER_HUB_KEY }
+        run: |
+         echo "login docker"
+         docker login -u $DOCKER_HUB -p  DOCKER_HUB_KEY
+         echo "building api"
+         docker build . -t api -f ./Docker-Files/Dockerfile-API
+         docker tag api dominicwrege/depp-project-api
+         docker push dominicwrege/depp-project-api 
+         echo "building web"
+         docker build . -t web -f Docker-Files/Dockerfile-Assign-mngr
+         docker tag web dominicwrege/depp-project-web
+         docke push dominicwrege/depp-project-web
+         echo "building testing"
+         docker build . -t testing -f Docker-Files/Dockerfile-Testing
+         docker tag testing dominicwrege/depp-testing 
+         docker push dominicwrege/depp-testing 
+         echo "done"
