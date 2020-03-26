@@ -19,15 +19,12 @@ jobs:
          echo "login docker"
          docker login -u $DOCKER_HUB -p  DOCKER_HUB_KEY
          echo "building api"
-         docker build . -t api -f ./Docker-Files/Dockerfile-API
-         docker tag api dominicwrege/depp-project-api
-         docker push dominicwrege/depp-project-api 
+         docker build . -t api -f ./Docker-Files/Dockerfile-API --tag dominicwrege/depp-project-api:latest
+         docker push dominicwrege/depp-project-api:latest 
          echo "building web"
-         docker build . -t web -f Docker-Files/Dockerfile-Assign-mngr
-         docker tag web dominicwrege/depp-project-web
-         docke push dominicwrege/depp-project-web
+         docker build . -t web -f Docker-Files/Dockerfile-Assign-mngr --tag dominicwrege/depp-project-web:latest
+         docker push dominicwrege/depp-project-web:latest
          echo "building testing"
-         docker build . -t testing -f Docker-Files/Dockerfile-Testing
-         docker tag testing dominicwrege/depp-testing 
-         docker push dominicwrege/depp-testing 
+         docker build . -t testing -f Docker-Files/Dockerfile-Testing --tag dominicwrege/depp-testing:latest
+         docker push dominicwrege/depp-testing:latest
          echo "done"
