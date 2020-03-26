@@ -17,7 +17,7 @@ jobs:
           DOCKER_HUB_KEY: ${{ secrets.DOCKER_HUB_KEY }}
         run: |
          echo "login docker"
-         docker login -u $DOCKER_HUB -p  DOCKER_HUB_KEY
+         docker login -u $DOCKER_HUB -p DOCKER_HUB_KEY
          echo "building api"
          docker build . -t api -f ./Docker-Files/Dockerfile-API --tag dominicwrege/depp-project-api:latest
          docker push dominicwrege/depp-project-api:latest 
