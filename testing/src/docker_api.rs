@@ -8,6 +8,7 @@ use bollard::errors::ErrorKind;
 
 use futures::StreamExt;
 use grpc_api::{Script, TargetOs};
+#[cfg(target_family = "unix")]
 use spinners::{Spinner, Spinners};
 use std::fmt::Write;
 use std::path::Path;
