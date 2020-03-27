@@ -29,4 +29,11 @@ CREATE TABLE assignment (
     description text not null default ''
 );
 
-INSERT INTO exercise(description) VALUES ('Praktikum 01');
+CREATE OR REPLACE FUNCTION init_exercise() RETURNS VOID AS $$
+BEGIN
+    FOR i IN 1..10 LOOP
+        INSERT INTO exercise(description) VALUES(concat('Praktikum', to_char(i, '09')));
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+select "init_exercise"();
