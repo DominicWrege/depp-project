@@ -11,7 +11,6 @@ use failure::_core::time::Duration;
 use futures::prelude::*;
 use handlers::{auth::get_credentials, auth::my_basic_auth};
 mod rpc_conf;
-use crate::rpc_conf::RpcEnvConfig;
 use state::State;
 
 async fn run() -> Result<(), failure::Error> {

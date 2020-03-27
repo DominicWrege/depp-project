@@ -241,13 +241,14 @@ impl DockerWrap {
             ..Default::default()
         });
         let mut stream = self.docker.create_image(options, None, None);
-
+        #[cfg(target_family = "unix")]
         let sp = Spinner::new(Spinners::Line, format!("pulling {}", self.image_name));
 
         while let Some(resp) = stream.next().await {
             match resp {
                 Err(err) => match err.kind() {
                     ErrorKind::DockerResponseNotFoundError { .. } => {
+                        #[cfg(target_family = "unix")]
                         sp.stop();
                         return Err(DockerError::ImageNotFound(self.image_name.to_string()));
                     }
@@ -255,6 +256,7 @@ impl DockerWrap {
                     | ErrorKind::JsonDeserializeError { .. }
                     | ErrorKind::JsonSerializeError { .. } => {}
                     _ => {
+                        #[cfg(target_family = "unix")]
                         sp.stop();
                         return Err(DockerError::Other(err));
                     }
@@ -262,6 +264,7 @@ impl DockerWrap {
                 _ => {}
             }
         }
+        #[cfg(target_family = "unix")]
         sp.stop();
         Ok(())
     }
