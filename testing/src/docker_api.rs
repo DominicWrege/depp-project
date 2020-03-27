@@ -86,7 +86,6 @@ pub fn create_host_config<'a>(
     );
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
-        extra_hosts: Some(vec!["localhost:127.0.0.1"]),
         #[cfg(target_family = "unix")]
         memory: Some(to_mb(200)), //200MB RAM for each container
         #[cfg(target_family = "windows")]
