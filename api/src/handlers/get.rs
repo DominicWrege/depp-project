@@ -66,7 +66,6 @@ pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }
 
-// TODO not reade better response for each rpc conn
 pub async fn version() -> HttpResponse {
     HttpResponse::Ok().json(Version {
         version: env!("CARGO_PKG_VERSION"),

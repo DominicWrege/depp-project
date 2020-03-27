@@ -19,7 +19,6 @@ fn main() {
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    // TODO Prefix
     let config = config::get_config()?;
     log::info!("Pulling docker the required image. This may take some time...");
     let docker_api = DockerWrap::new(config.docker_image, config.timeout);

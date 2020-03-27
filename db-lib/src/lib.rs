@@ -82,9 +82,6 @@ pub(crate) fn get_db_config() -> DbConfig {
 }
 
 pub async fn connect_migrate() -> Result<Pool, DbError> {
-    println!();
-    println!();
-    println!();
     let env_conf = get_db_config();
     let mut pg_config = tokio_postgres::Config::default();
     pg_config

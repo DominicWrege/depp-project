@@ -8,8 +8,6 @@ use bollard::errors::ErrorKind;
 
 use futures::StreamExt;
 use grpc_api::{Script, TargetOs};
-#[cfg(target_family = "unix")]
-use spinners::{Spinner, Spinners};
 use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
@@ -242,31 +240,23 @@ impl DockerWrap {
             ..Default::default()
         });
         let mut stream = self.docker.create_image(options, None, None);
-        #[cfg(target_family = "unix")]
-        let sp = Spinner::new(Spinners::Line, format!("pulling {}", self.image_name));
-
+        log::info!("pulling {} ...", self.image_name);
         while let Some(resp) = stream.next().await {
             match resp {
                 Err(err) => match err.kind() {
                     ErrorKind::DockerResponseNotFoundError { .. } => {
-                        #[cfg(target_family = "unix")]
-                        sp.stop();
                         return Err(DockerError::ImageNotFound(self.image_name.to_string()));
                     }
                     ErrorKind::JsonDataError { .. }
                     | ErrorKind::JsonDeserializeError { .. }
                     | ErrorKind::JsonSerializeError { .. } => {}
                     _ => {
-                        #[cfg(target_family = "unix")]
-                        sp.stop();
                         return Err(DockerError::Other(err));
                     }
                 },
                 _ => {}
             }
         }
-        #[cfg(target_family = "unix")]
-        sp.stop();
         Ok(())
     }
 }
