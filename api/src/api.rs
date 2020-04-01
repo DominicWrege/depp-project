@@ -31,7 +31,7 @@ pub struct IliasId(String);
 impl Default for IliasId {
     fn default() -> Self {
         Self {
-            0: "default_ilias_id".to_string(),
+            0: "some_ilias_id".to_string(),
         }
     }
 }

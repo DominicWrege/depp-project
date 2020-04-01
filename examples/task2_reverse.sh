@@ -1,8 +1,6 @@
 #! /bin/bash
-
-read -a input
+input=$1
 length=${#input}
-echo "Ausgabe: $input"
 reverse=""
 for i in $(seq 1 $length )
 do

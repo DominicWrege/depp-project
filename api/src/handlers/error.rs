@@ -1,6 +1,5 @@
 use crate::api::{IliasId, SubmissionExample};
 use crate::rpc_conf::RpcMeta;
-use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use grpc_api::AssignmentId;
@@ -28,7 +27,7 @@ impl ResponseError for Error {
             Error::DuplicateIliasId => StatusCode::CONFLICT,
             Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
             Error::BadRequest => StatusCode::BAD_REQUEST,
-            Error::Body(_err) => StatusCode::BAD_REQUEST,
+            Error::BadJson(_e) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -41,11 +40,11 @@ impl ResponseError for Error {
             Error::DuplicateIliasId | Error::NotFoundIliasId(_) | Error::NotAssignment(_) => {
                 response.json(err)
             }
-            Error::Body(err) => response.json(ErrSubmission {
-                msg: err.to_string(),
+            Error::BadJson(_e) => response.json(ErrSubmission {
+                msg: self.to_string(),
                 example: SubmissionExample::new(
                     IliasId::default(),
-                    "ZWNobyAiSGFsbG8iID4+IGhhbGxvLnR4dAo=",
+                    "IyEgL2Jpbi9iYXNoCmlucHV0PSQxCmxlbmd0aD0keyNpbnB1dH0KcmV2ZXJzZT0iIgpmb3IgaSBpbiAkKHNlcSAxICRsZW5ndGggKQpkbwoJcmV2ZXJzZSs9JHtpbnB1dDokbGVuZ3RoLWk6MX0KZG9uZQplY2hvICJBdXNnYWJlIHVtZ2VrZWhydDogJHJldmVyc2Ui",
                     Uuid::parse_str("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
                 ),
             }),
@@ -65,8 +64,11 @@ pub enum Error {
     NotFoundIliasId(IliasId),
     #[fail(display = "No Results not found for given AssignmentID: {}", _0)]
     NotAssignment(AssignmentId),
-    #[fail(display = "Request body error. {:?}", _0)]
-    Body(JsonPayloadError),
+    #[fail(
+        display = "Incorrect json received error: {}. Maybe there are some fields missing or the types does not match.",
+        _0
+    )]
+    BadJson(String),
     #[fail(display = "{}", reason)]
     RpcOffline { reason: RpcMeta },
     #[fail(display = "Bad request")]

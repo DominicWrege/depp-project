@@ -47,7 +47,7 @@ paths:
                 201:
                     description: "Submission created"
                 400:
-                    description: "Request body error"
+                    description: "Incorrect json received. Maybe there are some fields missing or the types does not match."
                     content:
                         application/json:
                                 schema:
@@ -57,7 +57,7 @@ paths:
                     content:
                         application/json:
                                 schema:
-                                    $ref: "#/components/schemas/SubmissionError"
+                                    $ref: "#/components/schemas/ApiError"
                 409:
                     description: "Duplicate iliasID. I except to that every iliasId should be unique and you submitted the same iliasId 
                     without calling ```get:  /result/{iliasId}``` twice"

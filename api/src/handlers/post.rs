@@ -1,7 +1,8 @@
 use crate::api::Submission;
 use crate::handlers::error::Error;
 use crate::state::State;
-use actix_web::{web, HttpResponse};
+use actix_web::FromRequest;
+use actix_web::{web, HttpRequest, HttpResponse};
 use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
 use grpc_api::Assignment;
@@ -13,30 +14,27 @@ use uuid::Uuid;
 
 pub async fn add_submission(
     state: web::Data<State>,
-    para: web::Json<Submission>,
+    req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
-    let para = para.into_inner();
-    let assignment = db_assignment(&state.db_pool, &para.assignment_id)
-        .await
-        .map_err(|_| Error::NotAssignment(para.assignment_id))?;
+    let submission = web::Json::<Submission>::extract(&req).await.map_err(|e| {
+        log::warn!("{}", e);
+        Error::BadJson(e.to_string())
+    })?;
 
-    if state.pending_results.contains_key(&para.ilias_id)
+    let assignment = db_assignment(&state.db_pool, &submission.assignment_id)
+        .await
+        .map_err(|_| Error::NotAssignment(submission.assignment_id))?;
+
+    if state.pending_results.contains_key(&submission.ilias_id)
         || state
             .to_test_assignments
             .read()
             .await
-            .contains(&para.ilias_id)
+            .contains(&submission.ilias_id)
     {
         return Err(Error::DuplicateIliasId);
     }
     let rpc = state.rpc_conf.meta(&assignment.script_type.into()).clone();
-
-    /*    let channel = Channel::from_shared(rpc.rpc_url.as_str().to_owned())
-        .unwrap()
-        .tls_config(state.rpc_conf.tls_config.clone())
-        .connect()
-        .await?;
-    let mut client = TestClient::new(channel);*/
 
     let mut client = TestClient::connect(rpc.rpc_url.to_string())
         .await
@@ -46,7 +44,7 @@ pub async fn add_submission(
 
     tokio::task::spawn(async move {
         let state = state.into_inner();
-        let ilias_id = para.ilias_id;
+        let ilias_id = &submission.ilias_id;
         state
             .to_test_assignments
             .write()
@@ -54,7 +52,7 @@ pub async fn add_submission(
             .insert(ilias_id.clone());
         let request = tonic::Request::new(AssignmentMsg {
             assignment: Some(assignment),
-            code_to_test: para.source_code.0,
+            code_to_test: submission.source_code.0.clone(),
         });
 
         match client.run_test(request).await {
