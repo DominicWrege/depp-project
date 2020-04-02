@@ -46,7 +46,7 @@ pub struct Exercise {
 
 pub async fn get_all_exercises(pool: &Pool) -> Result<Vec<Exercise>, HttpError> {
     let client = pool.get().await?;
-    let query = "Select id, description From exercise";
+    let query = "SELECT id, description FROM exercise ORDER BY description;";
     let rows = client.query(query, &[]).await?;
     Ok(rows_into(rows))
 }
@@ -61,6 +61,7 @@ where
         .collect::<Vec<S>>()
 }
 
+//"SELECT unnest(enum_range(NULL::script_type))::text as name ORDER BY name;"
 pub async fn get_script_types(pool: &Pool) -> Result<Vec<ScriptType>, DbError> {
     let client = pool.get().await?;
     let rows = client
