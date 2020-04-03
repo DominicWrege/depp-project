@@ -45,15 +45,14 @@ impl Files {
 #[async_trait]
 impl CrashTester for Stdout {
     async fn test(&self) -> Result<(), Error> {
-        let stdout = trim_new_lines(&self.testet.stdout);
+        let stdout = trim_sort_lines(&self.testet.stdout);
 
         if !self.testet.stderr.is_empty() || self.testet.status_code > 0 {
-            //maybe bad syntax
             return Err(Error::ExitCode(self.testet.stderr.clone()));
         }
-        let expected_output = trim_new_lines(&self.expected.stdout); // check if solution is also no error
-        log::info!("expected stdout: {:#?}", expected_output);
+        let expected_output = trim_sort_lines(&self.expected.stdout); // check if solution is also no error
         log::info!("result stdout: {:#?}", stdout);
+        log::info!("expected stdout: {:#?}", expected_output);
         if expected_output.contains(&stdout) {
             Ok(())
         } else {
@@ -81,8 +80,9 @@ impl CrashTester for Files {
             {
                 if solution_entry.is_file() {
                     let solution_content =
-                        trim_new_lines(&fs::read_to_string(&solution_entry).await?);
-                    let result_content = trim_new_lines(&fs::read_to_string(&path_to_check).await?);
+                        trim_sort_lines(&fs::read_to_string(&solution_entry).await?);
+                    let result_content =
+                        trim_sort_lines(&fs::read_to_string(&path_to_check).await?);
                     if solution_content != result_content {
                         return Err(Error::ExpectedFileNotSame(solution_content, result_content));
                     }
@@ -144,15 +144,14 @@ impl fmt::Display for DurationDisplay {
     }
 }
 
-pub fn trim_new_lines(s: &str) -> String {
-    s.chars()
+pub fn trim_sort_lines(s: &str) -> String {
+    let mut ret = s
+        .chars()
         .filter(|&c| c != '\r')
         .collect::<String>()
         .lines()
-        .map(|line| {
-            let mut n_line = line.trim_end().to_string();
-            n_line.push('\n');
-            n_line
-        })
-        .collect::<String>()
+        .map(|line| line.trim_end().to_string())
+        .collect::<Vec<String>>();
+    ret.sort();
+    ret.join("\n")
 }

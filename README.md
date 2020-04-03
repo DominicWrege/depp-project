@@ -126,7 +126,13 @@ Each Script will run inside a docker container for max duration of 120 secs on L
 - [x] update testing-server status `/version`
 - [x] store assignments in postgresql (tokio-postgres)
 - [x] multiple rpc endpoints
-- [ ] TLS for grpc
-- [ ] test ruslt cache
-- [ ] edit assignments
+- [ ] api submission better error handling on POST submission 
+- [ ] testing no panic if os does not support script
+- [ ] testing result cache
+- [ ] grpc_tester.rs see comment and fix it?!
+- [ ] edit assignments remove "/r/n" on edit
+- [ ] edit assignments add und edit script contains regex
+- [ ] testing test script contains with some regex
 - [x] assign-mngr auth
+- [ ] solution script and script to test should have the same name
+- [ ] files output folder shut have the same in container

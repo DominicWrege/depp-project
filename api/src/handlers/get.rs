@@ -41,7 +41,7 @@ pub async fn get_result(
 
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
     let client = &state.db_pool.get().await?;
-    let query = r#"SELECT format('%s/%s', exercise.description, assignment_name) as name, uuid
+    let query = r#"SELECT format('%s/%s (%s)', exercise.description, assignment_name, script_type) as name, uuid
                         FROM assignment JOIN exercise
                         ON assignment.exercise_id = exercise.id
                         WHERE assignment.active is true

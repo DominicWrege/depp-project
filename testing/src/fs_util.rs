@@ -41,8 +41,7 @@ pub fn new_tmp_script_file(
             .suffix(script_type.file_extension())
             .tempfile()?
     };
-
-    let content = if script_type.target_os() == TargetOs::Unix && content.contains(r"\r\n") {
+    let content = if script_type.target_os() == TargetOs::Unix && content.contains("\r\n") {
         content.replace("\r\n", "\n")
     } else {
         content.to_string()

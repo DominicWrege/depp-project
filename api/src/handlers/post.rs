@@ -10,17 +10,18 @@ use grpc_api::AssignmentMsg;
 /*
 use tonic::transport::Channel;
 */
+use actix_web::web::Json;
 use uuid::Uuid;
 
 pub async fn add_submission(
+    submission: web::Json<Submission>,
     state: web::Data<State>,
-    req: HttpRequest,
+    /*    req: HttpRequest,*/
 ) -> Result<HttpResponse, Error> {
-    let submission = web::Json::<Submission>::extract(&req).await.map_err(|e| {
+    /*    let submission = web::Json::<Submission>::extract(&req).await.map_err(|e| {
         log::warn!("{}", e);
         Error::BadJson(e.to_string())
-    })?;
-
+    })?;*/
     let assignment = db_assignment(&state.db_pool, &submission.assignment_id)
         .await
         .map_err(|_| Error::NotAssignment(submission.assignment_id))?;

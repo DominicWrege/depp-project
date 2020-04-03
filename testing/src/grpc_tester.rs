@@ -102,12 +102,13 @@ impl Tester {
             .await?;
         // TODO without Vec<Box<dyn CrashTester>>, try!..
         let mut tests: Vec<Box<dyn CrashTester>> = Vec::new();
-
-        tests.push(Stdout::boxed(solution_output, test_output));
+        // TODO bug wenn swag test.push(...) becuase not all tests are running
         tests.push(Files::boxed(
             solution_context_dir.path().to_path_buf(),
             context_dir.path().to_path_buf(),
         ));
+        tests.push(Stdout::boxed(solution_output, test_output));
+
         let _ =
             future::try_join_all(tests.iter().map(|item| async move { item.test().await })).await?;
         Ok(())

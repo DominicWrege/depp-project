@@ -25,8 +25,8 @@ impl Script {
             Script::PowerShell => (vec!["powershell.exe".into()]),
             Script::Batch => (vec!["cmd.exe".into(), "/C".into()]),
             Script::Python3 => (vec!["python3".into()]),
-            Script::Awk => (vec!["awk".into()]),
-            Script::Sed => (vec!["sed".into()]),
+            Script::Awk => (vec!["awk".into(), "-f".into()]),
+            Script::Sed => (vec!["sed".into(), "-f".into()]),
             Script::Bash => (vec!["bash".into()]), // bash -c are forwarded to the WSL process without modification.
             Script::Shell => (vec!["sh".into()]),
         }
