@@ -80,8 +80,9 @@ pub async fn get_script_types(pool: &Pool) -> Result<Vec<ScriptType>, DbError> {
 
 pub async fn insert_assignment(pool: &Pool, assign: &Assignment) -> Result<(), DbError> {
     let client = pool.get().await?;
-    let stmt = client.prepare(r#"INSERT INTO assignment(assignment_name, script_type, solution, exercise_id, args, description, include_files)
-                                                  Values($1, $2, $3, $4, $5, $6, $7)"#).await?;
+    let stmt = client.prepare(r#"INSERT INTO assignment(assignment_name, script_type, solution, exercise_id, args, description, 
+                                                                    include_files, compare_fs_solution, compare_stdout_solution, custom_script, regex, regex_check_mode)
+                                                  Values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#).await?;
     client
         .execute(
             &stmt,
@@ -93,6 +94,11 @@ pub async fn insert_assignment(pool: &Pool, assign: &Assignment) -> Result<(), D
                 &assign.args,
                 &assign.description,
                 &assign.include_files,
+                &assign.compare_fs_solution,
+                &assign.compare_stdout_solution,
+                &assign.custom_script,
+                &assign.regex,
+                &assign.regex_check_mode,
             ],
         )
         .await?;

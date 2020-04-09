@@ -4,23 +4,24 @@ use crate::fs_util;
 use async_trait::async_trait;
 use futures::pin_mut;
 use futures::StreamExt;
+use grpc_api::Script;
 use grpc_api::{RegexMode, SortStdoutBy};
 use log::info;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
 #[async_trait]
-pub trait CrashTester: Sync + Send {
-    async fn test(&self) -> Result<(), Error>;
+pub trait Checker: Sync + Send {
+    async fn check(&self) -> Result<(), Error>;
 }
-
+#[derive(Debug)]
 pub struct FilesChecker {
     expected_dir: PathBuf,
     given_dir: PathBuf,
 }
 
 impl FilesChecker {
-    pub fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn CrashTester> {
+    pub fn boxed(a: PathBuf, b: PathBuf) -> Box<dyn Checker> {
         Box::new(FilesChecker {
             expected_dir: a,
             given_dir: b,
@@ -30,7 +31,7 @@ impl FilesChecker {
         (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
     }
 }
-
+#[derive(Debug)]
 pub struct RegexChecker {
     regex: Option<Result<regex::Regex, regex::Error>>,
     mode: RegexMode,
@@ -44,7 +45,7 @@ impl RegexChecker {
         mode: RegexMode,
         stdout: T,
         script_content: &String,
-    ) -> Box<dyn CrashTester> {
+    ) -> Box<dyn Checker> {
         Box::new(RegexChecker {
             regex: regex.and_then(|reg_str| {
                 Some(
@@ -61,33 +62,37 @@ impl RegexChecker {
 }
 
 #[async_trait]
-impl CrashTester for RegexChecker {
-    async fn test(&self) -> Result<(), Error> {
+impl Checker for RegexChecker {
+    async fn check(&self) -> Result<(), Error> {
+        log::info!("checking with regex");
         if let Some(regex) = self.regex.clone() {
-            let regex = regex.map_err(|er| Error::WrongRegex(er))?;
-
-            if self.mode == RegexMode::Stdout && regex.is_match(&self.stdout) {
-                return Err(Error::NoRegexMatch(self.stdout.clone(), regex.clone()));
-            } else if self.mode == RegexMode::ScriptContent && regex.is_match(&self.script_content)
-            {
-                return Err(Error::NoRegexMatch(
+            let regex = regex.map_err(|er| Error::InvalidRegex(er.to_string()))?;
+            let res = match self.mode {
+                RegexMode::Stdout => (regex.is_match(&self.stdout), self.stdout.clone()),
+                RegexMode::ScriptContent => (
+                    regex.is_match(&self.script_content),
                     self.script_content.clone(),
-                    regex.clone(),
-                ));
+                ),
+                _ => (true, "".into()),
             };
+            return if res.0 {
+                Ok(())
+            } else {
+                Err(Error::NoRegexMatch(res.1, regex.clone()))
+            };
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 }
-
+#[derive(Debug)]
 pub struct StdoutChecker {
     expected: String,
     tested: String,
 }
 
 impl StdoutChecker {
-    pub fn boxed(expected: &str, tested: &str) -> Box<dyn CrashTester> {
+    pub fn boxed(expected: &str, tested: &str) -> Box<dyn Checker> {
         Box::new(StdoutChecker {
             expected: String::from(expected),
             tested: String::from(tested),
@@ -96,8 +101,8 @@ impl StdoutChecker {
 }
 
 #[async_trait]
-impl CrashTester for StdoutChecker {
-    async fn test(&self) -> Result<(), Error> {
+impl Checker for StdoutChecker {
+    async fn check(&self) -> Result<(), Error> {
         log::info!("result stdout: {:#?}", self.tested);
         log::info!("expected stdout: {:#?}", self.expected);
         if self.expected == self.tested {
@@ -113,8 +118,8 @@ impl CrashTester for StdoutChecker {
 
 // TODO show in message which file in different!!
 #[async_trait]
-impl CrashTester for FilesChecker {
-    async fn test(&self) -> Result<(), Error> {
+impl Checker for FilesChecker {
+    async fn check(&self) -> Result<(), Error> {
         print_dir_content("expected dir:", &self.expected_dir).await?;
         print_dir_content("dir after test:", &self.given_dir).await?;
         let stream = fs_util::ls_dir_content(self.expected_dir.clone());
@@ -155,20 +160,81 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     }
     Ok(())
 }
-
+#[derive(Debug)]
 pub struct CustomScriptChecker {
-    script_content: String,
-    expected_output: String,
-    solution_output: String,
+    custom_script_content: String,
+    tested_script_content: String,
+    tested_out: ScriptOutput,
+    solution_out: ScriptOutput,
+    working_dir: PathBuf,
 }
 
+impl CustomScriptChecker {
+    pub fn boxed(
+        c_script_content: &str,
+        tested_script_content: &str,
+        tested_out: ScriptOutput,
+        solution_out: ScriptOutput,
+        cur_dir: &Path,
+    ) -> Box<dyn Checker> {
+        Box::new(CustomScriptChecker {
+            custom_script_content: String::from(c_script_content),
+            tested_script_content: String::from(tested_script_content),
+            tested_out,
+            solution_out,
+            working_dir: cur_dir.to_path_buf(),
+        })
+    }
+}
+
+#[async_trait]
+impl Checker for CustomScriptChecker {
+    async fn check(&self) -> Result<(), Error> {
+        log::info!("running Custom script");
+        let script_type = if cfg!(target_family = "unix") {
+            Script::Bash
+        } else {
+            Script::PowerShell
+        };
+        let file_custom_script =
+            fs_util::new_tmp_script_file(script_type, &self.custom_script_content)
+                .map_err(Error::CantCreatTempFile)?
+                .into_temp_path();
+
+        let prog = if cfg!(target_family = "unix") {
+            "bash"
+        } else {
+            "powershell.exe"
+        };
+        use tokio::process::Command;
+        let outpout = Command::new(prog)
+            .arg(&file_custom_script)
+            .args(&[
+                &self.tested_out.stdout,
+                &self.tested_script_content,
+                &self.solution_out.stdout,
+            ])
+            .current_dir(&self.working_dir)
+            .output()
+            .await
+            .map_err(|e| Error::FailedRunCustomScript(e))?;
+        if outpout.stderr.is_empty() && outpout.status.success() {
+            Ok(())
+        } else {
+            Err(Error::CustomScript(
+                String::from_utf8(outpout.stderr).unwrap_or_default(),
+            ))
+        }
+    }
+}
+#[derive(Debug)]
 pub struct SortedChecker {
     content: String,
     sort_stdout_by: SortStdoutBy,
 }
 
 impl SortedChecker {
-    pub fn boxed(content: &str, sort_stdout_by: SortStdoutBy) -> Box<dyn CrashTester> {
+    pub fn boxed(content: &str, sort_stdout_by: SortStdoutBy) -> Box<dyn Checker> {
         Box::new(Self {
             content: content.into(),
             sort_stdout_by,
@@ -177,8 +243,8 @@ impl SortedChecker {
 }
 
 #[async_trait]
-impl CrashTester for SortedChecker {
-    async fn test(&self) -> Result<(), Error> {
+impl Checker for SortedChecker {
+    async fn check(&self) -> Result<(), Error> {
         use compare::{natural, Compare};
         log::info!("Checking if stdout is sorted.");
 

@@ -67,7 +67,8 @@ paths:
                                 $ref: "#/components/schemas/ApiError"
     /result/{iliasId}:
         get:
-            summary: "Returns the result and keeps until the post method is invoked for the submission by given iliasID"
+            summary: "Returns the result and keeps until the post method is invoked for the submission by given iliasID." 
+            "
             tags:
               - /api
             operationId: "getResults"
@@ -80,7 +81,8 @@ paths:
                     $ref: "#/components/schemas/IliasId"
             responses:
                 200:
-                    description: "Returns the result for the submission"
+                    description: "Returns the result for the submission. Tests are invalid if some other internal server errors while testing occur.
+            I test can't be valid = true and passed = true at the same time"
                     content:
                         application/json:
                             schema:
@@ -178,19 +180,17 @@ components:
         Result:
             type: object
             properties:
-                iliasId:
-                    $ref: "#/components/schemas/IliasId"
                 passed:
                     type: boolean
                 message:
                     type: string
                     nullable: true
-                mark:
-                    type: string
-                    nullable: true
+                valid:
+                    type: boolean
             required:
                 - iliasId
                 - passed
+                - valid
         Assignment:
             type: object
             properties: 

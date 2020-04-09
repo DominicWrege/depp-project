@@ -1,6 +1,7 @@
+mod checker;
 mod config;
-mod crash_test;
 mod docker_api;
+mod error;
 mod fs_util;
 mod grpc_tester;
 mod sema_wrap;

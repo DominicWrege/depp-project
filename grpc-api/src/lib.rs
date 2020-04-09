@@ -47,6 +47,26 @@ impl From<i32> for Script {
     }
 }
 
+impl From<i32> for RegexMode {
+    fn from(n: i32) -> Self {
+        match n {
+            1 => RegexMode::Stdout,
+            2 => RegexMode::ScriptContent,
+            _ => RegexMode::UnknownRegex,
+        }
+    }
+}
+
+impl From<i32> for SortStdoutBy {
+    fn from(n: i32) -> Self {
+        match n {
+            1 => SortStdoutBy::Asc,
+            2 => SortStdoutBy::Desc,
+            _ => SortStdoutBy::UnknownSort,
+        }
+    }
+}
+
 impl Script {
     pub fn file_extension(&self) -> &'static str {
         match self {
@@ -72,13 +92,46 @@ pub enum TargetOs {
 
 impl From<&tokio_postgres::row::Row> for Assignment {
     fn from(r: &Row) -> Self {
-        let s: Script = r.get("script_type");
         Assignment {
             name: r.get("assignment_name"),
             solution: r.get("solution"),
             include_files: r.get("include_files"),
-            script_type: s.into(),
+            script_type: r.get::<_, Script>("script_type") as i32,
             args: r.get("args"),
+            compare_fs_solution: r.get("compare_fs_solution"),
+            compare_stdout_solution: r.get("compare_stdout_solution"),
+            custom_script: r.get::<_, Option<String>>("custom_script"),
+            regex: r.get::<_, Option<String>>("regex"),
+            regex_mode: r.get::<_, RegexMode>("regex_check_mode") as i32,
+            sort_stdout: r.get::<_, SortStdoutBy>("sort_stdout") as i32,
+        }
+    }
+}
+
+impl From<Option<&String>> for RegexMode {
+    fn from(str: Option<&String>) -> Self {
+        match str {
+            Some(s) if s == "Stdout" => RegexMode::Stdout,
+            Some(s) if s == "ScriptContent" => RegexMode::ScriptContent,
+            _ => RegexMode::UnknownRegex,
+        }
+    }
+}
+
+impl From<Option<&String>> for SortStdoutBy {
+    fn from(str: Option<&String>) -> Self {
+        match str {
+            Some(s) if s == "Asc" => SortStdoutBy::Asc,
+            Some(s) if s == "Desc" => SortStdoutBy::Desc,
+            _ => SortStdoutBy::UnknownSort,
+        }
+    }
+}
+
+impl From<String> for SortStdoutBy {
+    fn from(str: String) -> Self {
+        match str {
+            _ => SortStdoutBy::UnknownSort,
         }
     }
 }

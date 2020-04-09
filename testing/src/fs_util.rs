@@ -1,4 +1,4 @@
-use crate::crash_test::Error;
+use crate::error::Error;
 use async_stream::try_stream;
 use futures::stream::Stream;
 use grpc_api::{Script, TargetOs};

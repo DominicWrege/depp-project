@@ -1,4 +1,4 @@
-use crate::crash_test::Error;
+use crate::error::Error;
 use bollard::container::{
     CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
     RemoveContainerOptions, StartContainerOptions, WaitContainerOptions,
@@ -6,12 +6,14 @@ use bollard::container::{
 
 use bollard::errors::ErrorKind;
 
+use crate::checker::trim_lines;
 use futures::StreamExt;
 use grpc_api::{Script, TargetOs};
 use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
 use tokio::time::timeout;
+
 #[derive(Debug, failure::Fail)]
 pub enum DockerError {
     #[fail(display = "Could not pull image: '{}' because it was not found.", _0)]
@@ -228,7 +230,7 @@ impl DockerWrap {
         let (stdout, stderr) = self.get_output(container_id).await;
 
         Ok(ScriptOutput {
-            stdout,
+            stdout: trim_lines(&stdout),
             stderr,
             status_code,
         })
@@ -266,4 +268,14 @@ pub struct ScriptOutput {
     pub stdout: String,
     pub stderr: String,
     pub status_code: u64,
+}
+
+impl ScriptOutput {
+    pub fn status_success(&self) -> Result<(), Error> {
+        if self.stderr.is_empty() || self.status_code == 0 {
+            Ok(())
+        } else {
+            Err(Error::ExitCode(self.stderr.clone()))
+        }
+    }
 }

@@ -1,9 +1,6 @@
 use crate::base64::Base64;
 use grpc_api::AssignmentId;
 use serde::{Deserialize, Serialize};
-/*
-use uuid::Uuid;
-*/
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -44,13 +41,6 @@ pub struct Submission {
     pub assignment_id: AssignmentId,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum Mark {
-    VeryGood,
-    Ok,
-    Bad,
-}
 #[derive(Debug, serde::Serialize, derive_more::Constructor)]
 #[serde(rename_all = "camelCase")]
 pub struct SubmissionExample {
@@ -72,12 +62,9 @@ pub struct Version {
     pub version: &'static str,
 }
 
-// TODO update swagger
-
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum EndPointStatus {
     Online,
-    // Maintenance,
     Offline,
 }

@@ -10,10 +10,8 @@
 
 <form class="d-flex justify-content-center" id="AssignmentForm" action="{{site_path}}/{{assignment.uuid}}"
       method="POST" target="_self">
-    <!--
-    <form class="d-flex justify-content-center" id="AssignmentForm"  action="http://jkorpela.fi/cgi-bin/echo.cgi" method="POST" target="_self">
-    -->
-    <div class="card w-75">
+
+    <div class="card">
         <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
             <h5>Aufgabe ansehen/bearbeiten</h5>
             <button type="submit" class="btn btn-primary justify-content-end" form="AssignmentForm">speichern</button>
@@ -52,32 +50,65 @@
                 >{{assignment.description}}</textarea>
             </div>
 
-            <div class="form-group">
-                <label for="SolutionInput">Musterlösung</label>
-                <textarea
-                        class="form-control p-3 code-editor mono-font"
-                        rows="8"
-                        name="solution"
-                        id="SolutionInput"
-                        required
-                >{{assignment.solution}}</textarea>
-            </div>
+            <fieldset class="form-group">
 
-            <div class="form-group ">
-                <label for="ArgsInput">Argumente</label>
-                <input
-                        type="text"
-                        class="form-control mono-font"
-                        id="ArgsInput"
-                        aria-describedby="Argumente help"
-                        name="args"
-                        value="{{ assignment.args | join(sep=',') }}"
+                <legend>Überprüfen mit der Müsterlösung</legend>
+                <div class="custom-control custom-checkbox mr-sm-2">
+                    <input type="checkbox" {%if assignment.compare_fs_solution %} checked="check" {% endif %} id="compare_fs_checkbox" class="custom-control-input" name="compare_fs_solution" aria-describedby="bla">
+                    <label class="custom-control-label" for="compare_fs_checkbox">Die von der Müsterlösung erstellten Dateien/Ordner werden 1:1 verglichen.</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-sm-2 mb-2">
+                    <input type="checkbox" {%if assignment.compare_stdout_solution %} checked="check" {% endif %} id="compare_stdout_checkbox" class="custom-control-input" name="compare_stdout_solution" aria-describedby="bla">
+                    <label class="custom-control-label" for="compare_stdout_checkbox">Die Konsolenausgabe wird 1:1 mit der Konsolenausgabe der Müsterlösung verglichen.</label>
+                </div>
+                <div class="form-group w-50">
+                    <label for="SortBySelect">Sortierung der gesammten Ausgabe auf der Konsole</label>
+                    <select
+                            class="form-control"
+                            id="SortBySelect"
+                            name="sort_stdout"
+                            value="Asc"
+                            required
+                    >   <!--lazy =)-->
+                        <option {%if assignment.sort_stdout == 'UnknownSort' %} selected {% endif %} value="UnknownSort">Keine</option>
+                        <option {%if assignment.sort_stdout == 'Asc' %} selected {% endif %} value="Asc">Aufsteigend</option>
+                        <option {%if assignment.sort_stdout == 'Desc' %} selected {% endif %} value="Desc">Absteigend</option>
+                        <!--lazy =)-->
+                    </select>
+                </div>
 
-                />
-                <small id="ArgsHelp" class="form-text text-muted"
-                >Komma-Sperierte Liste ohne Leerzeichen. Beispiel:
-                    -l,10,file.txt,--name bob</small>
-            </div>
+                <div class="form-group">
+                    <label for="SolutionInput">Musterlösung Skript</label>
+                    <textarea
+                            spellcheck="false"
+                            class="form-control p-3 code-editor mono-font"
+                            rows="8"
+                            name="solution"
+                            id="SolutionInput"
+                            required
+                    >{{assignment.solution}}</textarea>
+                </div>
+
+                <div class="form-group ">
+                    <label for="ArgsInput">Kommandozeilenparameter (optional)</label>
+                    <input
+                            spellcheck="false"
+                            type="text"
+                            class="form-control mono-font"
+                            id="ArgsInput"
+                            aria-describedby="Argumente help"
+                            name="args"
+                            value="{{ assignment.args | join(sep=',') }}"
+
+                    />
+                    <small id="ArgsHelp" class="form-text text-muted"
+                    >Komma-Sperierte Liste ohne Leerzeichen. Beispiel:
+                        -l,10,file.txt,--name bob</small>
+                    <small class="form-text text-muted">
+                        Gilt nur für die Musterlösung und das zu testene Skript.
+                    </small>
+                </div>
+            </fieldset>
 
             <div class="row">
                 <div class="form-group col-6">
@@ -116,6 +147,53 @@
                     </select>
                 </div>
             </div>
+            <fieldset class="form-group">
+            <legend>Regex</legend>
+            <div class="form-group w-50">
+                <div class="form-group ">
+                    <div class="form-check radio-regex">
+                        <input class="form-check-input" {%if assignment.regex_check_mode == 'UnknownRegex' %} checked="true" {% endif %}  name="regex_check_mode" type="radio" value="UnknownRegex" id="NoneRadio" onclick="onchangeRegexRadio(this)">
+                        <label for="NoneRadio">Nichts</label>
+                    </div>
+                    <div class="form-check radio-regex">
+                        <input class="form-check-input" {%if assignment.regex_check_mode == 'ScriptContent' %} checked="true" {% endif %} name="regex_check_mode" type="radio" value="ScriptContent" id="SkriptRadio" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
+                        <label for="SkriptRadio">Skriptinhalt</label>
+                    </div>
+                    <div class="form-check radio-regex">
+                        <input class="form-check-input" {%if assignment.regex_check_mode == 'Stdout' %} checked="true" {% endif %} name="regex_check_mode" type="radio" id="StdoutRadio" value="Stdout" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
+                        <label class="form-check-label" for="StdoutRadio">Konsolen Ausgabe</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group" hidden id="RegexInputForm">
+                <label for="RegexInput">Regex (Perl-style)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        id="RegexInput"
+                        {% if assignment.regex %}
+                        value="{{assignment.regex}}"
+                        {% endif %}
+                        aria-describedby="regex"
+                />
+                <small class="form-text text-muted">
+                    Jede Zeile wird überprüft. Es reicht, wenn es wenigensten einen Treffer gibt.
+                </small>
+            </div>
+
+        </fieldset>
+
+            <div class="form-group" id="SpecialSection">
+                <label for="CustomScriptInput">Spezielles Skript zum überprüfen der Abgabe (optional).</label>
+                <textarea
+                        spellcheck="false"
+                        class="form-control code-editor mono-font"
+                        rows="4"
+                        name="custom_script"
+                        id="CustomScriptInput"
+                >{{assignment.custom_script}}</textarea>
+                {% include 'solution-small-desc.html' %}
+            </div>
         </div>
 
     </div>
@@ -148,4 +226,5 @@
         </div>
     </div>
 </form>
+<script src="/static/form.js"></script>
 {% endblock content %}

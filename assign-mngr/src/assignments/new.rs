@@ -29,7 +29,17 @@ fn into_assignment_form(h: &mut HashMap<String, String>, zip: &[u8]) -> Assignme
             .parse::<i32>()
             .unwrap(),
         include_files: zip.to_vec(),
+        compare_fs_solution: checkbox_into(h.get("compare_fs_solution")),
+        compare_stdout_solution: checkbox_into(h.get("compare_stdout_solution")),
+        custom_script: h.get("custom_script").and_then(|x| Some(fix_newlines(x))),
+        regex: h.get("regex").and_then(|x| Some(x.to_string())),
+        regex_check_mode: h.get("regex_check_mode").into(),
+        sort_stdout: h.get("sort_stdout").into(),
     }
+}
+
+fn checkbox_into<T: AsRef<str>>(s: Option<T>) -> bool {
+    s.map(|s| s.as_ref() == "on").unwrap_or(false)
 }
 
 pub async fn insert(data: web::Data<State>, mut payload: Multipart) -> HttpResult {
@@ -50,8 +60,8 @@ pub async fn insert(data: web::Data<State>, mut payload: Multipart) -> HttpResul
     }
 
     let assign = into_assignment_form(&mut text_fields, &zip_file);
+    dbg!(&assign);
     db::insert_assignment(&data.db_pool, &assign).await?;
-
     Ok(redirect(format!("/exercise/{}", &assign.exercise_id)))
 }
 
@@ -59,7 +69,7 @@ fn remove_whitespace(s: &str) -> String {
     s.split_whitespace().collect()
 }
 
-fn fix_newlines(s: &str) -> String {
+pub fn fix_newlines(s: &str) -> String {
     s.replace("\r\n", "\n")
 }
 

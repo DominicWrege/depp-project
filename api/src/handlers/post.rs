@@ -5,8 +5,7 @@ use actix_web::FromRequest;
 use actix_web::{web, HttpRequest, HttpResponse};
 use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
-use grpc_api::Assignment;
-use grpc_api::AssignmentMsg;
+use grpc_api::{Assignment, AssignmentMsg, AssignmentResult};
 /*
 use tonic::transport::Channel;
 */
@@ -61,12 +60,19 @@ pub async fn add_submission(
                 state
                     .pending_results
                     .insert(ilias_id.clone(), response.into_inner());
-                state.to_test_assignments.write().await.remove(&ilias_id);
             }
             Err(e) => {
-                log::error!("from RPC {:#?}", e);
+                state.pending_results.insert(
+                    ilias_id.clone(),
+                    AssignmentResult {
+                        passed: false,
+                        message: Some(e.to_string()),
+                        valid: false,
+                    },
+                );
             }
         }
+        state.to_test_assignments.write().await.remove(&ilias_id);
     });
     Ok(HttpResponse::Created().body(""))
 }
@@ -75,9 +81,10 @@ async fn db_assignment(pool: &Pool, uuid: &Uuid) -> Result<Assignment, Error> {
     let client = pool.get().await?;
     let stmt = client
         .prepare(
-            r#"SELECT assignment_name, script_type, include_files, solution, args
+            r#"SELECT assignment_name, script_type, include_files, solution, args, compare_fs_solution, 
+                                compare_stdout_solution, regex, regex_check_mode, sort_stdout, custom_script
                     FROM assignment 
-                    WHERE assignment.uuid = $1"#,
+                    WHERE assignment.uuid = $1;"#,
         )
         .await?;
     let row = client

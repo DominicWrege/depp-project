@@ -104,7 +104,7 @@ async fn run() -> Result<(), failure::Error> {
 
 fn main() {
     if let Err(e) = actix_rt::System::new("web-main").block_on(run()) {
-        log::error!("{}", e);
+        eprintln!("{}", e);
         std::process::exit(1);
     }
 }
