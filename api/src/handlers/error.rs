@@ -1,5 +1,6 @@
 use crate::api::{IliasId, SubmissionExample};
 use crate::rpc_conf::RpcMeta;
+use actix_web::error::JsonPayloadError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use grpc_api::AssignmentId;
@@ -27,7 +28,7 @@ impl ResponseError for Error {
             Error::DuplicateIliasId => StatusCode::CONFLICT,
             Error::NotFoundIliasId(_) | Error::NotAssignment(_) => StatusCode::NOT_FOUND,
             Error::BadRequest => StatusCode::BAD_REQUEST,
-            Error::BadJson(_e) => StatusCode::BAD_REQUEST,
+            Error::Submission(_e) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -40,7 +41,7 @@ impl ResponseError for Error {
             Error::DuplicateIliasId | Error::NotFoundIliasId(_) | Error::NotAssignment(_) => {
                 response.json(err)
             }
-            Error::BadJson(_e) => response.json(ErrSubmission {
+            Error::Submission(_e) => response.json(ErrSubmission {
                 msg: self.to_string(),
                 example: SubmissionExample::new(
                     IliasId::default(),
@@ -68,20 +69,47 @@ pub enum Error {
         display = "Incorrect json received error: {}. Maybe there are some fields missing or the types does not match.",
         _0
     )]
-    BadJson(String),
-    #[fail(display = "{}", reason)]
     RpcOffline { reason: RpcMeta },
     #[fail(display = "Bad request")]
     BadRequest,
     #[fail(display = " Wrong credentials")]
     Unauthorized,
+    #[fail(display = "{}", _0)]
+    Submission(BadSubmission),
 }
+#[derive(failure::Fail, Debug)]
+pub enum BadSubmission {
+    #[fail(display = "json err: {:?}", _0)]
+    Json(String),
+    #[fail(display = "Wrong content type expected application/json.")]
+    ContentType,
+    #[fail(display = "{:?}", _0)]
+    Other(String),
+}
+
+impl From<BadSubmission> for Error {
+    fn from(bad_err: BadSubmission) -> Self {
+        Error::Submission(bad_err)
+    }
+}
+
 impl<T> From<T> for Error
 where
     T: std::error::Error + Sync + Send + 'static,
 {
     fn from(error: T) -> Self {
         Error::General(Box::new(error))
+    }
+}
+
+pub fn sub_extractor(ae: actix_web::error::Error) -> Error {
+    match ae.as_error::<JsonPayloadError>() {
+        Some(inner_e) => match inner_e {
+            JsonPayloadError::ContentType => BadSubmission::ContentType.into(),
+            JsonPayloadError::Deserialize(e) => BadSubmission::Json(e.to_string()).into(),
+            _ => BadSubmission::Other(inner_e.to_string()).into(),
+        },
+        None => Error::Submission(BadSubmission::Other(ae.to_string())),
     }
 }
 

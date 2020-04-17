@@ -1,26 +1,20 @@
 use crate::api::Submission;
-use crate::handlers::error::Error;
+use crate::handlers::error::{sub_extractor, Error};
 use crate::state::State;
-use actix_web::FromRequest;
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpResponse};
 use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
 use grpc_api::{Assignment, AssignmentMsg, AssignmentResult};
 /*
 use tonic::transport::Channel;
 */
-use actix_web::web::Json;
 use uuid::Uuid;
 
 pub async fn add_submission(
-    submission: web::Json<Submission>,
     state: web::Data<State>,
-    /*    req: HttpRequest,*/
+    json: Result<web::Json<Submission>, actix_web::error::Error>,
 ) -> Result<HttpResponse, Error> {
-    /*    let submission = web::Json::<Submission>::extract(&req).await.map_err(|e| {
-        log::warn!("{}", e);
-        Error::BadJson(e.to_string())
-    })?;*/
+    let submission = json.map_err(sub_extractor)?;
     let assignment = db_assignment(&state.db_pool, &submission.assignment_id)
         .await
         .map_err(|_| Error::NotAssignment(submission.assignment_id))?;
