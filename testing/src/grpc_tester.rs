@@ -2,7 +2,7 @@ use crate::checker::{
     Checker, CustomScriptChecker, FilesChecker, RegexChecker, SortedChecker, StdoutChecker,
 };
 use crate::docker_api::DockerWrap;
-use crate::error::{Error, IOError};
+use crate::error::{Error, IOError, SystemError};
 use crate::{fs_util, sema_wrap};
 use futures::future;
 use grpc_api::test_server::Test;
@@ -31,26 +31,11 @@ impl Test for Tester {
         let req = request.into_inner();
         if let Some(assignment) = req.assignment {
             let reply = match self.inner_run_test(&assignment, &req.code_to_test).await {
-                Err(Error::IO(e)) => {
-                    let msg = format!(
-                        "Error while creating a tempfile or copying files or failed to run custom script. The server has to stop. error: {}", e
-                    );
-                    log::error!("{}", &msg);
+                Err(Error::InvalidTest(e)) => {
+                    log::error!("Invalid test error_msg: {}", e);
                     AssignmentResult {
                         passed: false,
-                        message: Some(msg),
-                        valid: false,
-                    }
-                }
-                Err(Error::Docker(e)) | Err(Error::InvalidRegex(e)) => {
-                    let msg = format!(
-                        "Some error with the docker API or the given regex is invalid. The server has to stop. error: \n {}",
-                        e
-                    );
-                    log::error!("{}", &msg);
-                    AssignmentResult {
-                        passed: false,
-                        message: Some(msg),
+                        message: Some(e.to_string()),
                         valid: false,
                     }
                 }
@@ -114,7 +99,8 @@ impl Tester {
                 &solution_context_dir.path(),
                 &assignment.args,
             )
-            .await?;
+            .await
+            .map_err(|_e| SystemError::BadSampleSolution)?;
         test_output.status_success()?;
         log::info!("now checking");
         let mut tests: Vec<Box<dyn Checker>> = Vec::new();

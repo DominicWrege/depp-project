@@ -1,3 +1,4 @@
+use crate::docker_api::DockerError;
 use std::path::PathBuf;
 use std::{fmt, time};
 use zip::result::ZipError;
@@ -17,6 +18,15 @@ pub enum IOError {
     #[fail(display = "IO error while reading the dir {:?}", _0)]
     ListDir(PathBuf),
 }
+#[derive(Debug, failure::Fail)]
+pub enum SystemError {
+    #[fail(display = "IO error: {}", _0)]
+    IO(IOError),
+    #[fail(display = "Docker error {}", _0)] // this should be some docker_err
+    Docker(DockerError),
+    #[fail(display = "Error in sample solution.")]
+    BadSampleSolution,
+}
 
 impl From<zip::result::ZipError> for IOError {
     fn from(z_err: ZipError) -> Self {
@@ -24,16 +34,23 @@ impl From<zip::result::ZipError> for IOError {
     }
 }
 
+impl From<DockerError> for Error {
+    fn from(d_err: DockerError) -> Self {
+        Error::InvalidTest(SystemError::Docker(d_err))
+    }
+}
+
 impl From<IOError> for Error {
-    fn from(e: IOError) -> Error {
-        Error::IO(e)
+    fn from(err: IOError) -> Self {
+        Error::InvalidTest(SystemError::IO(err))
     }
 }
 
 #[derive(Debug, failure::Fail, derive_more::From)]
 pub enum Error {
-    #[fail(display = "IO error: {}", _0)]
-    IO(IOError),
+    #[from]
+    #[fail(display = "Invalid. {}", _0)]
+    InvalidTest(SystemError),
     #[fail(display = "Time out reached! Script took more than {}.", _1)]
     Timeout(tokio::time::Elapsed, DurationDisplay),
     #[from]
@@ -47,8 +64,6 @@ pub enum Error {
     ExitCode(String),
     #[fail(display = "Wrong file content: expected({:#?}) result({:#?})", _0, _1)]
     ExpectedFileNotSame(String, String),
-    #[fail(display = "Docker error {}", _0)] // this should be some docker_err
-    Docker(String),
     #[fail(display = "Regex error {}", _0)]
     InvalidRegex(String),
     #[fail(display = "No Regex match found in '{}' for regex: '{}'", _0, _1)]

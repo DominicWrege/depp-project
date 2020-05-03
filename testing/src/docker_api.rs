@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::{Error, SystemError};
 use bollard::container::{
     CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
     RemoveContainerOptions, StartContainerOptions, WaitContainerOptions,
@@ -15,7 +15,9 @@ use std::time::Duration;
 use tokio::time::timeout;
 
 #[derive(Debug, failure::Fail)]
-pub enum DockerImageError {
+pub enum DockerError {
+    #[fail(display = "Docker API error: {}", _0)]
+    API(bollard::errors::Error),
     #[fail(display = "Could not pull image: '{}' because it was not found.", _0)]
     ImageNotFound(String),
     #[fail(display = "error while pulling image: {} ", _0)]
@@ -24,7 +26,7 @@ pub enum DockerImageError {
 
 impl From<bollard::errors::Error> for Error {
     fn from(err: bollard::errors::Error) -> Self {
-        Error::Docker(err.to_string())
+        Error::InvalidTest(SystemError::Docker(DockerError::API(err)))
     }
 }
 
@@ -234,7 +236,7 @@ impl DockerWrap {
             status_code,
         })
     }
-    pub async fn pull_image(&self) -> Result<(), DockerImageError> {
+    pub async fn pull_image(&self) -> Result<(), DockerError> {
         use bollard::image::CreateImageOptions;
         let options = Some(CreateImageOptions {
             from_image: self.image_name.as_str(),
@@ -246,13 +248,13 @@ impl DockerWrap {
             match resp {
                 Err(err) => match err.kind() {
                     ErrorKind::DockerResponseNotFoundError { .. } => {
-                        return Err(DockerImageError::ImageNotFound(self.image_name.to_string()));
+                        return Err(DockerError::ImageNotFound(self.image_name.to_string()));
                     }
                     ErrorKind::JsonDataError { .. }
                     | ErrorKind::JsonDeserializeError { .. }
                     | ErrorKind::JsonSerializeError { .. } => {}
                     _ => {
-                        return Err(DockerImageError::Other(err));
+                        return Err(DockerError::Other(err));
                     }
                 },
                 _ => {}
