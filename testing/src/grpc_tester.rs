@@ -2,7 +2,7 @@ use crate::checker::{
     Checker, CustomScriptChecker, FilesChecker, RegexChecker, SortedChecker, StdoutChecker,
 };
 use crate::docker_api::DockerWrap;
-use crate::error::Error;
+use crate::error::{Error, IOError};
 use crate::{fs_util, sema_wrap};
 use futures::future;
 use grpc_api::test_server::Test;
@@ -31,9 +31,7 @@ impl Test for Tester {
         let req = request.into_inner();
         if let Some(assignment) = req.assignment {
             let reply = match self.inner_run_test(&assignment, &req.code_to_test).await {
-                Err(Error::CantCreatTempFile(e))
-                | Err(Error::Copy(e))
-                | Err(Error::FailedRunCustomScript(e)) => {
+                Err(Error::IO(e)) => {
                     let msg = format!(
                         "Error while creating a tempfile or copying files or failed to run custom script. The server has to stop. error: {}", e
                     );
@@ -46,7 +44,7 @@ impl Test for Tester {
                 }
                 Err(Error::Docker(e)) | Err(Error::InvalidRegex(e)) => {
                     let msg = format!(
-                        "Some error with the docker API or the given regex is invalid. The server has to stop. error {}",
+                        "Some error with the docker API or the given regex is invalid. The server has to stop. error: \n {}",
                         e
                     );
                     log::error!("{}", &msg);
@@ -92,11 +90,11 @@ impl Tester {
         let context_dir = fs_util::extract_files_include(&assignment.include_files).await?;
         let script_test_path =
             fs_util::new_tmp_script_file(assignment.script_type.into(), code_to_test)
-                .map_err(Error::CantCreatTempFile)?
+                .map_err(|e| IOError::CreateFile(e))?
                 .into_temp_path();
         let script_solution_path =
             fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
-                .map_err(Error::CantCreatTempFile)?
+                .map_err(|e| IOError::CreateFile(e))?
                 .into_temp_path();
         let docker_api = self.docker.acquire().await;
         let test_output = docker_api

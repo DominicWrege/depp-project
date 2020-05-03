@@ -1,5 +1,6 @@
 use crate::docker_api::ScriptOutput;
 use crate::error::Error;
+use crate::error::IOError;
 use crate::fs_util;
 use async_trait::async_trait;
 use futures::pin_mut;
@@ -132,8 +133,16 @@ impl Checker for FilesChecker {
                 && self.cmp_file_type(&solution_entry, &path_to_check.as_path())
             {
                 if solution_entry.is_file() {
-                    let solution_content = trim_lines(&fs::read_to_string(&solution_entry).await?);
-                    let result_content = trim_lines(&fs::read_to_string(&path_to_check).await?);
+                    let solution_content = trim_lines(
+                        &fs::read_to_string(&solution_entry)
+                            .await
+                            .map_err(|e| IOError::ReadFile(e))?,
+                    );
+                    let result_content = trim_lines(
+                        &fs::read_to_string(&path_to_check)
+                            .await
+                            .map_err(|e| IOError::ReadFile(e))?,
+                    );
                     if solution_content != result_content {
                         return Err(Error::ExpectedFileNotSame(solution_content, result_content));
                     }
@@ -198,7 +207,7 @@ impl Checker for CustomScriptChecker {
         };
         let file_custom_script =
             fs_util::new_tmp_script_file(script_type, &self.custom_script_content)
-                .map_err(Error::CantCreatTempFile)?
+                .map_err(|e| IOError::CreateFile(e))?
                 .into_temp_path();
 
         let prog = if cfg!(target_family = "unix") {
@@ -217,7 +226,7 @@ impl Checker for CustomScriptChecker {
             .current_dir(&self.working_dir)
             .output()
             .await
-            .map_err(|e| Error::FailedRunCustomScript(e))?;
+            .map_err(|e| IOError::FailedRunCustomScript(e))?;
         if outpout.stderr.is_empty() && outpout.status.success() {
             Ok(())
         } else {

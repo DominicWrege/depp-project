@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::{Error, IOError};
 use async_stream::try_stream;
 use futures::stream::Stream;
 use grpc_api::{Script, TargetOs};
@@ -10,11 +10,11 @@ use tokio::fs;
 
 const TEMP_DIR: &str = "/tmp/scripts";
 
-pub fn new_tmp_dir() -> Result<TempDir, std::io::Error> {
+pub async fn new_tmp_dir() -> Result<TempDir, std::io::Error> {
     if cfg!(target_family = "unix") {
         let p = Path::new(TEMP_DIR);
         if !p.exists() {
-            std::fs::create_dir(p)?;
+            tokio::fs::create_dir(p).await?
         }
         Builder::new().tempdir_in(TEMP_DIR)
     } else {
@@ -22,7 +22,7 @@ pub fn new_tmp_dir() -> Result<TempDir, std::io::Error> {
     }
 }
 pub async fn extract_files_include(zip: &[u8]) -> Result<TempDir, Error> {
-    let dir = new_tmp_dir()?;
+    let dir = new_tmp_dir().await.map_err(|e| IOError::CreateFile(e))?;
     let c_dir = dir.path().clone();
     tokio::task::block_in_place(move || unzip_into_dir(c_dir, &zip))?;
     Ok(dir)
@@ -50,14 +50,14 @@ pub fn new_tmp_script_file(
     Ok(file)
 }
 
-pub fn ls_dir_content(root: PathBuf) -> impl Stream<Item = Result<PathBuf, Error>> {
+pub fn ls_dir_content(root: PathBuf) -> impl Stream<Item = Result<PathBuf, IOError>> {
     try_stream! {
         if !root.is_file() {
             let mut stack = vec![root.to_path_buf()];
             while let Some(dir) = stack.pop() {
-                let mut dir_entry = fs::read_dir(&dir).await.map_err(|_e| Error::ListDir(dir))?;
+                let mut dir_entry = fs::read_dir(&dir).await.map_err(|_e| IOError::ListDir(dir.clone()))?;
                 while let Ok(Some(entry)) = dir_entry.next_entry().await {
-                    if entry.file_type().await?.is_dir() {
+                    if entry.file_type().await.map_err(|_e| IOError::ListDir(dir.clone()))?.is_dir() {
                         stack.push(entry.path());
                     }
                     yield entry.path();
@@ -67,24 +67,24 @@ pub fn ls_dir_content(root: PathBuf) -> impl Stream<Item = Result<PathBuf, Error
     }
 }
 
-fn unzip_into_dir(outdir: &Path, zip_buf: &[u8]) -> Result<(), Error> {
+fn unzip_into_dir(outdir: &Path, zip_buf: &[u8]) -> Result<(), IOError> {
     if !zip_buf.is_empty() {
         let reader = std::io::Cursor::new(zip_buf);
-        let mut zip = zip::ZipArchive::new(reader).unwrap();
+        let mut zip = zip::ZipArchive::new(reader)?;
         use std::fs;
         for i in 0..zip.len() {
-            let mut file = zip.by_index(i).unwrap();
+            let mut file = zip.by_index(i)?;
             let outpath = outdir.join(file.sanitized_name());
             if file.is_dir() {
-                fs::create_dir_all(&outpath)?;
+                fs::create_dir_all(&outpath).map_err(|e| IOError::CreateFile(e))?;
             } else {
                 if let Some(p) = outpath.parent() {
                     if !p.exists() {
-                        fs::create_dir_all(&p)?;
+                        fs::create_dir_all(&p).map_err(|e| IOError::Copy(e))?;
                     }
                 }
-                let mut outfile = fs::File::create(&outpath)?;
-                io::copy(&mut file, &mut outfile)?;
+                let mut outfile = fs::File::create(&outpath).map_err(|e| IOError::CreateFile(e))?;
+                io::copy(&mut file, &mut outfile).map_err(|e| IOError::Copy(e))?;
             }
         }
     }
