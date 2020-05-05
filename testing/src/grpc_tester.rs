@@ -77,11 +77,8 @@ impl Tester {
             fs_util::new_tmp_script_file(assignment.script_type.into(), code_to_test)
                 .map_err(|e| IOError::CreateFile(e))?
                 .into_temp_path();
-        let script_solution_path =
-            fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
-                .map_err(|e| IOError::CreateFile(e))?
-                .into_temp_path();
         let docker_api = self.docker.acquire().await;
+
         let test_output = docker_api
             .test_in_container(
                 &assignment.script_type.into(),
@@ -90,20 +87,54 @@ impl Tester {
                 &assignment.args,
             )
             .await?;
-        let solution_context_dir =
-            fs_util::extract_files_include(&assignment.include_files).await?;
-        let solution_output = docker_api
-            .test_in_container(
-                &assignment.script_type.into(),
-                &script_solution_path,
-                &solution_context_dir.path(),
-                &assignment.args,
-            )
-            .await
-            .map_err(|_e| SystemError::BadSampleSolution)?;
         test_output.status_success()?;
-        log::info!("now checking");
+
+        // only run solution if one of the 3 options is on
         let mut tests: Vec<Box<dyn Checker>> = Vec::new();
+        if assignment.compare_fs_solution
+            | assignment.compare_stdout_solution
+            | assignment.compare_stdout_solution
+            | assignment.custom_script.is_some()
+        {
+            let script_solution_path =
+                fs_util::new_tmp_script_file(assignment.script_type.into(), &assignment.solution)
+                    .map_err(|e| IOError::CreateFile(e))?
+                    .into_temp_path();
+            let solution_context_dir =
+                fs_util::extract_files_include(&assignment.include_files).await?;
+
+            let solution_output = docker_api
+                .test_in_container(
+                    &assignment.script_type.into(),
+                    &script_solution_path,
+                    &solution_context_dir.path(),
+                    &assignment.args,
+                )
+                .await
+                .map_err(|_e| SystemError::BadSampleSolution)?;
+            solution_output
+                .status_success()
+                .map_err(|_e| SystemError::BadSampleSolution)?;
+
+            if assignment.compare_fs_solution {
+                tests.push(FilesChecker::boxed(
+                    solution_context_dir.path().to_path_buf(),
+                    context_dir.path().to_path_buf(),
+                ));
+            }
+
+            if assignment.compare_stdout_solution {
+                tests.push(StdoutChecker::boxed(
+                    &solution_output.stdout,
+                    &test_output.stdout,
+                ));
+            }
+            let sort_stdout_by = assignment.sort_stdout.into();
+            if sort_stdout_by != SortStdoutBy::UnknownSort {
+                tests.push(SortedChecker::boxed(&test_output.stdout, sort_stdout_by))
+            }
+        }
+
         let regex_mode = assignment.regex_mode.into();
         if regex_mode != RegexMode::UnknownRegex {
             tests.push(RegexChecker::boxed(
@@ -113,38 +144,18 @@ impl Tester {
                 &code_to_test.to_string(),
             ));
         }
-
-        if assignment.compare_fs_solution {
-            tests.push(FilesChecker::boxed(
-                solution_context_dir.path().to_path_buf(),
-                context_dir.path().to_path_buf(),
-            ));
-        }
-
-        if assignment.compare_stdout_solution {
-            tests.push(StdoutChecker::boxed(
-                &solution_output.stdout,
-                &test_output.stdout,
-            ));
-        }
-        let sort_stdout_by = assignment.sort_stdout.into();
-        if sort_stdout_by != SortStdoutBy::UnknownSort {
-            tests.push(SortedChecker::boxed(&test_output.stdout, sort_stdout_by))
-        }
-
         if let Some(custom_script) = &assignment.custom_script {
             tests.push(CustomScriptChecker::boxed(
                 &custom_script,
                 code_to_test,
-                test_output,
-                solution_output,
+                &test_output,
                 &context_dir.path(),
             ))
         }
 
         let _ = future::try_join_all(tests.iter().map(|item| async move { item.check().await }))
             .await?;
-        info!("testing done assignment name: {}", &assignment.name);
+        info!("testing done for assignment: {}", &assignment.name);
         Ok(())
     }
 }

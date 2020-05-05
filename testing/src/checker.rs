@@ -174,7 +174,6 @@ pub struct CustomScriptChecker {
     custom_script_content: String,
     tested_script_content: String,
     tested_out: ScriptOutput,
-    solution_out: ScriptOutput,
     working_dir: PathBuf,
 }
 
@@ -182,15 +181,13 @@ impl CustomScriptChecker {
     pub fn boxed(
         c_script_content: &str,
         tested_script_content: &str,
-        tested_out: ScriptOutput,
-        solution_out: ScriptOutput,
+        tested_out: &ScriptOutput,
         cur_dir: &Path,
     ) -> Box<dyn Checker> {
         Box::new(CustomScriptChecker {
             custom_script_content: String::from(c_script_content),
             tested_script_content: String::from(tested_script_content),
-            tested_out,
-            solution_out,
+            tested_out: tested_out.clone(),
             working_dir: cur_dir.to_path_buf(),
         })
     }
@@ -218,11 +215,7 @@ impl Checker for CustomScriptChecker {
         use tokio::process::Command;
         let outpout = Command::new(prog)
             .arg(&file_custom_script)
-            .args(&[
-                &self.tested_out.stdout,
-                &self.tested_script_content,
-                &self.solution_out.stdout,
-            ])
+            .args(&[&self.tested_out.stdout, &self.tested_script_content])
             .current_dir(&self.working_dir)
             .output()
             .await

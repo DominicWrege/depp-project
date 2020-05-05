@@ -12,7 +12,8 @@
       method="POST" target="_self">
 
     <div class="card">
-        <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
+        <div class="align-baseline card-header d-flex align-items-center justify-content-between">
+            <button type="button" onclick="goBack('{{assignment.exercise_id}}')" class="btn btn-primary justify-content-start">zurück</button>
             <h5>Aufgabe ansehen/bearbeiten</h5>
             <button type="submit" class="btn btn-primary justify-content-end" form="AssignmentForm">speichern</button>
         </div>
@@ -101,9 +102,7 @@
                             value="{{ assignment.args | join(sep=',') }}"
 
                     />
-                    <small id="ArgsHelp" class="form-text text-muted"
-                    >Komma-Sperierte Liste ohne Leerzeichen. Beispiel:
-                        -l,10,file.txt,--name bob</small>
+                    <small id="ArgsHelp" class="form-text text-muted">Komma-Sperierte Liste ohne Leerzeichen. Beispiel: -l,10,file.txt,--name bob</small>
                     <small class="form-text text-muted">
                         Gilt nur für die Musterlösung und das zu testene Skript.
                     </small>
@@ -192,7 +191,7 @@
                         name="custom_script"
                         id="CustomScriptInput"
                 >{{assignment.custom_script}}</textarea>
-                {% include 'solution-small-desc.html' %}
+                {% include 'custom-script-small-desc.html' %}
             </div>
         </div>
 
@@ -202,7 +201,7 @@
 
 <form class="my-5 d-flex justify-content-center" id="FileForm" action="{{file_url}}" target="_parent" method="POST"
       enctype="multipart/form-data">
-    <div class="card w-75">
+    <div class="card w-100">
         <div class=" align-baseline card-header d-flex align-items-center justify-content-between">
             <h5>Benötige Dateien</h5>
             <button type="submit" class="btn btn-primary justify-content-end" form="FileForm">hochladen</button>
