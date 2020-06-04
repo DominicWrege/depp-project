@@ -28,3 +28,19 @@ services:
       - db
     links:
       - "db:database"
+  docs:
+    build: docs
+    container_name: api_docs
+    ports:
+      - 4001:80
+    volumes:
+      - ./docs:/usr/share/nginx/html/
+  swagger_ui:
+    container_name: swagger_ui
+    depends_on:
+      - docs
+    image: swaggerapi/swagger-ui
+    environment:
+      - API_URL=http://127.0.0.1:4001/api.openapi.yml
+    ports:
+      - 4000:8080
