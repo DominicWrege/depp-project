@@ -68,7 +68,6 @@ paths:
     /result/{iliasId}:
         get:
             summary: "Returns the result and keeps until the post method is invoked for the submission by given iliasID." 
-            "
             tags:
               - /api
             operationId: "getResults"
