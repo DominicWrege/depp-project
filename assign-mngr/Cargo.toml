@@ -1,39 +1,39 @@
 [package]
 name = "assign-mngr"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["DomincWrege <dominic.wrege001@stud.fh-dortmund.de>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "0.2.11", features=["full"]}
-tokio-postgres = "0.5.3"
+tokio = { version = "0.2.21", features = ["full"] }
+tokio-postgres = "0.5.5"
 deadpool-postgres = "0.5.5"
 dotenv = "0.15.0"
-tokio-pg-mapper = "0.1.5"
+tokio-pg-mapper = "0.1.8"
 tokio-pg-mapper-derive = "0.1.5"
 actix-web = "2.0.0"
-actix-rt = "1.0.0"
-tera = "1.0.2"
-serde = "1.0.104"
-postgres-types =  { version="0.1.0", features=["derive"] }
+actix-rt = "1.1.1"
+tera = "1.3.1"
+serde = "1.0.114"
+postgres-types =  { version = "0.1.2", features = ["derive"] }
 actix-multipart = "0.2.0"
-futures = "0.3.4"
+futures = "0.3.5"
 mime = "0.3.16"
-zip = "0.5.5"
-actix-files = "0.2.1"
-err-derive = "0.2.3"
+zip = "0.5.6"
+actix-files = "0.2.2"
+err-derive = "0.2.4"
 db-lib = {path = "../db-lib"}
 grpc-api = {path = "../grpc-api"}
 actix-identity = "0.2.1"
-chrono = "0.4.11"
+chrono = "0.4.13"
 environment = "0.1.1"
 rand = "0.7.3"
 actix-service = "1.0.5"
 lazy_static = "1.4.0"
-failure = "0.1.7"
-sha2 = "0.8.1"
+failure = "0.1.8"
+sha2 = "0.9.1"
 envy = "0.4.1"
 log = "0.4.8"
 env_logger = "0.7.1"
@@ -42,4 +42,4 @@ bstr = "0.2.13"
 derive_more = "0.99.9"
 [dependencies.uuid]
 features = ["serde", "v4"]
-version = "0.8"
+version = "0.8.1"

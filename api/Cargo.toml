@@ -2,45 +2,45 @@
 name = "api"
 authors = ["Dominic <email@domi-me.de>"]
 edition = "2018"
-version = "0.4.0"
+version = "0.5.0"
 
 
 [dependencies]
-tonic = "0.1.0"
-bytes = "0.5.3"
-prost = "0.6.0"
-tokio = { version = "0.2.13", features = ["full"] }
-futures = "0.3.1"
+tonic = "0.2.1"
+bytes = "0.5.5"
+prost = "0.6.1"
+tokio = { version = "0.2.21", features = ["full"] }
+futures = "0.3.5"
 
 actix-web = "2.0.0"
 actix-cors = "0.2.0"
-actix-rt = "1.0.0"
-actix-web-httpauth = "0.4.0"
+actix-rt = "1.1.1"
+actix-web-httpauth = "0.4.2"
 
-base64 = "0.11.0"
+base64 = "0.12.3"
 env_logger = "0.7.1"
-err-derive = "0.2.1"
-failure = "0.1.6"
+err-derive = "0.2.4"
+failure = "0.1.8"
 log = "0.4.8"
-serde = "1.0.104"
-serde_json = "1.0.44"
-derive_more = "0.99.2"
-dashmap = "3.0.7"
+serde = "1.0.114"
+serde_json = "1.0.56"
+derive_more = "0.99.9"
+dashmap = "3.11.7"
 grpc-api = {path = "../grpc-api"}
 db-lib = {path = "../db-lib"}
 envy = "0.4.1"
-sha2 = "0.8.1"
-toml = "0.5.5"
+sha2 = "0.9.1"
+toml = "0.5.6"
 hex-serde = "0.1.0"
-structopt = "0.3.7"
+structopt = "0.3.15"
 deadpool-postgres = "0.5.5"
-tokio-postgres = { version="0.5.3" , features=["with-uuid-0_8"] }
-tokio-pg-mapper = "0.1.5"
+tokio-postgres = { version = "0.5.5", features = ["with-uuid-0_8"] }
+tokio-pg-mapper = "0.1.8"
 tokio-pg-mapper-derive = "0.1.5"
-async-trait = "0.1.24"
+async-trait = "0.1.36"
 [dependencies.url]
 version = "2.1.1"
 features = ["serde"]
 [dependencies.uuid]
 features = ["serde", "v4"]
-version = "0.8"
+version = "0.8.1"

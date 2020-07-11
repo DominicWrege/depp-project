@@ -1,10 +1,10 @@
 use crate::error::{Error, SystemError};
 use bollard::container::{
-    CreateContainerOptions, CreateContainerResults, HostConfig, LogOutput, LogsOptions, MountPoint,
-    RemoveContainerOptions, StartContainerOptions, WaitContainerOptions,
+    CreateContainerOptions, LogOutput, LogsOptions, RemoveContainerOptions, StartContainerOptions,
+    WaitContainerOptions,
 };
-
 use bollard::errors::ErrorKind;
+use bollard::service::{ContainerCreateResponse, HostConfig, Mount};
 
 use crate::checker::trim_lines;
 use futures::StreamExt;
@@ -32,24 +32,9 @@ impl From<bollard::errors::Error> for Error {
 }
 
 #[derive(Debug)]
-pub struct Mount<'a> {
+pub struct MountContext<'a> {
     pub source_dir: &'a str,
     pub target_dir: &'a str,
-}
-
-enum MountPermission {
-    Read,
-    Write,
-}
-
-impl From<MountPermission> for Option<bool> {
-    fn from(m: MountPermission) -> Option<bool> {
-        let p = match m {
-            MountPermission::Read => true,
-            MountPermission::Write => false,
-        };
-        Some(p)
-    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -65,34 +50,30 @@ pub fn docker_mount_points(script: &Script) -> (&'static str, &'static str) {
     }
 }
 
-fn create_mount_point<'a>(
-    source: &'a str,
-    target: &'a str,
-    permission: MountPermission,
-) -> MountPoint<&'a str> {
-    MountPoint {
-        target,
-        source,
-        type_: "bind",
-        read_only: permission.into(),
-        consistency: "default",
+fn create_mount_point<'a>(source: String, target: String, read_only: bool) -> Mount {
+    Mount {
+        target: Some(target),
+        source: Some(source),
+        _type: Some(bollard::service::MountTypeEnum::BIND),
+        read_only: Some(read_only),
+        consistency: Some(String::from("default")),
         ..Default::default()
     }
 }
 
 pub fn create_host_config<'a>(
-    out_put_mount: &'a Mount,
-    script_mount: &'a Mount,
-) -> Option<HostConfig<&'a str>> {
+    out_put_mount: &'a MountContext,
+    script_mount: &'a MountContext,
+) -> Option<HostConfig> {
     let output_mount_point = create_mount_point(
-        out_put_mount.source_dir,
-        out_put_mount.target_dir,
-        MountPermission::Write,
+        out_put_mount.source_dir.to_string(),
+        out_put_mount.target_dir.to_string(),
+        false,
     );
     let script_mount_point = create_mount_point(
-        script_mount.source_dir,
-        script_mount.target_dir,
-        MountPermission::Read,
+        script_mount.source_dir.to_string(),
+        script_mount.target_dir.to_string(),
+        true,
     );
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),
@@ -104,8 +85,8 @@ pub fn create_host_config<'a>(
     })
 }
 
-const fn to_mb(n: u64) -> u64 {
-    n * 1000000
+const fn to_mb(n: u64) -> i64 {
+    (n * 1000000) as i64
 }
 
 // time in seconds
@@ -134,11 +115,11 @@ impl DockerWrap {
         args_from_conf: &Vec<String>,
     ) -> Result<ScriptOutput, Error> {
         let (inner_working_dir, inner_script_dir) = docker_mount_points(script);
-        let out_dir_mount = Mount {
+        let out_dir_mount = MountContext {
             source_dir: out_dir.to_str().unwrap(),
             target_dir: inner_working_dir,
         };
-        let script_dir_mount = Mount {
+        let script_dir_mount = MountContext {
             source_dir: script_path.parent().unwrap().to_str().unwrap(),
             target_dir: inner_script_dir,
         };
@@ -179,9 +160,9 @@ impl DockerWrap {
     pub async fn create_container(
         &self,
         cmd: Vec<&str>,
-        host_config: Option<HostConfig<&str>>,
+        host_config: Option<HostConfig>,
         working_dir: &str,
-    ) -> Result<CreateContainerResults, bollard::errors::Error> {
+    ) -> Result<ContainerCreateResponse, DockerError> {
         let container_config = bollard::container::Config {
             hostname: Some("computer"),
             attach_stdout: Some(true),
@@ -191,13 +172,14 @@ impl DockerWrap {
             working_dir: Some(working_dir),
             cmd: Some(cmd),
             env: None,
-            stop_timeout: Some(self.timeout.as_secs() as isize),
+            stop_timeout: Some(self.timeout.as_secs() as i64),
             host_config,
             ..Default::default()
         };
         self.docker
             .create_container(None::<CreateContainerOptions<&str>>, container_config)
             .await
+            .map_err(|e| DockerError::API(e))
     }
 
     async fn get_output(&self, container_id: &str) -> (String, String) {
@@ -211,8 +193,18 @@ impl DockerWrap {
         let mut stderr = String::new();
         while let Some(out) = output_stream.next().await {
             match out.unwrap() {
-                LogOutput::StdOut { message } => write!(stdout, "{}\n", message).unwrap(),
-                LogOutput::StdErr { message } => write!(stderr, "{}\n", message).unwrap(),
+                LogOutput::StdOut { message } => write!(
+                    stdout,
+                    "{}\n",
+                    std::str::from_utf8(message.as_ref()).unwrap()
+                )
+                .unwrap(),
+                LogOutput::StdErr { message } => write!(
+                    stderr,
+                    "{}\n",
+                    std::str::from_utf8(message.as_ref()).unwrap()
+                )
+                .unwrap(),
                 _ => (),
             }
         }
@@ -271,7 +263,7 @@ impl DockerWrap {
 pub struct ScriptOutput {
     pub stdout: String,
     pub stderr: String,
-    pub status_code: u64,
+    pub status_code: i64,
 }
 
 impl Display for ScriptOutput {

@@ -2,7 +2,7 @@ use deadpool_postgres::{Manager, Pool};
 
 mod embedded {
     use refinery::embed_migrations;
-    embed_migrations!("./db-lib/migrations");
+    embed_migrations!("migrations");
 }
 // TODO refactor conn err
 #[derive(Debug, err_derive::Error, derive_more::From)]
@@ -21,7 +21,7 @@ pub enum ConfigError {
     #[error(display = "Connection failed using config {:#?}. Error: {}", _0, _1)]
     Connection(DbConfig, tokio_postgres::error::Error),
     #[error(display = "Migration failed: {}", _0)]
-    Migration(refinery_migrations::Error),
+    Migration(refinery::Error),
 }
 
 // user for testing
