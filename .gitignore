@@ -12,6 +12,7 @@ Cargo.lock
 #Added by cargo
 #
 #already existing elements are commented out
+node_modules
 
 /target
 #**/*.rs.bk

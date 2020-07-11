@@ -1,6 +1,6 @@
 use crate::assignments::file;
 use crate::assignments::new::fix_newlines;
-use crate::db::{rows_into, ScriptType};
+use crate::db::{get_exercise_description_for_id, rows_into, ScriptType};
 use crate::error::HttpError;
 use crate::handler::{render_template, HttpResult};
 use crate::template::TEMPLATES;
@@ -19,6 +19,7 @@ pub struct AssignmentExercise {
     script_type: ScriptType,
     description: String,
     exercise_name: String,
+    active: bool,
 }
 
 pub fn parse_path(path: &str) -> Result<i32, HttpError> {
@@ -26,6 +27,10 @@ pub fn parse_path(path: &str) -> Result<i32, HttpError> {
         .map_err(|_| HttpError::WrongParameter(String::from(path)))
 }
 
+/// User clicks on one of the exercise it shows all assignments to that exercise
+/// # Arguments
+/// path is ```/manage/exercise/{{exercise.id}}```
+/// data is my state of the app
 pub async fn all_assignments_for_exercise(
     path: web::Path<String>,
     data: web::Data<State>,
@@ -35,16 +40,18 @@ pub async fn all_assignments_for_exercise(
     let stmt = client
         .prepare(
             r#"
-            SELECT a.assignment_name as name, script_type, e.description as exercise_name, a.description, a.uuid
+            SELECT a.assignment_name as name, script_type, e.description as exercise_name, a.description, a.uuid, a.active
             FROM assignment a INNER JOIN exercise e ON a.exercise_id = e.id
             WHERE e.id = $1
-            ORDER BY name"#,
+            ORDER BY a.active = FALSE, name"#,
         )
         .await?;
     let rows = client.query(&stmt, &[&id]).await?;
+    let exercise_name = get_exercise_description_for_id(&data.db_pool, id).await?;
     let assignments: Vec<AssignmentExercise> = rows_into(rows);
     let mut context = tera::Context::new();
     context.insert("assignments", &assignments);
+    context.insert("exercise_name", &exercise_name);
     render_template(&TEMPLATES, "assignments_list.html", &context)
 }
 
@@ -135,7 +142,6 @@ pub async fn single_assignment(path: web::Path<uuid::Uuid>, data: web::Data<Stat
 
     let row = client.query_one(&stmt, &[&uuid]).await?;
     let assignment = Assignment::from_row(row).map_err(|e| {
-        //TODO err println!
         eprintln!("{}", e);
         HttpError::NotFound("Assignment".into())
     })?;

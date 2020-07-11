@@ -14,3 +14,4 @@ docs
 **/*.md
 **/*.env
 **/*.idea
+*/*/node_modules

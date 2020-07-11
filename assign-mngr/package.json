@@ -1,0 +1,12 @@
+{
+	"name": "assign-mngr",
+	"version": "1.0.0",
+	"description": "Just for monaco editor",
+	"main": "\"\"",
+	"dependencies": {
+		"monaco-editor": "^0.20.0"
+	},
+	"devDependencies": {},
+	"author": "Dominic",
+	"license": "MIT"
+}

@@ -9,6 +9,7 @@ use bollard::errors::ErrorKind;
 use crate::checker::trim_lines;
 use futures::StreamExt;
 use grpc_api::{Script, TargetOs};
+use std::fmt::Display;
 use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
@@ -151,7 +152,7 @@ impl DockerWrap {
             .create_container(cmd, host_config, inner_working_dir)
             .await?;
         log::info!("Container created");
-        let out = timeout(self.timeout, self.start_and_log_container(&container.id))
+        let output = timeout(self.timeout, self.start_and_log_container(&container.id))
             .await
             .map_err(|e| {
                 let err = Error::Timeout(e, self.timeout.into());
@@ -167,9 +168,11 @@ impl DockerWrap {
                 }),
             )
             .await?;
+        if let Ok(val) = &output {
+            log::info!("Output: {}", val);
+        }
         log::info!("Container removed");
-        dbg!(&out);
-        out
+        output
     }
 
     // TODO set MacAddress, args_escaped on windows?!
@@ -269,6 +272,16 @@ pub struct ScriptOutput {
     pub stdout: String,
     pub stderr: String,
     pub status_code: u64,
+}
+
+impl Display for ScriptOutput {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
+        write!(
+            f,
+            "stdout: {}\nstderr: {}\nstatus_code:{}",
+            &self.stdout, &self.stderr, &self.status_code
+        )
+    }
 }
 
 impl ScriptOutput {

@@ -37,6 +37,9 @@ sha2 = "0.8.1"
 envy = "0.4.1"
 log = "0.4.8"
 env_logger = "0.7.1"
+smallvec = "1.4.1"
+bstr = "0.2.13"
+derive_more = "0.99.9"
 [dependencies.uuid]
 features = ["serde", "v4"]
 version = "0.8"

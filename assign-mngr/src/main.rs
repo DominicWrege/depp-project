@@ -35,8 +35,9 @@ async fn run() -> Result<(), failure::Error> {
         db_pool: db_lib::connect_migrate().await?,
         pwd: config.password,
     };
+
     init_logging();
-    let host = format!("0.0.0.0:{}", config.port);
+    let host = format!("0.0.0.0:{}", config.port); // default port is 5000
     log::info!("Listening on http://{}", host);
     let cookie_conf = CookieConfig::new();
     HttpServer::new(move || {

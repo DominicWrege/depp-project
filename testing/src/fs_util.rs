@@ -68,7 +68,6 @@ pub fn ls_dir_content(root: PathBuf) -> impl Stream<Item = Result<PathBuf, IOErr
 }
 
 fn unzip_into_dir(outdir: &Path, zip_buf: &[u8]) -> Result<(), IOError> {
-    dbg!(zip_buf.is_empty());
     if !zip_buf.is_empty() {
         let reader = std::io::Cursor::new(zip_buf);
         let mut zip = zip::ZipArchive::new(reader)?;

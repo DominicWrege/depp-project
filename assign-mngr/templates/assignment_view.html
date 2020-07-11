@@ -6,14 +6,13 @@
 {% set site_path = base_url  ~"/assignment" %}
 {% set file_url =  site_path ~"/file/" ~assignment.uuid  %}
 {% set file_name = assignment.name ~"_files.zip" %}
+{% set stop_loop = false %}
 
 
-<form class="d-flex justify-content-center" id="AssignmentForm" action="{{site_path}}/{{assignment.uuid}}"
-      method="POST" target="_self">
-
-    <div class="card">
+<form class="d-flex justify-content-center" id="AssignmentForm" action="{{site_path}}/{{assignment.uuid}}" method="POST" target="_self">
+    <div class="card w-100">
         <div class="align-baseline card-header d-flex align-items-center justify-content-between">
-            <button type="button" onclick="goBack('{{assignment.exercise_id}}')" class="btn btn-primary justify-content-start">zurück</button>
+                <a href="/manage/exercise/{{assignment.exercise_id}}"><button type="button"class="btn btn-primary justify-content-start">zurück</button></a>
             <h5>Aufgabe ansehen/bearbeiten</h5>
             <button type="submit" class="btn btn-primary justify-content-end" form="AssignmentForm">speichern</button>
         </div>
@@ -52,10 +51,9 @@
             </div>
 
             <fieldset class="form-group">
-
-                <legend>Überprüfen mit der Müsterlösung</legend>
+                <legend>Überprüfung mit der Musterlösung</legend>
                 <div class="custom-control custom-checkbox mr-sm-2">
-                    <input type="checkbox" {%if assignment.compare_fs_solution %} checked="check" {% endif %} id="compare_fs_checkbox" class="custom-control-input" name="compare_fs_solution" aria-describedby="bla">
+                    <input type="checkbox" {%if assignment.compare_fs_solution %} checked="check" {% endif %} id="compare_fs_checkbox" class="custom-control-input" name="compare_fs_solution" aria-describedby="müserlösung Label">
                     <label class="custom-control-label" for="compare_fs_checkbox">Die von der Müsterlösung erstellten Dateien/Ordner werden 1:1 verglichen.</label>
                 </div>
                 <div class="custom-control custom-checkbox mr-sm-2 mb-2">
@@ -79,15 +77,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="SolutionInput">Musterlösung Skript</label>
-                    <textarea
-                            spellcheck="false"
-                            class="form-control p-3 code-editor mono-font"
-                            rows="8"
-                            name="solution"
-                            id="SolutionInput"
-                            required
-                    >{{assignment.solution}}</textarea>
+                    <div hidden id="hiddenSolutionText">
+                        {{assignment.solution}}
+                    </div>
+                    <div hidden id="hiddenScriptType">
+                        {{assignment.script_type}}
+                    </div>
+                    {% include 'monaco_editor.html' %}
                 </div>
 
                 <div class="form-group ">
@@ -116,14 +112,15 @@
                             class="form-control"
                             id="SkriptType"
                             name="script_type"
+                            onchange="languageChanged(this)"
                             required
                     >
                         {% for script in scripts %}
-                        {% if script == assignment.script_type %}
-                        <option selected value="{{script}}">{{script}}</option>
-                        {% else %}
-                        <option value="{{script}}">{{script}}</option>
-                        {% endif %}
+                            {% if script == assignment.script_type %}
+                            <option selected value="{{script}}">{{script}}</option>
+                            {% else %}
+                            <option value="{{script}}">{{script}}</option>
+                            {% endif %}
                         {% endfor %}
                     </select>
                 </div>
@@ -147,57 +144,49 @@
                 </div>
             </div>
             <fieldset class="form-group">
-            <legend>Regex</legend>
-            <div class="form-group w-50">
-                <div class="form-group ">
-                    <div class="form-check radio-regex">
-                        <input class="form-check-input" {%if assignment.regex_check_mode == 'UnknownRegex' %} checked="true" {% endif %}  name="regex_check_mode" type="radio" value="UnknownRegex" id="NoneRadio" onclick="onchangeRegexRadio(this)">
-                        <label for="NoneRadio">Nichts</label>
-                    </div>
-                    <div class="form-check radio-regex">
-                        <input class="form-check-input" {%if assignment.regex_check_mode == 'ScriptContent' %} checked="true" {% endif %} name="regex_check_mode" type="radio" value="ScriptContent" id="SkriptRadio" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
-                        <label for="SkriptRadio">Skriptinhalt</label>
-                    </div>
-                    <div class="form-check radio-regex">
-                        <input class="form-check-input" {%if assignment.regex_check_mode == 'Stdout' %} checked="true" {% endif %} name="regex_check_mode" type="radio" id="StdoutRadio" value="Stdout" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
-                        <label class="form-check-label" for="StdoutRadio">Konsolen Ausgabe</label>
+                <legend>Regex</legend>
+                <div class="form-group w-50">
+                    <div class="form-group ">
+                        <div class="form-check radio-regex">
+                            <input class="form-check-input" {%if assignment.regex_check_mode == 'UnknownRegex' %} checked="true" {% endif %}  name="regex_check_mode" type="radio" value="UnknownRegex" id="NoneRadio" onclick="onchangeRegexRadio(this)">
+                            <label for="NoneRadio">Nichts</label>
+                        </div>
+                        <div class="form-check radio-regex">
+                            <input class="form-check-input" {%if assignment.regex_check_mode == 'ScriptContent' %} checked="true" {% endif %} name="regex_check_mode" type="radio" value="ScriptContent" id="SkriptRadio" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
+                            <label for="SkriptRadio">Skriptinhalt</label>
+                        </div>
+                        <div class="form-check radio-regex">
+                            <input class="form-check-input" {%if assignment.regex_check_mode == 'Stdout' %} checked="true" {% endif %} name="regex_check_mode" type="radio" id="StdoutRadio" value="Stdout" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
+                            <label class="form-check-label" for="StdoutRadio">Konsolen Ausgabe</label>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="form-group" hidden id="RegexInputForm">
-                <label for="RegexInput">Regex (Perl-style)</label>
-                <input
-                        type="text"
-                        class="form-control"
-                        id="RegexInput"
-                        {% if assignment.regex %}
-                        value="{{assignment.regex}}"
-                        {% endif %}
-                        aria-describedby="regex"
-                />
-                <small class="form-text text-muted">
-                    Jede Zeile wird überprüft. Es reicht, wenn es wenigensten einen Treffer gibt.
-                </small>
-            </div>
-
-        </fieldset>
+                <div class="form-group" hidden id="RegexInputForm">
+                    <label for="RegexInput">Regex (Perl-style)</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="RegexInput"
+                            {% if assignment.regex %}
+                            value="{{assignment.regex}}"
+                            {% endif %}
+                            aria-describedby="regex"
+                    />
+                    <small class="form-text text-muted">
+                        Jede Zeile wird überprüft. Es reicht, wenn es wenigensten einen Treffer gibt.
+                    </small>
+                </div>
+            </fieldset>
 
             <div class="form-group" id="SpecialSection">
-                <label for="CustomScriptInput">Spezielles Skript zum überprüfen der Abgabe (optional).</label>
-                <textarea
-                        spellcheck="false"
-                        class="form-control code-editor mono-font"
-                        rows="4"
-                        name="custom_script"
-                        id="CustomScriptInput"
-                >{{assignment.custom_script}}</textarea>
+                <label for="customScriptEditor">Spezielles Skript zum überprüfen der Abgabe (optional).</label>
+                <div id="customScriptEditor"></div>
                 {% include 'custom-script-small-desc.html' %}
+                <div hidden id="hiddenCustomScriptText">{{assignment.custom_script}}</div>
             </div>
         </div>
-
     </div>
 </form>
-
 
 <form class="my-5 d-flex justify-content-center" id="FileForm" action="{{file_url}}" target="_parent" method="POST"
       enctype="multipart/form-data">
@@ -206,18 +195,16 @@
             <h5>Benötige Dateien</h5>
             <button type="submit" class="btn btn-primary justify-content-end" form="FileForm">hochladen</button>
         </div>
-
         <div class="card-body">
             {% include 'file_upload.html' %}
             <section class="mb-4">
                 <p>Inhalt der Zip Datei <a href="{{file_url}}" download="{{file_name}}">herunterladen</a>:</p>
-
                 {% if files | length > 0 %}
-                {% for file in files %}
-                <ul>
-                    <li class="bg-light">{{file}}</li>
-                </ul>
-                {% endfor %}
+                    {% for file in files %}
+                    <ul>
+                        <li class="bg-light">{{file}}</li>
+                    </ul>
+                    {% endfor %}
                 {% else %}
                 <p>Keine Dateien vorhanden.</p>
                 {% endif %}
@@ -225,5 +212,6 @@
         </div>
     </div>
 </form>
+
 <script src="/static/form.js"></script>
 {% endblock content %}

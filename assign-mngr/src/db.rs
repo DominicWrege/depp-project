@@ -78,6 +78,19 @@ pub async fn get_script_types(pool: &Pool) -> Result<Vec<ScriptType>, DbError> {
     Ok(ret)
 }
 
+pub async fn get_exercise_description_for_id(pool: &Pool, id: i32) -> Result<String, DbError> {
+    let client = pool.get().await?;
+    let stmt_exercise_name = client
+        .prepare("SELECT description FROM exercise WHERE id = $1")
+        .await?;
+    let description = if let Ok(row) = client.query_one(&stmt_exercise_name, &[&id]).await {
+        row.get("description")
+    } else {
+        String::from("Praktikum X")
+    };
+    Ok(description)
+}
+
 pub async fn insert_assignment(pool: &Pool, assign: &Assignment) -> Result<(), DbError> {
     let client = pool.get().await?;
     let stmt = client.prepare(r#"INSERT INTO assignment(assignment_name, script_type, solution, exercise_id, args, description, 

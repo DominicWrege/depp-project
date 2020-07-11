@@ -14,12 +14,9 @@ function onchangeRegexRadio(target) {
     }
 }
 
-function goBack(exerciseID){
-    this.window.location.href = this.window.location.href.replace(/assignment\/\S+/, `exercise/${exerciseID}`);
-}
+document.querySelector("#AssignmentForm").addEventListener("load", (e) => {
 
-window.onload = (e) => {
    document.querySelector(".radio-regex>input:checked").click();
     let previousUrl = document.referrer;
-    console.log(previousUrl);
-};
+});
+

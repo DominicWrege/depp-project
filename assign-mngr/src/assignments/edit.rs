@@ -20,7 +20,6 @@ pub async fn update(
                     custom_script = $10, regex = $11, regex_check_mode = $12, sort_stdout = $13
     WHERE uuid = $14
     "#).await?;
-
     client
         .execute(
             &stmt,

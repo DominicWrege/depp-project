@@ -45,7 +45,6 @@ where
     }
 
     fn call(&mut self, req: ServiceRequest) -> Self::Future {
-        //dbg!(&id);
         if req.get_identity().is_some() {
             Either::Left(self.service.call(req))
         } else {

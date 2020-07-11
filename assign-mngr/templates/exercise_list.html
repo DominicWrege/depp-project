@@ -18,7 +18,7 @@
 
     {% if exercises | length > 0 %}
     <div class="list-group">
-        {% for exercise in exercises %}
+        {% for exercise in exercises%}
         <div class="list-group-item list-group-item-action w-75 m-auto d-flex justify-content-between">
                 <a class="item-link" href="/manage/exercise/{{exercise.id}}">&#x1f4c1;  {{exercise.description}}</a>
                 <form hidden method="POST" class="w-100" traget="/" action="/manage/exercise/rename/{{exercise.id}}">
