@@ -1,6 +1,6 @@
 ### PostgreSQL Configuration Library
 
-Shared code for coniguration the [api]("tree/master/api") and the [Assignment Manager](tree/master/assign-mngr) for establishing the connection to PostgreSQL.
+Shared code for coniguration the [api](../api) and the [Assignment Manager](../assign-mngr) for establishing the connection to PostgreSQL.
 
 | Name                    | Type   | Default     |
 | ----------------------- | ------ | ----------- |

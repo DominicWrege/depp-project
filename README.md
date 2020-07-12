@@ -1,3 +1,5 @@
+# Depp Project
+
 ## Overview
 
 This project contains of 5 crates (3 Main Crates and 2 helper crates)
@@ -139,7 +141,7 @@ To create documentation for the Rust code:
 cargo doc --no-deps --open
 ```
 
-## How To Create and Publish Images to Dockerhub:
+## How To Create and Publish Images to Dockerhub
 
 Build and publish the Assignment Managerimage (assign-mngr)
 
