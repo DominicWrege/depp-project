@@ -1,3 +1,4 @@
+//! Error handling using [failure](https://docs.rs/crate/failure) as error library.
 use crate::api::{IliasId, SubmissionExample};
 use crate::rpc_conf::RpcMeta;
 use actix_web::error::JsonPayloadError;

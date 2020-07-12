@@ -1,3 +1,4 @@
+//! Error handling using [failure](https://docs.rs/crate/failure) as error library.
 use crate::docker_api::DockerError;
 use std::path::PathBuf;
 use std::{fmt, time};

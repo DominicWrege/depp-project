@@ -32,7 +32,7 @@ pub struct AllEndpointStatus {
     pub linux: EndPointStatus,
 }
 
-/// To distinguish which rpc host is on which platform.
+/// To distinguish which RPC host is on which platform.
 #[derive(Clone, Debug)]
 pub struct RpcMeta {
     pub rpc_url: Url,
@@ -71,7 +71,7 @@ impl std::fmt::Display for RpcMeta {
         )
     }
 }
-/// This is the RPC config. RPC is used for the communication between the api and the testing server. Two server are required in order to test all necessary kind of scripts.
+/// This is the RPC config which uses the RPC client.It's used for the communication between the api and the testing server. Two server are required in order to test all necessary kind of scripts.
 /// The Linux server test all the ```Bash, Python, sed...``` scripts.
 /// And the Windows is only there to test ```PowerShell``` and ```batch``` scripts natively.
 pub struct RpcConfig {
@@ -102,7 +102,7 @@ impl RpcConfig {
         }
     }
 }
-/// Returning the [EndPointStatus](../api/enum.EndPointStatus.html) the  for one RPC Endpoint.
+/// Returning the [EndPointStatus](../api/enum.EndPointStatus.html) for one RPC Endpoint.
 fn endpoint_status<T, E>(r: Result<T, E>, context: &RpcMeta) -> EndPointStatus {
     if r.is_ok() {
         EndPointStatus::Online

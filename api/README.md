@@ -1,11 +1,11 @@
 ## Description
 
-This is the REST API which uses `JSON`. It communicates via RPC to the Endpoints and acces all assignments from the Postgresql Database.
+This is the REST API which uses `JSON`. It communicates via RPC to the Endpoints and acces all assignments from the PostgreSQL Database.
 
 ## Develop
 
 ```
-# Make sure that the Postgresql instance is running.
+# Make sure that the PostgreSQL instance is running.
 cargo run
 ```
 

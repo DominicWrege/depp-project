@@ -5,6 +5,8 @@ use crate::handlers::{
     get::get_assignments, get::get_result, get::index, get::status, get::version,
     post::add_submission,
 };
+
+/// Registers all routes
 /// # Routes
 /// **Note:** That all routes have a ```/api``` prefix.
 /// See the openapi docs for more information.
@@ -14,7 +16,6 @@ use crate::handlers::{
 /// * ```/status```
 /// * ```/version```
 ///
-
 pub fn register_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")

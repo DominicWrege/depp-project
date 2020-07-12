@@ -9,7 +9,7 @@ use actix_web::{middleware, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use failure::_core::time::Duration;
 use futures::prelude::*;
-use handlers::{auth::get_credentials, auth::my_basic_auth};
+use handlers::{auth::get_credentials, auth::handle_basic_auth};
 mod rpc_conf;
 use state::State;
 /// Real main function. Starting the middleware and global initialization the state.
@@ -30,7 +30,7 @@ async fn run() -> Result<(), failure::Error> {
         App::new()
             .wrap(middleware::Compress::default())
             .wrap(Logger::default())
-            .wrap(HttpAuthentication::basic(my_basic_auth))
+            .wrap(HttpAuthentication::basic(handle_basic_auth))
             .configure(routes::register_routes)
             .wrap(
                 Cors::new()

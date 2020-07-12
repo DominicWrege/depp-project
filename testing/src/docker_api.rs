@@ -1,3 +1,4 @@
+//! Docker API wrapper using [bollard](https://docs.rs/bollard/) to create, start and stop Docker containers.
 use crate::error::{Error, SystemError};
 use bollard::container::{
     CreateContainerOptions, LogOutput, LogsOptions, RemoveContainerOptions, StartContainerOptions,
