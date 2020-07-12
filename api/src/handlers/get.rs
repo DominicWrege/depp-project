@@ -1,3 +1,5 @@
+//! This is an REST API using only ```JSON```.
+
 use crate::api::{AssignmentShort, Status, Version};
 use crate::handlers::error::Error;
 use crate::state::State;
@@ -62,7 +64,7 @@ impl From<Row> for AssignmentShort {
         }
     }
 }
-
+#[doc(hidden)]
 pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }

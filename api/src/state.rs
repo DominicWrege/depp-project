@@ -1,3 +1,4 @@
+//! Maneging the global state accessed by multiple threads.
 use crate::api::{EndPointStatus, IliasId};
 use crate::handlers::auth::Credentials;
 use crate::rpc_conf::{RpcConfig, RpcEnvConfig};
@@ -6,16 +7,23 @@ use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+/// Wrapper for the [InnerState](struct.InnerState.html) which uses [Arc](https://doc.rust-lang.org/std/sync/struct.Arc.html) to have thread save shareable state.
 #[derive(Clone)]
 pub struct State {
     pub inner: Arc<InnerState>,
 }
-
+/// You can call it the real state
 pub struct InnerState {
+    /// All ready test results waiting to be picked up. Maybe store them in a DB instead of memory?!.
     pub pending_results: dashmap::DashMap<IliasId, grpc_api::AssignmentResult>,
+    /// RPC Config so all handlers have access to it.
     pub rpc_conf: RpcConfig,
+    ///The HTTP basic access authentication credentials.
     pub credentials: Credentials,
+    /// Thread safe hashset of all submissions which are not tested yet.
     pub to_test_assignments: RwLock<HashSet<IliasId>>,
+    /// DB connection pool using deadpool
     pub db_pool: Pool,
 }
 

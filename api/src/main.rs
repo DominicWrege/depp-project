@@ -12,7 +12,7 @@ use futures::prelude::*;
 use handlers::{auth::get_credentials, auth::my_basic_auth};
 mod rpc_conf;
 use state::State;
-
+/// Real main function. Starting the middleware and global initialization the state.
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     let db_pool = db_lib::connect_migrate().await.expect("db connection err");
@@ -45,6 +45,8 @@ async fn run() -> Result<(), failure::Error> {
     .await?;
     Ok(())
 }
+
+/// Fake main function calls only the ```run``` function.
 fn main() {
     if let Err(e) = actix_rt::System::new("api-main").block_on(run()) {
         log::error!("{}", e);

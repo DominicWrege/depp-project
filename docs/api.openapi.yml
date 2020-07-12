@@ -31,7 +31,7 @@ paths:
                                     $ref: "#/components/schemas/Assignment"
     /submission:
         post:
-            summary: "Takes the source code to test"
+            summary: "Upload of a new student submission"
             tags:
               - /api
             operationId: "addSubmission"

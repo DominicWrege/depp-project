@@ -1,9 +1,19 @@
+//! All routes an here defined to keep the ```main()``` cleaner.
 use actix_web::web;
 
 use crate::handlers::{
     get::get_assignments, get::get_result, get::index, get::status, get::version,
     post::add_submission,
 };
+/// # Routes
+/// **Note:** That all routes have a ```/api``` prefix.
+/// See the openapi docs for more information.
+/// * ```/assignments```
+/// * ```/submission```
+/// * ```/result/{iliasId}```
+/// * ```/status```
+/// * ```/version```
+///
 
 pub fn register_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(

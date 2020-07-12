@@ -1,3 +1,5 @@
+//! Own Base64 module which supports deserialize.
+
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 #[derive(Debug, Clone)]
 pub struct Base64(pub String);

@@ -1,3 +1,4 @@
+//! RPC Config
 use crate::api::EndPointStatus;
 use grpc_api::{Script, TargetOs};
 use serde::Deserialize;
@@ -9,14 +10,15 @@ use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 */
 
 // DEPP_API_ as prefix
+/// Default is: ```http://127.0.0.1:50051```
 fn default_addr() -> Url {
     Url::parse("http://127.0.0.1:50051").unwrap()
 }
-
+/// Reading the environment variables.
 pub fn get_config() -> Result<RpcEnvConfig, envy::Error> {
     envy::prefixed("DEPP_API_").from_env::<RpcEnvConfig>()
 }
-
+/// The RPC config via the environment variables using ```DEPP_API_``` as prefix.
 #[derive(Deserialize, Debug)]
 pub struct RpcEnvConfig {
     #[serde(default = "default_addr")]
@@ -24,10 +26,13 @@ pub struct RpcEnvConfig {
     #[serde(default = "default_addr")]
     ms_rpc_url: Url,
 }
+/// Bucket for storing the Windows and Linux RPC status.
 pub struct AllEndpointStatus {
     pub windows: EndPointStatus,
     pub linux: EndPointStatus,
 }
+
+/// To distinguish which rpc host is on which platform.
 #[derive(Clone, Debug)]
 pub struct RpcMeta {
     pub rpc_url: Url,
@@ -66,19 +71,25 @@ impl std::fmt::Display for RpcMeta {
         )
     }
 }
+/// This is the RPC config. RPC is used for the communication between the api and the testing server. Two server are required in order to test all necessary kind of scripts.
+/// The Linux server test all the ```Bash, Python, sed...``` scripts.
+/// And the Windows is only there to test ```PowerShell``` and ```batch``` scripts natively.
 pub struct RpcConfig {
+    /// The Windows RPC Host.
     windows: RpcMeta,
+    /// The Linux RPC Host.
     linux: RpcMeta,
-    //pub tls_config: ClientTlsConfig,
 }
 
 impl RpcConfig {
+    /// Decides which script belongs to which platform to test.
     pub fn meta(&self, script_type: &Script) -> &RpcMeta {
         match script_type.target_os() {
             TargetOs::Windows => &self.windows,
             TargetOs::Unix => &self.linux,
         }
     }
+    /// The status of the RPC Host.
     pub async fn status(&self) -> AllEndpointStatus {
         use grpc_api::test_client::TestClient;
         let (l, w) = futures::join!(
@@ -91,7 +102,7 @@ impl RpcConfig {
         }
     }
 }
-
+/// Returning the [EndPointStatus](../api/enum.EndPointStatus.html) the  for one RPC Endpoint.
 fn endpoint_status<T, E>(r: Result<T, E>, context: &RpcMeta) -> EndPointStatus {
     if r.is_ok() {
         EndPointStatus::Online
