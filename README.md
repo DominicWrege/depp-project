@@ -29,7 +29,7 @@ Local:
 
 ## API
 
-The REST API uses basic auth passed via environment variable.
+The REST API uses HTTP basic auth passed via environment variable.
 
 ### Basic Auth
 

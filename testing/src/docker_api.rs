@@ -32,6 +32,22 @@ impl From<bollard::errors::Error> for Error {
 }
 
 #[derive(Debug)]
+enum MountPermission {
+    Readonly,
+    Write,
+}
+
+impl From<MountPermission> for Option<bool> {
+    fn from(m: MountPermission) -> Option<bool> {
+        let p = match m {
+            MountPermission::Readonly => true,
+            MountPermission::Write => false,
+        };
+        Some(p)
+    }
+}
+
+#[derive(Debug)]
 pub struct MountContext<'a> {
     pub source_dir: &'a str,
     pub target_dir: &'a str,
@@ -50,12 +66,12 @@ pub fn docker_mount_points(script: &Script) -> (&'static str, &'static str) {
     }
 }
 
-fn create_mount_point<'a>(source: String, target: String, read_only: bool) -> Mount {
+fn create_mount_point<'a>(source: String, target: String, permission: MountPermission) -> Mount {
     Mount {
         target: Some(target),
         source: Some(source),
         _type: Some(bollard::service::MountTypeEnum::BIND),
-        read_only: Some(read_only),
+        read_only: permission.into(),
         consistency: Some(String::from("default")),
         ..Default::default()
     }
@@ -68,12 +84,12 @@ pub fn create_host_config<'a>(
     let output_mount_point = create_mount_point(
         out_put_mount.source_dir.to_string(),
         out_put_mount.target_dir.to_string(),
-        false,
+        MountPermission::Write,
     );
     let script_mount_point = create_mount_point(
         script_mount.source_dir.to_string(),
         script_mount.target_dir.to_string(),
-        true,
+        MountPermission::Readonly,
     );
     Some(HostConfig {
         mounts: Some(vec![script_mount_point, output_mount_point]),

@@ -28,9 +28,9 @@ services:
       - db
     links:
       - "db:database"
-  docs:
-    build: docs
-    container_name: api_docs
+  openapi:
+    build: ./api/openapi
+    container_name: openapi
     ports:
       - 4001:80
     volumes:
