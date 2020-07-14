@@ -1,3 +1,4 @@
+//! Semaphore wrapper for limiting concurrent tests.
 use std::sync::Arc;
 use tokio::sync::{Semaphore, SemaphorePermit};
 

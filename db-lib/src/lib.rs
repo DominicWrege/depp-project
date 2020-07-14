@@ -1,3 +1,4 @@
+//! Shared code to configure the REST [API](../api/index.html) and the [Assignment Manager](../assign_mngr/index.html) for establishing the connection to PostgreSQL.
 use deadpool_postgres::{Manager, Pool};
 
 mod embedded {

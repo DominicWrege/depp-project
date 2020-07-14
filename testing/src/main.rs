@@ -1,3 +1,6 @@
+//! A RPC server waiting to test scripts inside a Docker container.
+//! Resources like time and memory are limited. Each container gets a specific folder mounted where the fs output
+//! is been checked alongside with the console output as well. You need to run two instances (Windows and Linux) in order to test all scripts.
 mod checker;
 mod config;
 mod docker_api;
@@ -9,14 +12,14 @@ use crate::docker_api::DockerWrap;
 use grpc_api::test_server::TestServer;
 //use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tonic::transport::Server;
-
+/// Real main function. Starting the RPC Server and global initialization the state.
 fn main() {
     if let Err(e) = tokio::runtime::Runtime::new().unwrap().block_on(run()) {
         log::error!("{}", e);
         std::process::exit(1);
     }
 }
-
+/// Fake main function calls only the ```run``` function.
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();

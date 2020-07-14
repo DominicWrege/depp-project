@@ -1,3 +1,4 @@
+//! Checks the script meets certain criterions.
 use crate::docker_api::ScriptOutput;
 use crate::error::Error;
 use crate::error::IOError;
@@ -11,6 +12,7 @@ use log::info;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
+/// Checks if the script is correct and if not each function has to return an error.
 #[async_trait]
 pub trait Checker: Sync + Send {
     async fn check(&self) -> Result<(), Error>;

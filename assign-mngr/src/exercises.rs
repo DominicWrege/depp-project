@@ -1,3 +1,4 @@
+//! All HTTP handlers dealing with the exercises.
 use crate::assignments::get::parse_path;
 use crate::db::rows_into;
 use crate::error::HttpError;
@@ -11,7 +12,7 @@ use tokio_pg_mapper_derive::PostgresMapper;
 pub struct ExerciseForm {
     description: String,
 }
-
+/// Insert a new exercise into the database.
 pub async fn insert(form: web::Form<ExerciseForm>, data: web::Data<State>) -> HttpResult {
     let client = data.db_pool.get().await?;
     let stmt = client
@@ -20,11 +21,11 @@ pub async fn insert(form: web::Form<ExerciseForm>, data: web::Data<State>) -> Ht
     client.execute(&stmt, &[&form.description]).await?;
     Ok(redirect_home())
 }
-
+/// Renders the ```exercise_form.html``` page for creating new exercises.
 pub async fn page() -> HttpResult {
     render_template(&TEMPLATES, "exercise_form.html", &tera::Context::new())
 }
-
+/// Rename an exercise in the database.
 pub async fn rename(
     form: web::Form<ExerciseForm>,
     data: web::Data<State>,
@@ -41,7 +42,7 @@ pub async fn rename(
         .map_err(|_e| HttpError::NotFound(format!("Exercise {}", exercise_id)))?;
     Ok(redirect_home())
 }
-
+/// Returns all [Exercises](struct.ExerciseCount.html) and the count of assignments.
 pub async fn get_all_with_count(data: web::Data<State>) -> HttpResult {
     let client = data.db_pool.get().await?;
     let query = r#"
@@ -56,7 +57,7 @@ pub async fn get_all_with_count(data: web::Data<State>) -> HttpResult {
     context.insert("exercises", &exercises);
     render_template(&TEMPLATES, "exercise_list.html", &context)
 }
-
+/// Deletes an Exercise from the database. Please use it with caution.
 pub async fn delete(data: web::Data<State>, path: web::Path<String>) -> HttpResult {
     let exercise_id = parse_path(&path.into_inner())?;
     let client = data.db_pool.get().await?;

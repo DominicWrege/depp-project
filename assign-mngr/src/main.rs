@@ -1,3 +1,7 @@
+//! A small web app for managing all assignments. [Bootstrap](https://getbootstrap.com/) is used for teh CSS and the [Monaco editor](https://microsoft.github.io/monaco-editor/) to have a better editor then textarea.
+//! [Actix-Web](https://github.com/actix/actix-web) is used for the http component with [tokio](https://github.com/tokio-rs/tokio) as the async runtime.
+//! [Tera](https://github.com/Keats/tera) is used for rendering the HTMl templates.  
+//! All assignments are stored in a PostgreSQL DB.
 #[macro_use]
 extern crate lazy_static;
 
@@ -28,7 +32,7 @@ pub struct State {
 }
 
 pub const PATH_PREFIX: &'static str = "/manage";
-
+/// Real main function. Starting the middleware and global initialization the state.
 async fn run() -> Result<(), failure::Error> {
     let config = config::get();
     let state = State {
@@ -102,7 +106,7 @@ async fn run() -> Result<(), failure::Error> {
     .await?;
     Ok(())
 }
-
+/// Fake main function calls only the ```run``` function.
 fn main() {
     if let Err(e) = actix_rt::System::new("web-main").block_on(run()) {
         eprintln!("{}", e);

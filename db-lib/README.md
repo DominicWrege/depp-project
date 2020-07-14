@@ -1,6 +1,8 @@
 ### PostgreSQL Configuration Library
 
-Shared code for coniguration the [api](../api) and the [Assignment Manager](../assign-mngr) for establishing the connection to PostgreSQL.
+Shared code to configure the REST [API](../api) and the [Assignment Manager](../assign-mngr) for establishing the connection to PostgreSQL.
+
+### Config
 
 | Name                    | Type   | Default     |
 | ----------------------- | ------ | ----------- |

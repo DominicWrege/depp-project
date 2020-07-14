@@ -2,13 +2,13 @@
 
 ## Overview
 
-This project contains of 5 crates (3 Main Crates and 2 helper crates)
+This project contains of 5 crates (3 Main Crates and 2 helper lib)
 
 - **api**: The JSON REST API with and openapi documentation inside (main)
 - **assign-mngr**: The web UI (Assignments Manager) for managing all assignments (main)
-- **testing**: Just running all scripts inside Docker (main)
-- **db_lib**: Shared code for connection to PostgreSQL (helper)
-- **grpc_lib**: All models written in protobuf (helper)
+- **testing**: For running all scripts inside a Docker (main)
+- **db_lib**: Shared code for connection to PostgreSQL (helper lib)
+- **grpc_lib**: All models written in protobuf (helper lib)
 
 ## Usage
 
@@ -41,7 +41,7 @@ Local:
 
 ### API
 
-The REST API uses HTTP basic auth passed via environment variable.
+The REST API uses basic access authentication configured via environment variables.
 
 #### Basic Auth
 
@@ -51,6 +51,8 @@ The REST API uses HTTP basic auth passed via environment variable.
 | DEPP_API_PASSWORD | String | wasd4221 |
 
 #### RPC
+
+The client config.
 
 | Name                   | Type | Default                |
 | ---------------------- | ---- | ---------------------- |
@@ -125,7 +127,7 @@ Each Script will run inside a docker container for max duration of 120 secs on L
 - PowerShell\*
 - Shell
 - Bash
-- Batch\* (windows only without Docker)
+- Batch\*
 - Sed
 - Awk
 

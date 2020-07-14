@@ -1,3 +1,4 @@
+//! The RPC testing server
 use crate::checker::{
     Checker, CustomScriptChecker, FilesChecker, RegexChecker, SortedChecker, StdoutChecker,
 };

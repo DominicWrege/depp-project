@@ -287,7 +287,7 @@ impl Display for ScriptOutput {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
         write!(
             f,
-            "stdout: {}\nstderr: {}\nstatus_code:{}",
+            "stdout: {}\nstderr: {}\nstatus_code: {}",
             &self.stdout, &self.stderr, &self.status_code
         )
     }

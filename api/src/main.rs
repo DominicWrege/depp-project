@@ -1,3 +1,5 @@
+//! This is the REST API which uses `JSON`. It communicates via RPC to the RPC servers (Windows | Linux) by retrieving all assignments from the PostgreSQL Database.
+//! [actix-web](https://github.com/actix/actix-web) is used for the http component with [tokio](https://github.com/tokio-rs/tokio) as the async runtime.
 mod api;
 mod base64;
 mod handlers;

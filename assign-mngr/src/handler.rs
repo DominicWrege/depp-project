@@ -1,3 +1,4 @@
+//! Common operation like rendering the template and redirecting
 use crate::error::HttpError;
 
 use actix_web::{http, HttpResponse};

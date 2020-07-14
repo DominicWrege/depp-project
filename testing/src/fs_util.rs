@@ -1,3 +1,4 @@
+//! FS utils for creating temporary files folder and doing FS work.
 use crate::error::{Error, IOError};
 use async_stream::try_stream;
 use futures::stream::Stream;

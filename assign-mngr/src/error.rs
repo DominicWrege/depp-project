@@ -1,3 +1,4 @@
+//! Error handling using [failure](https://docs.rs/crate/failure) as error library.
 use crate::template::TEMPLATES;
 use actix_web::http::StatusCode;
 use actix_web::{error, HttpResponse};

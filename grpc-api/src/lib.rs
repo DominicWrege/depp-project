@@ -1,3 +1,4 @@
+//! Shared models using [protobuff.](https://developers.google.com/protocol-buffers) These models are send via RPC.
 use tokio_postgres::Row;
 tonic::include_proto!("deep_project");
 

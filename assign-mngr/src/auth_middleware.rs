@@ -1,3 +1,4 @@
+//! Middleware that checks if the user is logged in and if not redirects it to the login page.
 use std::task::{Context, Poll};
 
 use crate::handler;

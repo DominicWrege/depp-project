@@ -29,6 +29,7 @@ pub async fn handle_basic_auth(
         None => Err(Error::Unauthorized.into_actix_web_err()),
     }
 }
+
 /// Default username: ```user```
 fn default_user() -> String {
     String::from("user")

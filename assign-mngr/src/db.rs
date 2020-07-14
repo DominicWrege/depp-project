@@ -1,3 +1,4 @@
+//! General Database functions.
 use crate::assignments::get::Assignment;
 use crate::error::HttpError;
 use db_lib::DbError;
