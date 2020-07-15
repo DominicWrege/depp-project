@@ -14,10 +14,9 @@
 </style>
 
 <div class="d-flex flex-column justify-content-center">
-    <h4 class="mb-4">Praktika Übersicht</h4>
-
+    <h4 class="mb-auto w-75">Praktika Übersicht</h4>
     {% if exercises | length > 0 %}
-    <div class="list-group">
+    <div class="list-group mt-3">
         {% for exercise in exercises%}
         <div class="list-group-item list-group-item-action w-75 m-auto d-flex justify-content-between">
                 <a class="item-link" href="/manage/exercise/{{exercise.id}}">&#x1f4c1;  {{exercise.description}}</a>
