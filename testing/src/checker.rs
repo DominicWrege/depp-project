@@ -17,6 +17,8 @@ use tokio::fs;
 pub trait Checker: Sync + Send {
     async fn check(&self) -> Result<(), Error>;
 }
+
+/// Check if the script has created certain files/folders.
 #[derive(Debug)]
 pub struct FilesChecker {
     expected_dir: PathBuf,
@@ -34,14 +36,18 @@ impl FilesChecker {
         (a.is_file() && b.is_file()) || (a.is_dir() && b.is_dir())
     }
 }
+/// Check script or stdout for certain pattern.
 #[derive(Debug)]
 pub struct RegexChecker {
     regex: Option<Result<regex::Regex, regex::Error>>,
+    /// Check stdout or the script content
     mode: RegexMode,
+    /// Stdout to check
     stdout: String,
+    /// The content of the script to check
     script_content: String,
 }
-
+/// initialize struct
 impl RegexChecker {
     pub fn boxed<T: AsRef<str>>(
         regex: Option<T>,
@@ -88,12 +94,13 @@ impl Checker for RegexChecker {
         }
     }
 }
+/// Check stdout with the expected output form the solution.
 #[derive(Debug)]
 pub struct StdoutChecker {
     expected: String,
     tested: String,
 }
-
+/// initialize struct
 impl StdoutChecker {
     pub fn boxed(expected: &str, tested: &str) -> Box<dyn Checker> {
         Box::new(StdoutChecker {
@@ -102,7 +109,6 @@ impl StdoutChecker {
         })
     }
 }
-
 #[async_trait]
 impl Checker for StdoutChecker {
     async fn check(&self) -> Result<(), Error> {
@@ -119,7 +125,6 @@ impl Checker for StdoutChecker {
     }
 }
 
-// TODO show in message which file in different!!
 #[async_trait]
 impl Checker for FilesChecker {
     async fn check(&self) -> Result<(), Error> {
@@ -146,7 +151,11 @@ impl Checker for FilesChecker {
                             .map_err(|e| IOError::ReadFile(e))?,
                     );
                     if solution_content != result_content {
-                        return Err(Error::ExpectedFileNotSame(solution_content, result_content));
+                        return Err(Error::ExpectedFileNotSame(
+                            solution_entry,
+                            solution_content,
+                            result_content,
+                        ));
                     }
                 }
             } else {
@@ -171,6 +180,8 @@ async fn print_dir_content(msg: &str, root: &Path) -> Result<(), Error> {
     }
     Ok(())
 }
+/// Run the custom script to check if the script is right.
+/// $1=Stdout from tested script, $2=script content.
 #[derive(Debug)]
 pub struct CustomScriptChecker {
     custom_script_content: String,
@@ -178,7 +189,7 @@ pub struct CustomScriptChecker {
     tested_out: ScriptOutput,
     working_dir: PathBuf,
 }
-
+/// initialize struct
 impl CustomScriptChecker {
     pub fn boxed(
         c_script_content: &str,
@@ -231,12 +242,13 @@ impl Checker for CustomScriptChecker {
         }
     }
 }
+/// Check if the stdout ist sorted asc or desc.
 #[derive(Debug)]
 pub struct SortedChecker {
     content: String,
     sort_stdout_by: SortStdoutBy,
 }
-
+/// initialize struct
 impl SortedChecker {
     pub fn boxed(content: &str, sort_stdout_by: SortStdoutBy) -> Box<dyn Checker> {
         Box::new(Self {

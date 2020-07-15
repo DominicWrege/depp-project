@@ -1,4 +1,4 @@
-window.addEventListener("load", (e) => {
+document.querySelector("#AssignmentForm").addEventListener("load", (e) => {
 	document.querySelector("#solutionEditor").style = editorStyle("28em");
 	document.querySelector("#customScriptEditor").style = editorStyle("14em");
 	const solutionElement = document.querySelector("#hiddenSolutionText");

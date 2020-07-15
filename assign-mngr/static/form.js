@@ -14,9 +14,7 @@ function onchangeRegexRadio(target) {
     }
 }
 
-document.querySelector("#AssignmentForm").addEventListener("load", (e) => {
-
-   document.querySelector(".radio-regex>input:checked").click();
-    let previousUrl = document.referrer;
+document.querySelector(".radio-regex>input").addEventListener("load", (event) => {
+    event.target.click();
 });
 

@@ -31,11 +31,10 @@ Web UI to manage all assignments.
 | DEPP_WEB_PASSWORD | String | secret1 |
 | DEPP_WEB_PORT     | uin16  | 5000    |
 
-### RPC
+## Build And Publish The Docker Image
 
-The client config.
-
-| Name                   | Type | Default                |
-| ---------------------- | ---- | ---------------------- |
-| DEPP_API_LINUX_RPC_URL | URL  | http://127.0.0.1:50051 |
-| DEPP_API_MS_RPC_URL    | URL  | http://127.0.0.1:50051 |
+```
+sudo docker build -t web -f ../Docker-Files/Dockerfile-Assign-Mngr-Release ..
+sudo docker tag web dominicwrege/depp-project-web
+sudo docker push dominicwrege/depp-project-web
+```

@@ -64,7 +64,7 @@ The client config.
 | Name                   | Type                | Default                                                                                          |
 | ---------------------- | ------------------- | ------------------------------------------------------------------------------------------------ |
 | DEPP_TEST_PORT         | uint16              | 50051                                                                                            |
-| DEPP_TEST_MAX_CURR     | uint8               | Linux: 8, Windows: 4                                                                             |
+| DEPP_TEST_MAX_CURR     | uint8               | Linux: 10, Windows: 5                                                                            |
 | DEPP_TEST_DOCKER_IMAGE | String              | Linux: `dominicwrege/depp-project-ubuntu:latest`, Windows: `mcr.microsoft.com/powershell:latest` |
 | DEPP_TEST_TIMEOUT      | uint64 format: secs | Linux: 120, Windows: 180                                                                         |
 
@@ -135,7 +135,7 @@ Each Script will run inside a docker container for max duration of 120 secs on L
 
 ## Code Documentation
 
-For how to use the API from outside everything is written in `./api/openapi/api.openapi.yml` file.
+For how to use the API from outside everything is written in `./api/openapi/doc.openapi.yml` file.
 To create documentation for the Rust code:
 
 ```
@@ -145,7 +145,7 @@ cargo doc --no-deps --open
 
 ## How To Create and Publish Images to Dockerhub
 
-Build and publish the Assignment Managerimage (assign-mngr)
+Build and publish the Assignment Manager image (assign-mngr)
 
 ```
 # from the root folder of this repo

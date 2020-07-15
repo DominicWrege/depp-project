@@ -10,6 +10,9 @@ use tonic::transport::Channel;
 */
 use uuid::Uuid;
 
+/// Run the script test by calling a method via RPC.
+/// Spawns for each test in a new "thread".  
+/// Storing the test result in the global thread safe HasMap ```pending_results```.
 pub async fn add_submission(
     state: web::Data<State>,
     json: Result<web::Json<Submission>, actix_web::error::Error>,
@@ -70,7 +73,7 @@ pub async fn add_submission(
     });
     Ok(HttpResponse::Created().body(""))
 }
-
+/// Query one assigment from the database.
 async fn db_assignment(pool: &Pool, uuid: &Uuid) -> Result<Assignment, Error> {
     let client = pool.get().await?;
     let stmt = client

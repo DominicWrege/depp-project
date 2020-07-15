@@ -1,6 +1,6 @@
 ### PostgreSQL Configuration Library
 
-Shared code to configure the REST [API](../api) and the [Assignment Manager](../assign-mngr) for establishing the connection to PostgreSQL.
+Shared code to configure the REST [API](../api) and the [Assignment Manager](../assign-mngr) for establishing the connection to PostgreSQL using [rust-postgres](https://github.com/sfackler/rust-postgres).
 
 ### Config
 

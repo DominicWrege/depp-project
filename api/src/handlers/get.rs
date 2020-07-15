@@ -6,14 +6,14 @@ use crate::state::State;
 use actix_web::http::{Method, StatusCode};
 use actix_web::{web, HttpRequest, HttpResponse};
 use tokio_postgres::row::Row;
-
+/// Return test result for a script or
+/// 404 if the given IliasId does not exists.
 pub async fn get_result(
     req: HttpRequest,
     state: web::Data<State>,
     para: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
     let id = para.into_inner().into();
-
     match req.method().to_owned() {
         Method::POST => {
             if state.pending_results.remove(&id).is_some() {
@@ -40,7 +40,7 @@ pub async fn get_result(
         _ => Err(Error::BadRequest),
     }
 }
-
+/// Return all assignments which currently active.
 pub async fn get_assignments(state: web::Data<State>) -> Result<HttpResponse, Error> {
     let client = &state.db_pool.get().await?;
     let query = r#"SELECT format('%s/%s (%s)', exercise.description, assignment_name, script_type) as name, uuid
@@ -68,13 +68,13 @@ impl From<Row> for AssignmentShort {
 pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body("Hello FH Dortmund")
 }
-
+/// Return API version.
 pub async fn version() -> HttpResponse {
     HttpResponse::Ok().json(Version {
         version: env!("CARGO_PKG_VERSION"),
     })
 }
-
+/// Return status of booth RPC Endpoints.
 pub async fn status(state: web::Data<State>) -> HttpResponse {
     let rpc = &state.rpc_conf;
     let status = rpc.status().await;

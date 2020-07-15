@@ -11,7 +11,7 @@ services:
     depends_on:
       - db
   db:
-    image: postgres:alpine
+    image: postgres:13-alpine
     ports:
       - 5432:5432
     env_file:
@@ -38,9 +38,9 @@ services:
   swagger_ui:
     container_name: swagger_ui
     depends_on:
-      - docs
+      - openapi
     image: swaggerapi/swagger-ui
     environment:
-      - API_URL=http://127.0.0.1:4001/api.openapi.yml
+      - API_URL=http://127.0.0.1:4001/doc.openapi.yml
     ports:
       - 4000:8080

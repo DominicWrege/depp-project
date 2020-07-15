@@ -1,4 +1,4 @@
-//! The RPC testing server
+//! The RPC testing server.
 use crate::checker::{
     Checker, CustomScriptChecker, FilesChecker, RegexChecker, SortedChecker, StdoutChecker,
 };
@@ -10,7 +10,7 @@ use grpc_api::test_server::Test;
 use grpc_api::{Assignment, AssignmentMsg, AssignmentResult, RegexMode, Script, SortStdoutBy};
 use log::info;
 use tonic::{Request, Response, Status};
-
+/// State
 #[derive(Debug, Clone)]
 pub struct Tester {
     docker: sema_wrap::SemWrap<DockerWrap>,

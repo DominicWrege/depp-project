@@ -47,13 +47,13 @@ impl From<MountPermission> for Option<bool> {
         Some(p)
     }
 }
-
+/// Context for mounting a volume.
 #[derive(Debug)]
 pub struct MountContext<'a> {
     pub source_dir: &'a str,
     pub target_dir: &'a str,
 }
-
+/// Docker image context
 #[derive(Copy, Clone, Debug)]
 pub struct ImageOpt {
     pub name: &'static str,
@@ -167,7 +167,7 @@ impl DockerWrap {
             )
             .await?;
         if let Ok(val) = &output {
-            log::info!("Output: {}", val);
+            log::info!("Output: {:#?}", val);
         }
         log::info!("Container removed");
         output
@@ -275,7 +275,7 @@ impl DockerWrap {
         Ok(())
     }
 }
-
+/// Script sdtout and stderr and status code.
 #[derive(Debug, Clone)]
 pub struct ScriptOutput {
     pub stdout: String,

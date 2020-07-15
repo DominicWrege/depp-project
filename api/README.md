@@ -37,3 +37,20 @@ The client config.
 | ---------------------- | ---- | ---------------------- |
 | DEPP_API_LINUX_RPC_URL | URL  | http://127.0.0.1:50051 |
 | DEPP_API_MS_RPC_URL    | URL  | http://127.0.0.1:50051 |
+
+## OpenAPI REST Documentation
+
+```
+# start
+docker-compose -f ./openapi/docker-compose.yml up
+# stop
+docker-compose -f ./openapi/docker-compose.yml down
+```
+
+## Build And Publish The Docker Image
+
+```
+sudo docker build -t api -f ../Docker-Files/Dockerfile-API ..
+sudo docker tag api dominicwrege/depp-project-api
+sudo docker push dominicwrege/depp-project-api
+```

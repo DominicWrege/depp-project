@@ -7,10 +7,13 @@ use actix_web::{HttpResponse, ResponseError};
 use grpc_api::AssignmentId;
 use uuid::Uuid;
 
+/// No valid ```JSON``` was send
 #[derive(serde::Serialize)]
 pub struct ErrJson {
     msg: String,
 }
+
+/// Not valid [Submission](../../api/struct.Submission.html) was send was send.
 #[derive(serde::Serialize)]
 pub struct ErrSubmission {
     msg: String,

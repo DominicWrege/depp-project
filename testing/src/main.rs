@@ -21,7 +21,7 @@ fn main() {
 }
 /// Fake main function calls only the ```run``` function.
 async fn run() -> Result<(), failure::Error> {
-    std::env::set_var("RUST_LOG", "info");
+    std::env::set_var("RUST_LOG", "testing=info,error,tonic=info");
     env_logger::init();
     let config = config::get_config()?;
     log::info!("Pulling docker the required image. This may take some time...");

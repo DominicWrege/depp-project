@@ -63,8 +63,11 @@ pub enum Error {
     ExpectedDirNotSame,
     #[fail(display = "Script finished with exit code 1 stderr: {}", _0)]
     ExitCode(String),
-    #[fail(display = "Wrong file content: expected({:#?}) result({:#?})", _0, _1)]
-    ExpectedFileNotSame(String, String),
+    #[fail(
+        display = "This content of this file {:#?} does not match with the solution. expected({:#?}) result({:#?})",
+        _0, _1, _2
+    )]
+    ExpectedFileNotSame(PathBuf, String, String),
     #[fail(display = "Regex error {}", _0)]
     InvalidRegex(String),
     #[fail(display = "No Regex match found in '{}' for regex: '{}'", _0, _1)]

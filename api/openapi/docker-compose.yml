@@ -1,0 +1,18 @@
+version: "3"
+services:
+  openapi:
+    build: .
+    container_name: docs
+    ports:
+      - 4001:80
+    volumes:
+      - ./doc.openapi.yml:/usr/share/nginx/html/doc.openapi.yml
+  swagger_ui:
+    container_name: openapi_swagger_ui
+    depends_on:
+      - openapi
+    image: swaggerapi/swagger-ui
+    environment:
+      - API_URL=http://127.0.0.1:4001/doc.openapi.yml
+    ports:
+      - 4000:8080

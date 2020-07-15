@@ -74,3 +74,11 @@ Windows Server 2016 host.
 - Windows Server 2019: `mcr.microsoft.com/windows/servercore:ltsc2019`
 
 For a full list please checkout [Windows container version compatibility](https://docs.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility?tabs=windows-server-2004%2Cwindows-10-2004).
+
+## Build And Publish The Docker Image
+
+```
+sudo docker build -t testing -f ../Docker-Files/Dockerfile-Testing ..
+sudo docker tag testing dominicwrege/depp-project-testing
+sudo docker push dominicwrege/depp-project-testing
+```

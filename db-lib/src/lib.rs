@@ -1,4 +1,5 @@
-//! Shared code to configure the REST [API](../api/index.html) and the [Assignment Manager](../assign_mngr/index.html) for establishing the connection to PostgreSQL.
+//! Shared code to configure the REST [API](../api) and the [Assignment Manager](../assign-mngr) 
+//! for establishing the connection to PostgreSQL using [rust-postgres](https://github.com/sfackler/rust-postgres).
 use deadpool_postgres::{Manager, Pool};
 
 mod embedded {
@@ -19,7 +20,7 @@ pub enum DbError {
 }
 #[derive(Debug, err_derive::Error)]
 pub enum ConfigError {
-    #[error(display = "Connection failed using config {:#?}. Error: {}", _0, _1)]
+    #[error(display = "{}\nConnection to the database failed using config {:#?}", _1, _0)]
     Connection(DbConfig, tokio_postgres::error::Error),
     #[error(display = "Migration failed: {}", _0)]
     Migration(refinery::Error),
