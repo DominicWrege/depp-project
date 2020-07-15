@@ -1,4 +1,4 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
 {% block content %}
 
 <link rel="stylesheet" href="/static/editor.css">
@@ -64,7 +64,7 @@
                     <label for="SortBySelect">Sortierung der gesammten Ausgabe auf der Konsole</label>
                     <select
                             class="form-control"
-                            id="SortBySelect"
+                            id="SortBySelect w-50"
                             name="sort_stdout"
                             value="Asc"
                             required
@@ -106,10 +106,28 @@
             </fieldset>
 
             <div class="row">
+
+                <div class="form-group col-6">
+                    <label for="ExerciseSelect">Praktikum</label>
+                    <select
+                            class="form-control w-75"
+                            id="ExerciseSelect"
+                            name="exercise_id"
+                            required
+                    >
+                        {% for exercise in exercises %}
+                        {% if exercise.id == assignment.exercise_id %}
+                        <option selected value="{{exercise.id}}">{{exercise.description}}</option>
+                        {% else %}
+                        <option value="{{exercise.id}}">{{exercise.description}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="form-group col-6">
                     <label for="SkriptType">Skript</label>
                     <select
-                            class="form-control"
+                            class="form-control w-50"
                             id="SkriptType"
                             name="script_type"
                             onchange="languageChanged(this)"
@@ -124,40 +142,22 @@
                         {% endfor %}
                     </select>
                 </div>
-
-                <div class="form-group col-6">
-                    <label for="PraktikumSelect">Praktikum</label>
-                    <select
-                            class="form-control"
-                            id="PraktikumSelect"
-                            name="exercise_id"
-                            required
-                    >
-                        {% for exercise in exercises %}
-                        {% if exercise.id == assignment.exercise_id %}
-                        <option selected value="{{exercise.id}}">{{exercise.description}}</option>
-                        {% else %}
-                        <option value="{{exercise.id}}">{{exercise.description}}</option>
-                        {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
             </div>
             <fieldset class="form-group">
                 <legend>Regex</legend>
                 <div class="form-group w-50">
                     <div class="form-group ">
-                        <div class="form-check radio-regex">
-                            <input class="form-check-input" {%if assignment.regex_check_mode == 'UnknownRegex' %} checked="true" {% endif %}  name="regex_check_mode" type="radio" value="UnknownRegex" id="NoneRadio" onclick="onchangeRegexRadio(this)">
-                            <label for="NoneRadio">Nichts</label>
+                        <div class="form-check radio-regex mb-2 align-items-center d-flex">
+                            <input class="form-check-input" id="NoneRadio" {%if assignment.regex_check_mode == 'UnknownRegex' %} checked="true" {% endif %}  name="regex_check_mode" type="radio" value="UnknownRegex" onclick="onchangeRegexRadio(this)">
+                            <label for="NoneRadio" class="ml-3 mb-0">Nichts</label>
+                        </div>
+                        <div class="form-check radio-regex mb-2 align-items-center d-flex">
+                            <input class="form-check-input" id="SkriptRadio" {%if assignment.regex_check_mode == 'ScriptContent' %} checked="true" {% endif %} name="regex_check_mode" type="radio" value="ScriptContent"onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
+                            <label for="SkriptRadio" class="ml-3 mb-0">Skriptinhalt</label>
                         </div>
                         <div class="form-check radio-regex">
-                            <input class="form-check-input" {%if assignment.regex_check_mode == 'ScriptContent' %} checked="true" {% endif %} name="regex_check_mode" type="radio" value="ScriptContent" id="SkriptRadio" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
-                            <label for="SkriptRadio">Skriptinhalt</label>
-                        </div>
-                        <div class="form-check radio-regex">
-                            <input class="form-check-input" {%if assignment.regex_check_mode == 'Stdout' %} checked="true" {% endif %} name="regex_check_mode" type="radio" id="StdoutRadio" value="Stdout" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
-                            <label class="form-check-label" for="StdoutRadio">Konsolen Ausgabe</label>
+                            <input class="form-check-input" id="StdoutRadio" {%if assignment.regex_check_mode == 'Stdout' %} checked="true" {% endif %} name="regex_check_mode" type="radio" value="Stdout" onclick="onchangeRegexRadio(this)" onclick="showRegexInput(this)">
+                            <label class="form-check-label ml-3 mb-0" >Konsolen Ausgabe</label>
                         </div>
                     </div>
                 </div>

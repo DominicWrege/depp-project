@@ -1,34 +1,34 @@
-{% extends "index.html" %} {% block content %}
+{% extends "base.html" %} {% block content %}
 
 <style>
-  #list {
-    max-width: 800px;
-  }
+	#list {
+		max-width: 800px;
+	}
 </style>
 
 <div id="list" class="list list-group container">
-  <h4 class="mb-3">Aufgabenübersicht für {{exercise_name}}</h4>
-  {% if assignments | length > 0 %} {% for assignment in assignments %}
-  <a
-    href="{{base_url}}/assignment/{{assignment.uuid}}"
-    class="list-group-item list-group-item-action"
-  >
-    <div class="d-flex w-100 justify-content-between">
-      <h5 class="mb-1">{{assignment.name}}</h5>
-      <small>{{assignment.script_type}}</small>
-    </div>
-    <p class="mb-1">{{assignment.description}}</p>
-    {% if assignment.active %}
-    <small>Aktiv</small>
-    {% else %}
-    <small>✖️Inaktiv</small>
-    {% endif %}
-  </a>
-  {% endfor %} {% else %}
-  <h5>
-    Keine Aufgaben vorhanden
-  </h5>
-  {% endif %}
+	<h4 class="mb-3">Aufgabenübersicht für {{exercise_name}}</h4>
+	{% if assignments | length > 0 %} {% for assignment in assignments %}
+	<a
+		href="{{base_url}}/assignment/{{assignment.uuid}}"
+		class="list-group-item list-group-item-action"
+	>
+		<div class="d-flex w-100 justify-content-between">
+			<h5 class="mb-1">{{assignment.name}}</h5>
+			<small>{{assignment.script_type}}</small>
+		</div>
+		<p class="mb-1">{{assignment.description}}</p>
+		{% if assignment.active %}
+		<small>Aktiv</small>
+		{% else %}
+		<small>✖️Inaktiv</small>
+		{% endif %}
+	</a>
+	{% endfor %} {% else %}
+	<h5>
+		Keine Aufgaben vorhanden
+	</h5>
+	{% endif %}
 </div>
 
 {% endblock content %}

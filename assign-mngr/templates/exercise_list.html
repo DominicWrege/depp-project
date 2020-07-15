@@ -1,52 +1,80 @@
-{% extends "index.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 
 <script src="/static/exercise.js"></script>
 
 <style>
-    .item-link{
-        flex-grow: 2;
-    }
-    .item-link:hover{
-        cursor: pointer;
-    }
+	.item-link {
+		flex-grow: 2;
+	}
+	.item-link:hover {
+		cursor: pointer;
+	}
 </style>
 
 <div class="d-flex flex-column justify-content-center">
-    <h4 class="mb-auto w-75">Praktika Übersicht</h4>
-    {% if exercises | length > 0 %}
-    <div class="list-group mt-3">
-        {% for exercise in exercises%}
-        <div class="list-group-item list-group-item-action w-75 m-auto d-flex justify-content-between">
-                <a class="item-link" href="/manage/exercise/{{exercise.id}}">&#x1f4c1;  {{exercise.description}}</a>
-                <form hidden method="POST" class="w-100" traget="/" action="/manage/exercise/rename/{{exercise.id}}">
-                    <input
-                            type="text"
-                            class="form-control w-50 p-3 mb-4"
-                            id="DescriptionInput"
-                            aria-describedby="description"
-                            name="description"
-                            value="{{exercise.description}}"
-                            required
-                    />
-                    <button type="submit" class="btn btn-primary btn-sm mr-3">speichern</button>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="toggle_edit(this, '{{exercise.id}}')">abbrechen</button>
-                </form>
-                <div class="btns_bar">
-                    <span class="badge badge-primary badge-pill">{{exercise.count}}</span>
-                    <button type="button" onclick="toggle_edit(this, '{{exercise.id}}')" class="btn btn-outline-secondary btn-sm ml-3">umbenennen</button>
-                    <button type="button" onclick="confirm_delete('{{exercise.id}}')" class="btn btn-outline-warning btn-sm ml-3">löschen</button>
-                </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <h5>Keine Pratika vorhanden?! Hier neu <a href="/manage/exercise_form">anlegen.</a></h5>
-    {% endif %}
+	<h4 class="m-auto w-75">Praktika Übersicht</h4>
+	{% if exercises | length > 0 %}
+	<div class="list-group mt-3">
+		{% for exercise in exercises%}
+		<div
+			class="list-group-item list-group-item-action w-75 m-auto d-flex justify-content-between"
+		>
+			<a class="item-link" href="/manage/exercise/{{exercise.id}}"
+				>&#x1f4c1; {{exercise.description}}</a
+			>
+			<form
+				hidden
+				method="POST"
+				class="w-100"
+				traget="/"
+				action="/manage/exercise/rename/{{exercise.id}}"
+			>
+				<input
+					type="text"
+					class="form-control w-50 p-3 mb-4"
+					id="DescriptionInput"
+					aria-describedby="description"
+					name="description"
+					value="{{exercise.description}}"
+					required
+				/>
+				<button type="submit" class="btn btn-primary btn-sm mr-3">
+					speichern
+				</button>
+				<button
+					type="button"
+					class="btn btn-sm btn-primary"
+					onclick="toggle_edit(this, '{{exercise.id}}')"
+				>
+					abbrechen
+				</button>
+			</form>
+			<div class="btns_bar">
+				<span class="badge badge-primary badge-pill">{{exercise.count}}</span>
+				<button
+					type="button"
+					onclick="toggle_edit(this, '{{exercise.id}}')"
+					class="btn btn-outline-secondary btn-sm ml-3"
+				>
+					umbenennen
+				</button>
+				<button
+					type="button"
+					onclick="confirm_delete('{{exercise.id}}')"
+					class="btn btn-outline-warning btn-sm ml-3"
+				>
+					löschen
+				</button>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+	{% else %}
+	<h5>
+		Keine Pratika vorhanden?! Hier neu
+		<a href="/manage/exercise_form">anlegen.</a>
+	</h5>
+	{% endif %}
 </div>
-
-
-
 
 {% endblock content %}

@@ -1,4 +1,4 @@
-{% extends "index.html" %} {% block content %}
+{% extends "base.html" %} {% block content %}
 <link rel="stylesheet" href="/static/editor.css" />
 <form
 	id="AssignmentForm"
@@ -75,7 +75,7 @@
 						>Sortierung der gesammten Ausgabe auf der Konsole</label
 					>
 					<select
-						class="form-control"
+						class="form-control w-50"
 						id="SortBySelect"
 						name="sort_stdout"
 						required
@@ -118,10 +118,9 @@
 				<div class="form-group col-lg-6 col-sm-12">
 					<label for="ExerciseSelect">Praktikum</label>
 					<select
-						class="form-control"
+						class="form-control w-75"
 						id="ExerciseSelect"
 						name="exercise_id"
-						onchange="exerciseChanged(this)"
 						required
 					>
 						{% for exercise in exercises %}
@@ -133,7 +132,7 @@
 				<div class="form-group col-lg-6 col-sm-12">
 					<label for="SkriptType">Skript</label>
 					<select
-						class="form-control"
+						class="form-control w-50"
 						id="SkriptType"
 						name="script_type"
 						required
@@ -152,7 +151,7 @@
 				<legend>Regex</legend>
 				<div class="form-group w-50">
 					<div class="form-group">
-						<div class="form-check radio-regex">
+						<div class="form-check radio-regex mb-2 align-items-center d-flex">
 							<input
 								class="form-check-input"
 								name="regex_check_mode"
@@ -162,9 +161,9 @@
 								id="NoneRadio"
 								onclick="onchangeRegexRadio(this)"
 							/>
-							<label for="NoneRadio">Nichts</label>
+							<label for="NoneRadio"  class="ml-3 mb-0">Nichts</label>
 						</div>
-						<div class="form-check radio-regex">
+						<div class="form-check radio-regex mb-2 align-items-center d-flex">
 							<input
 								class="form-check-input"
 								name="regex_check_mode"
@@ -172,11 +171,10 @@
 								value="ScriptContent"
 								id="SkriptRadio"
 								onclick="onchangeRegexRadio(this)"
-								onclick="showRegexInput(this)"
 							/>
-							<label for="SkriptRadio">Skriptinhalt</label>
+							<label for="SkriptRadio" class="ml-3 mb-0">Skriptinhalt</label>
 						</div>
-						<div class="form-check radio-regex">
+						<div class="form-check radio-regex align-items-center d-flex">
 							<input
 								class="form-check-input"
 								name="regex_check_mode"
@@ -184,11 +182,8 @@
 								id="StdoutRadio"
 								value="Stdout"
 								onclick="onchangeRegexRadio(this)"
-								onclick="showRegexInput(this)"
 							/>
-							<label class="form-check-label" for="StdoutRadio"
-								>Konsolen Ausgabe</label
-							>
+							<label class="form-check-label ml-3 mb-0" for="StdoutRadio">Konsolen Ausgabe</label>
 						</div>
 					</div>
 				</div>

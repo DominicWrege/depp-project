@@ -7,6 +7,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="/static/bootstrap.min.css" >
+        <link rel="stylesheet" href="/static/style.css">
         <link rel="icon" href="/static/favicon.ico">
         <style>
             body{
@@ -26,7 +27,7 @@
             <a class="mr-2 ml-1" href="{{base_url}}/logout">Logout</a>
             {% endif %}
         </nav>
-        <div class="container">
+        <div class="container mt-4">
             {% block content %}{% endblock content %}
         </div>
     </body>
