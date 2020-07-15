@@ -22,9 +22,7 @@ cargo run
 
 ## Config
 
-### API
-
-Web UI to manage all assignments.
+Set the server port and the password for the admin user.
 
 | Name              | Type   | Default |
 | ----------------- | ------ | ------- |
