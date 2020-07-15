@@ -42,10 +42,12 @@ The client config.
 
 ```
 # start
-docker-compose -f ./openapi/docker-compose.yml up
+sudo docker-compose -f ./openapi/docker-compose.yml up
 # stop
-docker-compose -f ./openapi/docker-compose.yml down
+sudo docker-compose -f ./openapi/docker-compose.yml down
 ```
+
+Then open [http://localhost:4000](http://localhost:4000) in your browser.
 
 ## Build And Publish The Docker Image
 
