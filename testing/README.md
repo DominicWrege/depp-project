@@ -30,7 +30,7 @@ You can use docker to run the testing server [dominicwrege/depp-testing](https:/
 On Windows to just compile and run it directly on the host machine.
 For setting the environment variables [git Windows Bash](https://git-scm.com/download/win) is also recommended.
 
-##### Choose The Docker Testing Image:
+##### Choose the docker testing image:
 
 ```
 # Windows 10 Pro/Enterprise
@@ -43,7 +43,7 @@ export DEPP_TEST_DOCKER_IMAGE=mcr.microsoft.com/windows/servercore:ltsc2016
 export DEPP_TEST_DOCKER_IMAGE=mcr.microsoft.com/windows/servercore:ltsc2019
 ```
 
-##### Compile And Run:
+##### Compile and run:
 
 ```
 cargo run --release
