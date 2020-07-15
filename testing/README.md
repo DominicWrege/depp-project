@@ -23,7 +23,8 @@ cargo run
 
 ### Linux
 
-You can use docker to run the testing server [dominicwrege/depp-testing](https://hub.docker.com/r/dominicwrege/depp-testing) inside Docker and mounting the daemon `/var/run/docker.sock:/var/run/docker.sock` as an volume.
+Run the testing server [dominicwrege/depp-testing](https://hub.docker.com/r/dominicwrege/depp-testing) using Docker and by mounting the
+daemon: `/var/run/docker.sock:/var/run/docker.sock` as an volume.
 
 ### Windows
 
