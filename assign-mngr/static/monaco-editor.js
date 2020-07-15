@@ -1,4 +1,5 @@
-document.querySelector("#AssignmentForm").addEventListener("load", (e) => {
+document.body.onload =  (e) => {
+	console.log(e);
 	document.querySelector("#solutionEditor").style = editorStyle("28em");
 	document.querySelector("#customScriptEditor").style = editorStyle("14em");
 	const solutionElement = document.querySelector("#hiddenSolutionText");
@@ -45,7 +46,7 @@ document.querySelector("#AssignmentForm").addEventListener("load", (e) => {
 				});
 		});
 	}
-});
+};
 
 function editorStyle(height) {
 	return `width:auto;height:${height};border:1px solid lightgray;margin-bottom: 0.3em;`;

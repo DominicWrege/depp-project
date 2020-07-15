@@ -8,7 +8,7 @@ This is the REST API which uses `JSON`. It communicates via RPC to the RPC serve
 ```
 # For starting the PostgreSQL instance.
 docker-compose -f ../assign-mngr/docker-compose.yml up
-
+# Run
 cargo run
 ```
 

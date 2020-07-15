@@ -14,11 +14,14 @@ yarn install --modules-folder ./static/node_modules
 ## Build and Run In Debug Mode Mode
 
 ```
+# Don't forget to install the node_modules first
 # For starting the PostgreSQL instance.
 docker-compose up -d
-
+# Run
 cargo run
 ```
+
+Open [localhost:5000/manage](http://localhost:5000/manage) in your browser.
 
 ## Config
 
