@@ -13,9 +13,8 @@ COPY . .
 RUN cd testing && cargo build --release --target x86_64-unknown-linux-musl
 
 FROM alpine:latest
-RUN  ln -s /media/examples/ examples
 
 COPY --from=builder /workspace/target/x86_64-unknown-linux-musl/release/testing .
 EXPOSE 50051
 
-CMD ["./testing","--config", "examples/assignments.toml"]
+CMD ["./testing"]
