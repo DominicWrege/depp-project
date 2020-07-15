@@ -53,6 +53,6 @@ Then open [http://localhost:4000](http://localhost:4000) in your browser.
 
 ```
 sudo docker build -t api -f ../Docker-Files/Dockerfile-API ..
-sudo docker tag api dominicwrege/depp-project-api
+sudo docker tag api dominicwrege/depp-project-api:latest
 sudo docker push dominicwrege/depp-project-api
 ```

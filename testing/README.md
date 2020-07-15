@@ -80,6 +80,6 @@ For a full list please checkout [Windows container version compatibility](https:
 
 ```
 sudo docker build -t testing -f ../Docker-Files/Dockerfile-Testing ..
-sudo docker tag testing dominicwrege/depp-project-testing
+sudo docker tag testing dominicwrege/depp-project-testing:latest
 sudo docker push dominicwrege/depp-project-testing
 ```

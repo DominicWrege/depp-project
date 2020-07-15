@@ -36,6 +36,6 @@ Set the server port and the password for the admin user.
 
 ```
 sudo docker build -t web -f ../Docker-Files/Dockerfile-Assign-Mngr-Release ..
-sudo docker tag web dominicwrege/depp-project-web
+sudo docker tag web dominicwrege/depp-project-web:latest
 sudo docker push dominicwrege/depp-project-web
 ```

@@ -2,7 +2,7 @@
 version: "3"
 services:
   testing:
-    image: dominicwrege/depp-testing
+    image: dominicwrege/depp-testing:latest
     ports:
       - 50051:50051
     volumes:
@@ -10,7 +10,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/scripts:/tmp/scripts
   api:
-    image: dominicwrege/depp-project-api
+    image: dominicwrege/depp-project-api:latest
     ports:
       - 6000:6000
     env_file:

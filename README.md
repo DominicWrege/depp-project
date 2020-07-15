@@ -150,7 +150,7 @@ Build and publish the Assignment Manager image (assign-mngr)
 ```
 # from the root folder of this repo
 sudo docker build -t web -f Docker-Files/Dockerfile-Assign-Mngr-Release  .
-sudo docker tag web dominicwrege/depp-project-web
+sudo docker tag web dominicwrege/depp-project-web:latest
 sudo docker push dominicwrege/depp-project-web
 ```
 
@@ -159,7 +159,7 @@ Build and publish the Rest API image:
 ```
 # from the root folder of this repo
 sudo docker build -t api -f Docker-Files/Dockerfile-API .
-sudo docker tag api dominicwrege/depp-project-api
+sudo docker tag api dominicwrege/depp-project-api:latest
 sudo docker push dominicwrege/depp-project-api
 ```
 
@@ -168,6 +168,6 @@ Build and publish the testing image:
 ```
 # from the root folder of this repo
 sudo docker build -t testing -f Docker-Files/Dockerfile-Testing .
-sudo docker tag testing dominicwrege/depp-project-testing
+sudo docker tag testing dominicwrege/depp-project-testing:latest
 sudo docker push dominicwrege/depp-project-testing
 ```
