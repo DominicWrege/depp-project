@@ -1,0 +1,55 @@
+# api, web ui, test RPC server with reverse ngnix proxy
+version: "3"
+services:
+  testing:
+    image: dominicwrege/depp-testing
+    ports:
+      - 50051:50051
+    volumes:
+      - ./testing/examples:/media/examples
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/scripts:/tmp/scripts
+  api:
+    image: dominicwrege/depp-project-api
+    ports:
+      - 6000:6000
+    env_file:
+      - ./compose.env
+    links:
+      - "db:database"
+    depends_on:
+      - db
+  db:
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    env_file:
+      - ./compose.env
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+  web:
+    image: dominicwrege/depp-project-web:latest
+    ports:
+      - 5000:5000
+    env_file:
+      - ./compose.env
+    depends_on:
+      - db
+    links:
+      - "db:database"
+  proxy:
+    image: nginx:1-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/:/etc/nginx/
+      - ./ssl/:/etc/ssl/
+    depends_on:
+      - db
+      - web
+      - api
+      - testing
+    links:
+      - "api:api"
+      - "web:web"
