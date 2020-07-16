@@ -2,17 +2,16 @@
 use crate::api::EndPointStatus;
 use grpc_api::{Script, TargetOs};
 use serde::Deserialize;
-use std::fmt::Formatter;
+use std::fmt::{Debug, Formatter};
 use url::Url;
-
 /*
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 */
 
 // DEPP_API_ as prefix
-/// Default is: ```http://127.0.0.1:50051```
+/// Default is: ```http://127.0.0.2:50051```
 fn default_addr() -> Url {
-    Url::parse("http://127.0.0.1:50051").unwrap()
+    Url::parse("http://192.168.178.98:50051").unwrap()
 }
 /// Reading the environment variables.
 pub fn get_config() -> Result<RpcEnvConfig, envy::Error> {
@@ -92,6 +91,7 @@ impl RpcConfig {
     /// The status of the RPC Host.
     pub async fn status(&self) -> AllEndpointStatus {
         use grpc_api::test_client::TestClient;
+        dbg!(&self.linux.rpc_url.to_string());
         let (l, w) = futures::join!(
             TestClient::connect(self.linux.rpc_url.to_string()),
             TestClient::connect(self.windows.rpc_url.to_string())
@@ -102,13 +102,12 @@ impl RpcConfig {
         }
     }
 }
-/// Returning the [EndPointStatus](../api/enum.EndPointStatus.html) for one RPC Endpoint.
 fn endpoint_status<T, E>(r: Result<T, E>, context: &RpcMeta) -> EndPointStatus {
     if r.is_ok() {
         EndPointStatus::Online
     } else {
         log::warn!(
-            "grpc {} {} seems to be offline",
+            "GRPC {} {} seems to be offline",
             &context.platform,
             &context.rpc_url
         );
