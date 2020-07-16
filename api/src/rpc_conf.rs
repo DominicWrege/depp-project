@@ -3,6 +3,8 @@ use crate::api::EndPointStatus;
 use grpc_api::{Script, TargetOs};
 use serde::Deserialize;
 use std::fmt::{Debug, Formatter};
+use std::time::Duration;
+use tokio::time::timeout;
 use url::Url;
 /*
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
@@ -93,22 +95,26 @@ impl RpcConfig {
         use grpc_api::test_client::TestClient;
         let linux_rpc_url = self.linux.rpc_url.to_string();
         let ms_rpc_url = self.windows.rpc_url.to_string();
-        let (l, w) = futures::join!(
-            TestClient::connect(linux_rpc_url),
-            TestClient::connect(ms_rpc_url)
-        );
+        let time_out_duration = Duration::from_secs(1);
+        let linux_status = timeout(time_out_duration, TestClient::connect(linux_rpc_url)).await;
+        let windows_status = timeout(time_out_duration, TestClient::connect(ms_rpc_url)).await;
         AllEndpointStatus {
-            windows: endpoint_status(w, &self.windows),
-            linux: endpoint_status(l, &self.linux),
+            windows: endpoint_status(windows_status, &self.windows),
+            linux: endpoint_status(linux_status, &self.linux),
         }
     }
 }
 fn endpoint_status<T, E>(r: Result<T, E>, context: &RpcMeta) -> EndPointStatus {
     if r.is_ok() {
+        log::info!(
+            "RPC {} {} server is online",
+            &context.platform,
+            &context.rpc_url
+        );
         EndPointStatus::Online
     } else {
         log::warn!(
-            "GRPC {} {} seems to be offline",
+            "RPC {} {} seems to be offline",
             &context.platform,
             &context.rpc_url
         );

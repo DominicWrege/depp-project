@@ -2,7 +2,7 @@
 version: "3"
 services:
   testing:
-    image: dominicwrege/depp-testing:latest
+    image: dominicwrege/depp-project-testing:latest
     ports:
       - 50051:50051
     volumes:

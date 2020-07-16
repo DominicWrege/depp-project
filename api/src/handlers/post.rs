@@ -5,6 +5,8 @@ use actix_web::{web, HttpResponse};
 use deadpool_postgres::Pool;
 use grpc_api::test_client::TestClient;
 use grpc_api::{Assignment, AssignmentMsg, AssignmentResult};
+use std::time::Duration;
+use tokio::time::timeout;
 /*
 use tonic::transport::Channel;
 */
@@ -32,13 +34,12 @@ pub async fn add_submission(
     }
     let rpc = state.rpc_conf.meta(&assignment.script_type.into()).clone();
     let rpc_url = rpc.rpc_url.to_string();
-    log::info!("Calling RPC Endpoint {}: ", &rpc_url);
-    let mut client = TestClient::connect(rpc_url)
+    log::info!("Calling RPC Endpoint: {} ", &rpc_url);
+    let mut client = timeout(Duration::from_secs(1), TestClient::connect(rpc_url))
         .await
         .map_err(|_| Error::RpcOffline {
             reason: rpc.clone(),
-        })?;
-
+        })??;
     tokio::task::spawn(async move {
         let state = state.into_inner();
         let ilias_id = &submission.ilias_id;

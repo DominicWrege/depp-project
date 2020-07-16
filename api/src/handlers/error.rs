@@ -41,6 +41,7 @@ impl ResponseError for Error {
         let err = ErrJson::from(self);
         let code = self.status_code();
         let mut response = HttpResponse::build(code);
+        log::error!("{}", &self);
         match self {
             Error::DuplicateIliasId | Error::NotFoundIliasId(_) | Error::NotAssignment(_) => {
                 response.json(err)
