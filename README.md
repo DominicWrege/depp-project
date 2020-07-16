@@ -171,3 +171,22 @@ sudo docker build -t testing -f Docker-Files/Dockerfile-Testing .
 sudo docker tag testing dominicwrege/depp-project-testing:latest
 sudo docker push dominicwrege/depp-project-testing
 ```
+
+## Backup And Restore Database
+
+**_Note_**: Make sure you have the matching postgresql-client installed.
+See how to [install postgresql 12 on Ubuntu.](https://computingforgeeks.com/install-postgresql-12-on-ubuntu/)
+
+Backup:
+
+```
+pg_dump postgres://USER:"PASSWORD"@127.0.0.1:5432/assignments > db-backup
+```
+
+Restore:
+
+```
+psql postgres://USER:"PASSWORD"@127.0.0.1:5432/assignments < db-backup
+```
+
+Read the PostgrSQL [documentation](https://www.postgresql.org/docs/current/backup-dump.html).
