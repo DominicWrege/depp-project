@@ -11,7 +11,7 @@ use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 // DEPP_API_ as prefix
 /// Default is: ```http://127.0.0.2:50051```
 fn default_addr() -> Url {
-    Url::parse("http://192.168.178.98:50051").unwrap()
+    Url::parse("http://127.0.0.1:50051").unwrap()
 }
 /// Reading the environment variables.
 pub fn get_config() -> Result<RpcEnvConfig, envy::Error> {
@@ -91,10 +91,11 @@ impl RpcConfig {
     /// The status of the RPC Host.
     pub async fn status(&self) -> AllEndpointStatus {
         use grpc_api::test_client::TestClient;
-        dbg!(&self.linux.rpc_url.to_string());
+        let linux_rpc_url = self.linux.rpc_url.to_string();
+        let ms_rpc_url = self.windows.rpc_url.to_string();
         let (l, w) = futures::join!(
-            TestClient::connect(self.linux.rpc_url.to_string()),
-            TestClient::connect(self.windows.rpc_url.to_string())
+            TestClient::connect(linux_rpc_url),
+            TestClient::connect(ms_rpc_url)
         );
         AllEndpointStatus {
             windows: endpoint_status(w, &self.windows),

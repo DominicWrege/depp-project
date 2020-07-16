@@ -18,10 +18,11 @@ pub async fn add_submission(
     json: Result<web::Json<Submission>, actix_web::error::Error>,
 ) -> Result<HttpResponse, Error> {
     let submission = json.map_err(sub_extractor)?;
+    dbg!(&submission);
     let assignment = db_assignment(&state.db_pool, &submission.assignment_id)
         .await
         .map_err(|_| Error::NotAssignment(submission.assignment_id))?;
-
+    dbg!(&assignment);
     if state.pending_results.contains_key(&submission.ilias_id)
         || state
             .to_test_assignments
@@ -32,8 +33,9 @@ pub async fn add_submission(
         return Err(Error::DuplicateIliasId);
     }
     let rpc = state.rpc_conf.meta(&assignment.script_type.into()).clone();
-
-    let mut client = TestClient::connect(rpc.rpc_url.to_string())
+    let rpc_url = rpc.rpc_url.to_string();
+    log::info!("Calling RPC Endpoint {}: ", &rpc_url);
+    let mut client = TestClient::connect(rpc_url)
         .await
         .map_err(|_| Error::RpcOffline {
             reason: rpc.clone(),
