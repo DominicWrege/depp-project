@@ -1,4 +1,8 @@
 {% extends "base.html" %} {% block content %}
+<!-- cache monaco editor hack -->
+<script src="/static/monaco-require.js"></script>
+<script src="/static/node_modules/monaco-editor/min/vs/loader.js"></script>
+<!-- cache monaco editor hack-->
 <h2>Login</h2>
 {% if error_msg %}
 <div class="alert alert-warning" role="alert">

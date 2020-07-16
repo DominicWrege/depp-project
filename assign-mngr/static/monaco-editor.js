@@ -1,5 +1,4 @@
-document.body.onload =  (e) => {
-	console.log(e);
+document.body.onload = (e) => {
 	document.querySelector("#solutionEditor").style = editorStyle("28em");
 	document.querySelector("#customScriptEditor").style = editorStyle("14em");
 	const solutionElement = document.querySelector("#hiddenSolutionText");

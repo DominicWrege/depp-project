@@ -14,7 +14,5 @@ function onchangeRegexRadio(target) {
     }
 }
 
-document.querySelector(".radio-regex>input").addEventListener("load", (event) => {
-    event.target.click();
-});
+document.querySelector(".radio-regex>input[type='radio']:checked").click();
 
