@@ -18,11 +18,9 @@ pub async fn add_submission(
     json: Result<web::Json<Submission>, actix_web::error::Error>,
 ) -> Result<HttpResponse, Error> {
     let submission = json.map_err(sub_extractor)?;
-    dbg!(&submission);
     let assignment = db_assignment(&state.db_pool, &submission.assignment_id)
         .await
         .map_err(|_| Error::NotAssignment(submission.assignment_id))?;
-    dbg!(&assignment);
     if state.pending_results.contains_key(&submission.ilias_id)
         || state
             .to_test_assignments
