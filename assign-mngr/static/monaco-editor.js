@@ -21,6 +21,7 @@ document.body.onload = (e) => {
 
 	function initEditor(solutionText, solutionlanguage, customScriptText) {
 		require(["vs/editor/editor.main"], () => {
+			document.querySelector("#loadingPlaceholder").remove();
 			window.soluitionEditor = createEditor(
 				"#solutionEditor",
 				solutionText,
