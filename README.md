@@ -119,7 +119,7 @@ I included some examples scripts folder in the `.testing/example-scripts` folder
 
 ### How Scripts Are Tested
 
-Each Script will run inside a docker container for max duration of 120 secs on Linux and on Windows 180 secs and the memory is limited. First the solution script will run. After that the provided script will run. At the end both stdouts and writing files are 1:1 compared
+Each Script will run inside a docker container for max duration of 120 secs on Linux and on Windows 180 secs and the memory is limited to 200-320MB. First the solution script will run. After that the provided script will run. At the end both stdouts and writing files are 1:1 compared
 
 ### Currently Supported Script Types
 

@@ -20,7 +20,9 @@ COPY ./assign-mngr/package.json .
 COPY ./assign-mngr/yarn.lock .
 
 RUN apk add yarn &&\
-    yarn install --modules-folder ./static/node_modules
+    yarn install --modules-folder ./static/node_modules &&\
+    rm -r /usr/local/share/.cache/yarn/
+
 
 EXPOSE 5000
 

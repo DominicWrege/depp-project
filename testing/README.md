@@ -3,6 +3,7 @@
 A RPC server waiting to test scripts inside a Docker container.
 Resources like time and memory are limited. Each container gets a specific folder mounted where the fs output
 is been checked alongside with the console output as well. You need to run two instances (Windows and Linux) in order to test all scripts.
+Each Script will run inside a docker container for max duration of 120 secs on Linux and on Windows 180 secs and the memory is limited to 200-320MB.
 
 ## Build and Run In Debug Mode
 
