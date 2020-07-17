@@ -112,13 +112,13 @@ impl StdoutChecker {
 #[async_trait]
 impl Checker for StdoutChecker {
     async fn check(&self) -> Result<(), Error> {
-        log::info!("result stdout: {:#?}", self.tested);
-        log::info!("expected stdout: {:#?}", self.expected);
+        log::info!("result stdout: {:}", self.tested);
+        log::info!("expected stdout: {:}", self.expected);
         if self.expected == self.tested {
             Ok(())
         } else {
             Err(Error::WrongOutput(format!(
-                "expected stdout:({:#?}) result stdout:({:#?})",
+                "expected stdout:({}) result stdout:({})",
                 self.expected, self.tested
             )))
         }

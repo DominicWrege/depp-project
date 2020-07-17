@@ -39,7 +39,10 @@ pub async fn add_submission(
         .await
         .map_err(|_| Error::RpcOffline {
             reason: rpc.clone(),
-        })??;
+        })?
+        .map_err(|_| Error::RpcOffline {
+            reason: rpc.clone(),
+        })?;
     tokio::task::spawn(async move {
         let state = state.into_inner();
         let ilias_id = &submission.ilias_id;

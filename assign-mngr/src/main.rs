@@ -115,6 +115,6 @@ fn main() {
 }
 
 fn init_logging() {
-    std::env::set_var("RUST_LOG", "assign_mngr=info,error,actix_web=info");
+    std::env::set_var("RUST_LOG", "assign_mngr=info,error,actix_web=info,warn");
     env_logger::init();
 }

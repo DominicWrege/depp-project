@@ -64,7 +64,7 @@ pub enum Error {
     #[fail(display = "Script finished with exit code 1 stderr: {}", _0)]
     ExitCode(String),
     #[fail(
-        display = "This content of this file {:#?} does not match with the solution. expected({:#?}) result({:#?})",
+        display = "This content of this file {:#?} does not match with the solution. expected({}) result({})",
         _0, _1, _2
     )]
     ExpectedFileNotSame(PathBuf, String, String),

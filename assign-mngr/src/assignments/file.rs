@@ -31,7 +31,7 @@ pub fn ls_zip_content(buf: &[u8]) -> Result<Vec<PathBuf>, std::io::Error> {
 }
 
 pub fn check_type_is_zip(field: &Field) -> bool {
-    field.content_type().subtype() == "zip"
+    field.content_type().subtype().as_str().contains("zip")
 }
 
 pub async fn update_files(
@@ -41,10 +41,10 @@ pub async fn update_files(
 ) -> HttpResult {
     let uuid = path.into_inner();
     let mut zip_file: Vec<u8> = vec![];
-
     while let Some(item) = payload.next().await {
         let mut field = item.unwrap();
         if check_type_is_zip(&field) {
+            log::info!("Uploading zip file");
             if let Some(Ok(s)) = field.next().await {
                 zip_file = s.to_vec();
             }
@@ -56,6 +56,5 @@ pub async fn update_files(
         .prepare("UPDATE assignment SET include_files = $1 WHERE uuid = $2")
         .await?;
     client.execute(&stmt, &[&zip_file, &uuid]).await?;
-
     Ok(redirect(format!("/assignment/{}", &uuid)))
 }

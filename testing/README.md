@@ -15,7 +15,7 @@ cargo run
 | Name                   | Type                | Default                                                                                          |
 | ---------------------- | ------------------- | ------------------------------------------------------------------------------------------------ |
 | DEPP_TEST_PORT         | uint16              | 50051                                                                                            |
-| DEPP_TEST_MAX_CURR     | uint8               | Linux: 8, Windows: 4                                                                             |
+| DEPP_TEST_MAX_CURR     | uint8               | Linux: 10, Windows: 5                                                                            |
 | DEPP_TEST_DOCKER_IMAGE | String              | Linux: `dominicwrege/depp-project-ubuntu:latest`, Windows: `mcr.microsoft.com/powershell:latest` |
 | DEPP_TEST_TIMEOUT      | uint64 format: secs | Linux: 120, Windows: 180                                                                         |
 

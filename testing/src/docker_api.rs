@@ -101,12 +101,10 @@ pub fn create_host_config<'a>(
         ..Default::default()
     })
 }
-
+/// Util function into mega
 const fn to_mb(n: u64) -> i64 {
     (n * 1000000) as i64
 }
-
-// time in seconds
 
 #[derive(Clone, Debug)]
 pub struct DockerWrap {
