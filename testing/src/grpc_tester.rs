@@ -36,13 +36,13 @@ impl Test for Tester {
                     log::error!("Invalid test error_msg: {}", e);
                     AssignmentResult {
                         passed: false,
-                        message: Some(e.to_string().trim().to_owned()),
+                        message: Some(e.to_string()),
                         valid: false,
                     }
                 }
                 Err(e) => AssignmentResult {
                     passed: false,
-                    message: Some(e.to_string().trim().to_owned()),
+                    message: Some(e.to_string()),
                     valid: true,
                 },
                 Ok(_) => AssignmentResult {

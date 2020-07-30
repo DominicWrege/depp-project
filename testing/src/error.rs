@@ -75,7 +75,7 @@ pub enum Error {
     #[fail(display = "Stdout is not sorted. stdout: {:#?}", _0)]
     NoSorted(String),
     #[fail(
-        display = "Custom script wrote to stderr or exit is not 0. Stderr: {}",
+        display = "Custom script wrote to some to the stderr or exit is not 0. Stderr: {}",
         _0
     )]
     CustomScript(String),
