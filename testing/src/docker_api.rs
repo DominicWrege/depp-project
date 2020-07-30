@@ -15,6 +15,20 @@ use std::path::Path;
 use std::time::Duration;
 use tokio::time::timeout;
 
+use std::fmt::Display;
+
+impl Display for ScriptOutput {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
+        write!(
+            f,
+            "stdout: {}\nstderr: {}\nstatus_code: {}",
+            &self.stdout.trim(),
+            &self.stderr.trim(),
+            &self.status_code
+        )
+    }
+}
+
 #[derive(Debug, failure::Fail)]
 pub enum DockerError {
     #[fail(display = "Docker API error: {}", _0)]

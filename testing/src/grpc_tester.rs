@@ -36,13 +36,13 @@ impl Test for Tester {
                     log::error!("Invalid test error_msg: {}", e);
                     AssignmentResult {
                         passed: false,
-                        message: Some(e.to_string()),
+                        message: Some(e.to_string().trim().to_owned()),
                         valid: false,
                     }
                 }
                 Err(e) => AssignmentResult {
                     passed: false,
-                    message: Some(e.to_string()),
+                    message: Some(e.to_string().trim().to_owned()),
                     valid: true,
                 },
                 Ok(_) => AssignmentResult {
@@ -89,7 +89,7 @@ impl Tester {
             )
             .await?;
         test_output.status_success()?;
-        log::info!("Test Output: {:?}", test_output);
+        log::info!("Test Output: {}", test_output);
         // only run solution if one of the 3 options is on
         let mut tests: Vec<Box<dyn Checker>> = Vec::new();
         if assignment.compare_fs_solution
@@ -113,7 +113,7 @@ impl Tester {
                 )
                 .await
                 .map_err(|_e| SystemError::BadSampleSolution)?;
-            log::info!("Solution Output: {:?}", solution_output);
+            log::info!("Solution Output: {}", solution_output);
             solution_output
                 .status_success()
                 .map_err(|_e| SystemError::BadSampleSolution)?;
