@@ -118,7 +118,7 @@ impl Checker for StdoutChecker {
             Ok(())
         } else {
             Err(Error::WrongOutput(format!(
-                "expected stdout:({}) result stdout:({})",
+                "Expected STDOUT:({}) Result STDOUT:({})",
                 self.expected.trim(),
                 self.tested.trim()
             )))

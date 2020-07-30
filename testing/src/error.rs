@@ -57,7 +57,7 @@ pub enum Error {
     #[from]
     #[fail(display = "Script produced invalid UTF8.")]
     NoUTF8(std::string::FromUtf8Error),
-    #[fail(display = "Does not contains expected output. {}", _0)]
+    #[fail(display = "Does not contains expected output: {}", _0)]
     WrongOutput(String),
     #[fail(display = "Solution dir and tested dir have not the same content")]
     ExpectedDirNotSame,
