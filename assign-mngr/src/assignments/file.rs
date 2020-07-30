@@ -42,11 +42,12 @@ pub async fn update_files(
     let uuid = path.into_inner();
     let mut zip_file: Vec<u8> = vec![];
     while let Some(item) = payload.next().await {
-        let mut field = item.unwrap();
-        if check_type_is_zip(&field) {
-            log::info!("Uploading zip file");
-            if let Some(Ok(s)) = field.next().await {
-                zip_file = s.to_vec();
+        if let Ok(mut field) = item {
+            if check_type_is_zip(&field) {
+                log::info!("Uploading zip file");
+                while let Some(Ok(s)) = field.next().await {
+                    zip_file.append(&mut s.to_vec());
+                }
             }
         }
     }

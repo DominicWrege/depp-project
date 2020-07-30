@@ -89,7 +89,7 @@ impl Tester {
             )
             .await?;
         test_output.status_success()?;
-
+        log::info!("Test Output: {:?}", test_output);
         // only run solution if one of the 3 options is on
         let mut tests: Vec<Box<dyn Checker>> = Vec::new();
         if assignment.compare_fs_solution
@@ -113,6 +113,7 @@ impl Tester {
                 )
                 .await
                 .map_err(|_e| SystemError::BadSampleSolution)?;
+            log::info!("Solution Output: {:?}", solution_output);
             solution_output
                 .status_success()
                 .map_err(|_e| SystemError::BadSampleSolution)?;
