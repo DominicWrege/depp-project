@@ -17,7 +17,7 @@ use state::State;
 /// Real main function. Starting the middleware and global initialization the state.
 async fn run() -> Result<(), failure::Error> {
     std::env::set_var("RUST_LOG", "api=info,error,warn,actix_web=info,warn");
-    let db_pool = db_lib::connect_migrate().await.expect("db connection err");
+    let db_pool = db_lib::connect_migrate().await?;
     let env_conf = rpc_conf::get_config()?;
     let state = State::new(env_conf, get_credentials(), db_pool);
     let c_state = state.clone();

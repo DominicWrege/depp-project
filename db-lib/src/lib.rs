@@ -1,7 +1,9 @@
-//! Shared code to configure the REST [API](../api) and the [Assignment Manager](../assign-mngr) 
+//! Shared code to configure the REST [API](../api) and the [Assignment Manager](../assign-mngr)
 //! for establishing the connection to PostgreSQL using [rust-postgres](https://github.com/sfackler/rust-postgres).
 use deadpool_postgres::{Manager, Pool};
-
+use serde::export::Formatter;
+use std::fmt;
+use std::fmt::Display;
 mod embedded {
     use refinery::embed_migrations;
     embed_migrations!("migrations");
@@ -20,7 +22,11 @@ pub enum DbError {
 }
 #[derive(Debug, err_derive::Error)]
 pub enum ConfigError {
-    #[error(display = "{}\nConnection to the database failed using config {:#?}", _1, _0)]
+    #[error(
+        display = "{}\nConnection to the database failed using config {:}",
+        _1,
+        _0
+    )]
     Connection(DbConfig, tokio_postgres::error::Error),
     #[error(display = "Migration failed: {}", _0)]
     Migration(refinery::Error),
@@ -58,6 +64,21 @@ fn default_port() -> u16 {
 }
 fn default_db_name() -> String {
     String::from("assignments")
+}
+
+impl Display for DbConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let pwd_stars = if self.password.len() > 3 {
+            format!("{}********", &self.password[..=3])
+        } else {
+            String::from("*********")
+        };
+        write!(
+            f,
+            "username: {},\npassword: {},\nport:{},\nmax_connection{}\n,host:{}",
+            &self.user, pwd_stars, self.port, &self.max_connection, &self.host
+        )
+    }
 }
 
 impl Default for DbConfig {
