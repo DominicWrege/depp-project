@@ -75,7 +75,7 @@ impl Display for DbConfig {
         };
         write!(
             f,
-            "username: {},\npassword: {},\nport:{},\nmax_connection{}\n,host:{}",
+            "username: {},\npassword: {},\nport: {},\nmax_connection: {},\nhost: {}",
             &self.user, pwd_stars, self.port, &self.max_connection, &self.host
         )
     }
