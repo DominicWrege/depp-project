@@ -15,10 +15,10 @@ or
 npm install --prefix ./static/
 ```
 
-## Build and Run In Debug Mode Mode
+## Build And Run In Debug Mode
 
 ```
-# Don't forget to install the node_modules first
+# Don't forget to install the node_modules first.
 # For starting the PostgreSQL instance.
 docker-compose up -d
 # Run
