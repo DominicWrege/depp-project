@@ -2,13 +2,17 @@
 
 A small web app for managing all assignments. [Bootstrap](https://getbootstrap.com/) is used for teh CSS and the [Monaco editor](https://microsoft.github.io/monaco-editor/) to have a better editor then textarea.
 [actix-web](https://github.com/actix/actix-web) is used for the http component with [tokio](https://github.com/tokio-rs/tokio) as the async runtime.
-[Tera](https://github.com/Keats/tera) is used for rendering the HTMl templates.  
+[Tera](https://github.com/Keats/tera) is used for rendering the HTML templates.  
 All assignments are stored in a PostgreSQL DB.
 
 ## Setup
 
 ```
 yarn install --modules-folder ./static/node_modules
+```
+or
+```
+npm install --prefix ./static/
 ```
 
 ## Build and Run In Debug Mode Mode
